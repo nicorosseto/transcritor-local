@@ -1,9 +1,16 @@
 name: Build Windows (.exe)
 
-# Roda manualmente (aba Actions → "Run workflow") ou ao criar uma tag v* (ex.: v0.1.0).
+# Roda: manualmente (aba Actions → "Run workflow"), a cada push na main que mexa no app
+# (o .zip fica em Actions → execução → Artifacts) e ao criar uma tag v* (vira Release).
 on:
   workflow_dispatch:
   push:
+    branches: [main]
+    paths:
+      - "transcritor/**"
+      - "packaging/**"
+      - "pyproject.toml"
+      - ".github/workflows/build-windows.yml"
     tags: ["v*"]
 
 permissions:
@@ -55,7 +62,9 @@ jobs:
 
       - name: Compactar
         shell: pwsh
-        run: Compress-Archive dist/TranscritorLocal "TranscritorLocal-${{ github.ref_name }}-windows.zip"
+        run: |
+          $versao = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "main-$("${{ github.sha }}".Substring(0,7))" }
+          Compress-Archive dist/TranscritorLocal "TranscritorLocal-$versao-windows.zip"
 
       - uses: actions/upload-artifact@v4
         with:
