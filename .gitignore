@@ -1,0 +1,40 @@
+# ---- CONTEÚDO DO USUÁRIO: NUNCA versionar ----
+# Vídeos, áudios, transcrições e capturas podem ser material protegido por
+# direitos autorais (cursos pagos) ou sigiloso (trabalho). Ficam só no seu PC.
+videos/
+saida/
+*_transcricoes/
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm
+*.m4v
+*.wmv
+*.mp3
+*.wav
+*.m4a
+registro*.csv
+transcritor_config.json
+.em_uso.lock
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# ---- Build ----
+build/
+dist/
+*.zip
+
+# ---- Sistema ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

@@ -1,0 +1,69 @@
+name: Build Windows (.exe)
+
+# Roda manualmente (aba Actions → "Run workflow") ou ao criar uma tag v* (ex.: v0.1.0).
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # necessário para anexar o .zip ao Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: FFmpeg para os testes
+        run: choco install ffmpeg -y --no-progress
+
+      - name: Testes
+        run: pytest -q
+
+      - name: Gerar executável
+        run: pyinstaller packaging/transcritor.spec --noconfirm --distpath dist --workpath build
+
+      - name: Embutir FFmpeg (build "essentials" de gyan.dev, GPL)
+        shell: pwsh
+        run: |
+          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+          Invoke-WebRequest $url -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_tmp
+          $pasta = Get-ChildItem ffmpeg_tmp -Directory | Select-Object -First 1
+          New-Item -ItemType Directory -Force dist/TranscritorLocal/bin | Out-Null
+          Copy-Item "$($pasta.FullName)/bin/ffmpeg.exe","$($pasta.FullName)/bin/ffprobe.exe" dist/TranscritorLocal/bin/
+          New-Item -ItemType Directory -Force dist/TranscritorLocal/licencas | Out-Null
+          Copy-Item "$($pasta.FullName)/LICENSE" dist/TranscritorLocal/licencas/FFmpeg-LICENSE.txt
+          Copy-Item LICENSE dist/TranscritorLocal/licencas/TranscritorLocal-LICENSE.txt
+          Copy-Item docs/LICENCAS_TERCEIROS.md dist/TranscritorLocal/licencas/
+
+      - name: Teste de fumaça do executável
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/TranscritorLocal/TranscritorLocal-terminal.exe -ArgumentList "--version" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "O executável não abriu (código $($p.ExitCode))" }
+
+      - name: Compactar
+        shell: pwsh
+        run: Compress-Archive dist/TranscritorLocal "TranscritorLocal-${{ github.ref_name }}-windows.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TranscritorLocal-windows
+          path: TranscritorLocal-*-windows.zip
+
+      - name: Publicar no Release (só em tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: TranscritorLocal-*-windows.zip

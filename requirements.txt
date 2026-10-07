@@ -1,0 +1,6 @@
+# Instalação simples: pip install -r requirements.txt
+faster-whisper>=1.1
+numpy
+pillow>=10.1
+psutil
+customtkinter>=5.2
