@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import time
 import types
 from pathlib import Path
 
@@ -58,8 +59,11 @@ class ModeloFalso:
     def transcribe(self, audio, **kw):
         self.chamadas.append(kw)
         dur = len(audio) / 16000
-        segs = (_Seg(i * 2.0, min((i + 1) * 2.0, dur), f" frase {i}") for i in range(int(dur // 2)))
-        return segs, types.SimpleNamespace(duration=dur)
+        def gerar():
+            for i in range(int(dur // 2)):
+                time.sleep(0.02)  # simula trabalho (o relógio do Windows tem ~15 ms de resolução)
+                yield _Seg(i * 2.0, min((i + 1) * 2.0, dur), f" frase {i}")
+        return gerar(), types.SimpleNamespace(duration=dur)
 
 
 @pytest.fixture

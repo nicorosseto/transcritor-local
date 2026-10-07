@@ -180,17 +180,17 @@ class Projeto:
                 resumo["parado"] = True
                 break
             emitir("video_inicio", indice=n, total=len(itens), rel=item.rel, duracao=item.duracao)
-            t0 = time.time()
+            t0 = time.perf_counter()
             try:
                 audio = self.caminho_audio(item.rel)
                 emitir("etapa", texto="Extraindo áudio...")
                 midia.extrair_audio(item.caminho, audio)
                 emitir("etapa", texto="Transcrevendo...")
                 array = midia.carregar_audio(audio)
-                t_trans = time.time()
+                t_trans = time.perf_counter()
 
                 def progresso(pos, total, _t=t_trans):
-                    gasto = time.time() - _t
+                    gasto = time.perf_counter() - _t
                     dados = {"pos": pos, "total": total, "rel": item.rel}
                     if gasto >= 30 and pos > 0:
                         vel = pos / gasto
@@ -210,14 +210,14 @@ class Projeto:
                     segundos_por_paragrafo=self.cfg.segundos_por_paragrafo,
                     ao_progredir=progresso, cancelar=cancelar)
                 del array
-                seg_trans = time.time() - t_trans
+                seg_trans = time.perf_counter() - t_trans
 
                 telas: list[markdown.Tela] = []
                 seg_ocr = 0.0
                 if estado_ocr is not None:
-                    t_ocr = time.time()
+                    t_ocr = time.perf_counter()
                     telas = self._ler_telas(item, estado_ocr, emitir, cancelar)
-                    seg_ocr = time.time() - t_ocr
+                    seg_ocr = time.perf_counter() - t_ocr
 
                 destino = self.caminho_md(item.rel)
                 conteudo, palavras = markdown.montar(
@@ -236,7 +236,7 @@ class Projeto:
                 l.palavras, l.capturas = palavras, len(telas)
                 l.observacao = ""
                 resumo["ok"] += 1
-                emitir("video_fim", rel=item.rel, palavras=palavras, segundos=time.time() - t0,
+                emitir("video_fim", rel=item.rel, palavras=palavras, segundos=time.perf_counter() - t0,
                        velocidade=l.velocidade, telas=len(telas))
                 feito_lote += dur
                 gasto_lote += seg_trans
