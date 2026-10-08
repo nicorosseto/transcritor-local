@@ -28,7 +28,7 @@ Severidade: 🔴 alta · 🟠 média · 🟡 baixa. Status: ✅ corrigido · ⏳
 
 | # | Lacuna / risco | Sev. | Próximo passo |
 |---|---|---|---|
-| P1 | **GUI nunca rodou em Windows real**; o CI só testa o `.exe` de terminal com `--version` | 🔴 | Teste manual do `.zip` no PC de referência; depois, teste de GUI automatizado |
+| P1 | **A janela (GUI) ainda não rodou em Windows real.** Já validado no CI Windows: os 14 testes do motor (Python 3.11 e 3.13), o build do PyInstaller e o `.exe` de terminal abrindo | 🔴 | Teste manual do `.zip` no PC de referência; depois, teste de GUI automatizado |
 | P2 | Efeito do `hotwords` e velocidade do beam 1 **não medidos** com o modelo real (o ambiente de build não baixa modelos) | 🟠 | Rodar o vídeo de referência com e sem vocabulário e comparar os erros |
 | P3 | Limiares de captura (4 s, 8 bits) não calibrados: vídeo com pessoa falando pode gerar muitas capturas | 🟠 | Medir capturas por hora em 3 tipos de vídeo; expor a "sensibilidade" na interface |
 | P4 | Sem barra de progresso do **download do modelo** (até 1,6 GB): parece travado | 🟠 | Pré-baixar com `huggingface_hub` e progresso próprio |

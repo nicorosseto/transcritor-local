@@ -4,7 +4,7 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 
 ![Tela do Transcritor Local](docs/img/app.png)
 
-> **Status:** v0.1 (beta). Testado em Linux com testes automatizados e build do executável; validação em Windows real em andamento. Veja o [Roadmap](docs/ROADMAP.md).
+> **Status:** v0.1 (beta). Testes automatizados passam em Windows e Linux (Python 3.11 e 3.13) e o `.exe` é gerado e testado no GitHub Actions; falta validar a janela em um PC real. Veja o [Roadmap](docs/ROADMAP.md).
 
 ---
 
@@ -53,7 +53,7 @@ Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/
 
 ### Opção A: executável para Windows (recomendado para usuários comuns)
 
-1. Baixe o `.zip` mais recente em **Releases**
+1. Baixe o `.zip` mais recente em **Releases** (versões estáveis) ou, para a versão de teste, em **Actions → Build Windows (.exe) → execução mais recente → Artifacts**
 2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`)
 3. Abra `TranscritorLocal.exe`
 

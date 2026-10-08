@@ -15,7 +15,7 @@ O Tesseract é **opcional** nos dois caminhos: só é necessário para ler o tex
 
 ## 2. Caminho A: executável
 
-1. Em **Releases**, baixe `TranscritorLocal-vX.Y.Z-windows.zip`.
+1. Em **Releases**, baixe `TranscritorLocal-vX.Y.Z-windows.zip`. Enquanto não houver Release, use **Actions → Build Windows (.exe) → execução mais recente → Artifacts → TranscritorLocal-windows** (é preciso estar logado no GitHub).
 2. Descompacte em `C:\TranscritorLocal` (evite o OneDrive e a Área de Trabalho sincronizada).
 3. Abra **`TranscritorLocal.exe`**.
 4. Se aparecer "O Windows protegeu o computador": **Mais informações → Executar assim mesmo**. Isso ocorre porque o app não tem assinatura digital paga, não porque é perigoso. O código é aberto e está neste repositório.
