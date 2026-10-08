@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="860" viewBox="0 0 1200 860">
+<style>text{font-family:Arial,sans-serif;fill:#172b4d;font-size:16px}.small{font-size:13px;fill:#52627a}.title{font-size:24px;font-weight:bold}.bold{font-weight:bold}.white{fill:white}.line{stroke:#dbe2ed;stroke-width:1}.card{fill:white;stroke:#dbe2ed}</style>
+<rect width="1200" height="860" fill="#f2f5fa"/>
+<text x="32" y="35" class="small">PROPOSTA DE LAYOUT · desktop · conteúdo ilustrativo · interface ainda não implementada</text>
+<rect x="24" y="55" width="1152" height="780" rx="16" fill="white" stroke="#dbe2ed"/>
+<text x="48" y="101" class="title">Transcritor Local</text><text x="48" y="128" class="small">Transforme seus vídeos em uma base pesquisável, com processamento local.</text>
+<rect x="864" y="80" width="180" height="38" rx="8" fill="#edf8f2"/><text x="880" y="105" fill="#18744a">PC pronto · CPU</text><text x="1080" y="105">Ajuda</text>
+<line x1="24" y1="150" x2="1176" y2="150" class="line"/>
+<text x="48" y="180" class="bold">Projeto: Curso Power BI</text><text x="48" y="212" class="small">Origem</text><text x="140" y="212">D:\Cursos\Power BI</text><text x="870" y="212">Escolher pasta</text><text x="1040" y="212">Atualizar</text>
+<text x="48" y="245" class="small">Saída</text><text x="140" y="245">D:\Transcrições\Power BI</text><text x="870" y="245">Escolher pasta</text><text x="1040" y="245">Abrir</text>
+<rect x="48" y="270" width="714" height="300" rx="10" class="card"/><rect x="786" y="270" width="366" height="300" rx="10" class="card"/>
+<text x="68" y="303" class="bold">Vídeos</text><text x="68" y="331" class="small">24 vídeos · 16 pendentes · 8 concluídos</text>
+<rect x="68" y="347" width="438" height="34" rx="6" fill="#f2f5fa"/><text x="80" y="370" class="small">Buscar por nome ou módulo...</text><text x="560" y="370">Estado: Todos ▾</text>
+<rect x="68" y="395" width="674" height="30" fill="#f2f5fa"/><text x="80" y="415" class="small">Seleção</text><text x="162" y="415" class="small">Vídeo</text><text x="522" y="415" class="small">Duração</text><text x="628" y="415" class="small">Estado</text>
+<text x="90" y="450">☑</text><text x="162" y="450">Módulo 01 / Introdução.mp4</text><text x="522" y="450">12:30</text><text x="628" y="450">Pendente</text>
+<line x1="68" y1="463" x2="742" y2="463" class="line"/>
+<text x="90" y="489">☐</text><text x="162" y="489">Módulo 02 / Medidas.mp4</text><text x="522" y="489">20:00</text><text x="628" y="489">Concluído</text>
+<text x="68" y="541" class="small">Selecionar: Pendentes · Todos · Nenhum</text><text x="598" y="541" class="small">Ver detalhes →</text>
+<text x="806" y="303" class="bold">Configuração da rodada</text><text x="806" y="339">Qualidade</text>
+<rect x="806" y="353" width="326" height="40" rx="7" fill="#eef3fb"/><rect x="906" y="353" width="125" height="40" rx="7" fill="#2469c8"/>
+<text x="819" y="379" class="small">Rápido</text><text x="917" y="379" class="white">Equilibrado</text><text x="1042" y="379" class="small">Preciso</text>
+<text x="806" y="420" class="small">Equilíbrio entre tempo e qualidade.</text><text x="806" y="455">☐ Ler texto da tela (OCR)</text><text x="806" y="481" class="small">Tesseract pronto · aumenta o tempo</text><text x="806" y="532">▸ Vocabulário e correções</text>
+<rect x="48" y="590" width="1104" height="102" rx="10" fill="#eef3fb"/>
+<text x="68" y="620" class="bold">16 selecionados · 2 h 10 min de vídeo · estimativa inicial: ~45 min</text>
+<text x="68" y="658">Quantidade desta rodada</text><rect x="300" y="633" width="290" height="40" rx="7" fill="white" stroke="#aab8cc"/><text x="315" y="659">Escolher quantidade... ▾</text>
+<rect x="832" y="633" width="300" height="40" rx="7" fill="#d2dce9"/><text x="886" y="659" fill="#52627a">Transcrever vídeos</text>
+<text x="68" y="717" class="small">Selecione a quantidade para iniciar. Origem, destino e seleção ficam protegidos durante a rodada.</text>
+<line x1="48" y1="738" x2="1152" y2="738" class="line"/><text x="68" y="769" class="bold">Aguardando início</text><text x="68" y="796" class="small">Durante o processamento: etapa atual, progresso, tempo restante e ações de parada.</text>
+<text x="890" y="778" class="small">▸ Registro de atividades</text>
+</svg>

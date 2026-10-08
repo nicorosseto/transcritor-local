@@ -131,6 +131,7 @@ Exemplo de trecho gerado (conteúdo fictício):
 | [Decisões técnicas (ADRs)](docs/DECISOES.md) | Por que cada escolha foi feita |
 | [Histórico do projeto](docs/HISTORICO.md) | Como o projeto evoluiu e o que aprendemos |
 | [Auditoria](docs/AUDITORIA.md) | Lacunas encontradas, corrigidas e pendentes |
+| [Auditoria independente — Codex (08/10/2026)](docs/auditorias/2026-10-08/README.md) | Achados técnicos, evidências, revisão de interface e proposta de layout |
 | [Roadmap](docs/ROADMAP.md) | Próximas versões |
 | [Licenças de terceiros](docs/LICENCAS_TERCEIROS.md) | FFmpeg, Whisper, Tesseract e bibliotecas |
 

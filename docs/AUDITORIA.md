@@ -77,3 +77,5 @@ Severidade: 🔴 alta · 🟠 média · 🟡 baixa. Status: ✅ corrigido · ⏳
 - [Gemini API free tier 2026 (yingtu.ai)](https://yingtu.ai/en/blog/google-gemini-api-free-tier-limits-2026)
 
 > Uma segunda auditoria, independente, está prevista com o Codex. Veja [AUDITORIA_CODEX.md](AUDITORIA_CODEX.md).
+
+> **Atualização de 08/10/2026:** a auditoria independente foi concluída e está disponível em [auditorias/2026-10-08/README.md](auditorias/2026-10-08/README.md). As tabelas acima registram a auditoria anterior; os novos achados não foram corrigidos por sua publicação.

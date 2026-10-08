@@ -4,6 +4,8 @@
 > *"Leia `docs/AUDITORIA_CODEX.md` e execute a auditoria descrita, sem alterar código."*
 > Depois, copie o relatório gerado e cole na conversa com o Claude para análise e correção.
 
+> **Resultado disponível:** a auditoria de 08/10/2026 está salva em [auditorias/2026-10-08/README.md](auditorias/2026-10-08/README.md), com relatório técnico, revisão de interface, wireframe e evidências. O Claude pode consultar esses arquivos diretamente no repositório; o briefing abaixo permanece como referência do escopo original.
+
 ---
 
 ## 1. Seu papel
