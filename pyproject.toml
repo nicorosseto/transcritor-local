@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "transcritor-local"
-version = "0.1.0"
+version = "0.1.1"
 description = "Transcreve vídeos para Markdown pesquisável, 100% no seu PC (Whisper + OCR), para alimentar IAs como NotebookLM e Claude."
 readme = "README.md"
 license = { text = "MIT" }

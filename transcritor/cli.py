@@ -108,6 +108,15 @@ def main(argv: list[str] | None = None) -> int:
 
     cfg.ocr = perguntar("Ler também o TEXTO que aparece na tela (slides, código)? s/n",
                         _sim_nao, "s" if cfg.ocr else "n")
+    if cfg.ocr:
+        from . import ocr as _ocr
+        est = _ocr.verificar()
+        if not est.disponivel:
+            print(f"  ⚠️  {est.mensagem}")
+            if not perguntar("  Continuar SEM ler o texto da tela? s/n", _sim_nao):
+                print("Nada foi feito. Instale o Tesseract e rode de novo.")
+                return 0
+            cfg.ocr = False
 
     atual = ", ".join(cfg.vocabulario)
     print("\nVocabulário de dicas (nomes e termos que o Whisper costuma errar), separados por vírgula.")
@@ -142,6 +151,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"\n[{d['indice']}/{d['total']}] {d['rel']}  ({hhmmss(d['duracao'])})")
         elif ev.tipo == "etapa":
             print(f"    {d['texto']}".ljust(110))
+        elif ev.tipo == "download":
+            print(f"\r    baixando modelo: {d['feito'] / 1e6:,.0f} de ~{d['total'] / 1e6:,.0f} MB".replace(",", ".")
+                  .ljust(60), end="", flush=True)
+        elif ev.tipo == "progresso_telas":
+            print(f"\r    lendo telas: {d['feito']}/{d['total']}".ljust(60), end="", flush=True)
         elif ev.tipo == "progresso":
             linha = f"\r    {hhmmss(d['pos'])} / {hhmmss(d['total'])}"
             if "velocidade" in d:
@@ -150,7 +164,8 @@ def main(argv: list[str] | None = None) -> int:
             print(linha.ljust(120), end="", flush=True)
         elif ev.tipo == "video_fim":
             print(f"\n    ✅ {d['palavras']} palavras em {hhmmss(d['segundos'])} "
-                  f"(velocidade {d['velocidade']:.1f}x, {d['telas']} trecho(s) de tela)")
+                  f"(velocidade {d['velocidade']:.1f}x, {d['telas']} trecho(s) de tela, "
+                  f"{d.get('correcoes', 0)} correção(ões))")
         elif ev.tipo == "video_erro":
             print(f"\n    ❌ FALHOU: {d['erro']}")
         elif ev.tipo == "aviso":

@@ -53,23 +53,27 @@ jobs:
           Copy-Item "$($pasta.FullName)/LICENSE" dist/TranscritorLocal/licencas/FFmpeg-LICENSE.txt
           Copy-Item LICENSE dist/TranscritorLocal/licencas/TranscritorLocal-LICENSE.txt
           Copy-Item docs/LICENCAS_TERCEIROS.md dist/TranscritorLocal/licencas/
+          Copy-Item packaging/COMO_ABRIR.txt dist/TranscritorLocal/
 
       - name: Teste de fumaça do executável
         shell: pwsh
         run: |
-          $p = Start-Process dist/TranscritorLocal/TranscritorLocal-terminal.exe -ArgumentList "--version" -Wait -PassThru -NoNewWindow
-          if ($p.ExitCode -ne 0) { throw "O executável não abriu (código $($p.ExitCode))" }
+          $p = Start-Process dist/TranscritorLocal/TranscritorLocal.exe -ArgumentList "--autoteste" -Wait -PassThru
+          if ($p.ExitCode -ne 0) {
+            Get-Content "$env:LOCALAPPDATA/TranscritorLocal/transcritor.log" -ErrorAction SilentlyContinue
+            throw "Autoteste do executável falhou (código $($p.ExitCode))"
+          }
 
-      - name: Compactar
-        shell: pwsh
-        run: |
-          $versao = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "main-$("${{ github.sha }}".Substring(0,7))" }
-          Compress-Archive dist/TranscritorLocal "TranscritorLocal-$versao-windows.zip"
-
+      # Artefato de teste: o GitHub já compacta a pasta (um zip só, sem zip dentro de zip)
       - uses: actions/upload-artifact@v4
         with:
           name: TranscritorLocal-windows
-          path: TranscritorLocal-*-windows.zip
+          path: dist/TranscritorLocal/
+
+      - name: Compactar para o Release (só em tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: Compress-Archive dist/TranscritorLocal "TranscritorLocal-${{ github.ref_name }}-windows.zip"
 
       - name: Publicar no Release (só em tags)
         if: startsWith(github.ref, 'refs/tags/')

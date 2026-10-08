@@ -195,3 +195,53 @@ def test_trava_impede_duas_execucoes(tmp_path):
     with Trava(tmp_path):
         assert (tmp_path / ".em_uso.lock").exists()
     assert not (tmp_path / ".em_uso.lock").exists()
+
+
+def test_correcoes_palavra_inteira_sem_maiusculas(tmp_path):
+    from transcritor import correcoes
+    regras = {"Chatepte": "ChatGPT", "Clode": "Claude", "chat EPT": "ChatGPT"}
+    c = correcoes.compilar(regras)
+    texto, n = correcoes.aplicar("O chatepte e o Clode. Clodes ficam. Usei chat EPT ontem.", c)
+    assert texto == "O ChatGPT e o Claude. Clodes ficam. Usei ChatGPT ontem."
+    assert n == 3
+
+
+def test_correcoes_arquivo_invalido_nao_derruba(tmp_path):
+    from transcritor import correcoes
+    (tmp_path / "correcoes.json").write_text("{ isso não é json", encoding="utf-8")
+    regras, aviso = correcoes.carregar(tmp_path)
+    assert regras == {} and "erro de formato" in aviso
+    arq = correcoes.criar_modelo_se_faltar(tmp_path / "novo")
+    regras, aviso = correcoes.carregar(arq.parent)
+    assert regras["Chatepte"] == "ChatGPT" and aviso == ""
+
+
+def test_markdown_tem_linha_em_branco_apos_separador(tmp_path):
+    md, _ = markdown.montar(titulo="t", origem="t.mp4", duracao=60, modelo="m", preset="p",
+                            paragrafos=[Paragrafo(0, "oi")], telas=[], destino=tmp_path / "t.md")
+    assert "---\n\n**[00:00:00]** oi" in md
+
+
+def test_registro_le_csv_antigo_sem_colunas_novas(tmp_path):
+    arq = tmp_path / "registro.csv"
+    arq.write_text("caminho;tamanho_bytes;modificado_em;duracao_s;status;preset;ocr;transcrito_em;"
+                   "seg_transcricao;seg_ocr;velocidade;palavras;capturas;observacao\n"
+                   "a.mp4;10;2026-01-01T00:00:00;60,00;ok;preciso;nao;;30,00;0,00;2,00;100;0;\n",
+                   encoding="utf-8-sig")
+    r = Registro(arq)
+    assert r.linhas["a.mp4"].velocidade == 2.0 and r.linhas["a.mp4"].threads == 0
+
+
+@requer_ffmpeg
+def test_pipeline_aplica_correcoes_e_registra_diagnostico(tmp_path, modelo_falso):
+    import json
+    videos, saida = tmp_path / "videos", tmp_path / "saida"
+    criar_video(videos / "a.mp4", [("x", 4)])
+    saida.mkdir()
+    (saida / "correcoes.json").write_text(json.dumps({"trocar": {"frase": "sentença"}}), encoding="utf-8")
+    proj = Projeto(Config(videos, saida))
+    proj.executar(proj.escanear(), lambda e: None)
+    md = proj.caminho_md("a.mp4").read_text(encoding="utf-8")
+    assert "sentença 0" in md and "Correções automáticas:** 2" in md
+    l = Registro(saida / "registro.csv").linhas["a.mp4"]
+    assert l.correcoes == 2 and l.threads > 0 and l.dispositivo == "cpu"

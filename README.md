@@ -4,6 +4,12 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 
 ![Tela do Transcritor Local](docs/img/app.png)
 
+<details><summary>Tela "Verificar PC e preparar" (primeira abertura)</summary>
+
+![Verificar PC e preparar](docs/img/verificar_pc.png)
+
+</details>
+
 > **Status:** v0.1 (beta). Testes automatizados passam em Windows e Linux (Python 3.11 e 3.13) e o `.exe` é gerado e testado no GitHub Actions; falta validar a janela em um PC real. Veja o [Roadmap](docs/ROADMAP.md).
 
 ---
@@ -30,6 +36,8 @@ Vídeos de 500 MB a 1 GB não cabem no upload de nenhuma IA, e "conversores de M
 - ⏱️ **Estimativa de tempo** que aprende a velocidade real do seu PC
 - 🖥️ **Verificação de hardware:** diz o que ajuda, o que atrapalha e qual qualidade usar
 - 🔤 **Vocabulário de dicas** para nomes que o Whisper erra (ex.: *Power BI, DAX, ChatGPT*)
+- ✏️ **Correções automáticas** por projeto (`correcoes.json`): "Chatepte" → "ChatGPT", contadas no cabeçalho do `.md`
+- 🧰 **Preparação guiada** na primeira abertura: verifica o PC, baixa o modelo com barra de progresso e ajuda a instalar o Tesseract
 - 🛑 **Parar com segurança** após o vídeo atual; nada se perde; não deixa o PC suspender no meio
 
 ## Como funciona
@@ -53,11 +61,11 @@ Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/
 
 ### Opção A: executável para Windows (recomendado para usuários comuns)
 
-1. Baixe o `.zip` mais recente em **Releases** (versões estáveis) ou, para a versão de teste, em **Actions → Build Windows (.exe) → execução mais recente → Artifacts**
-2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`)
-3. Abra `TranscritorLocal.exe`
+1. Baixe o `.zip` mais recente em **Releases** (versões estáveis) ou, para a versão de teste, em **Actions → Build Windows (.exe) → execução mais recente → Artifacts → TranscritorLocal-windows** (role até o fim da página)
+2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`). É um zip só; dentro há um único programa e o arquivo `COMO_ABRIR.txt`
+3. Abra `TranscritorLocal.exe`. Na primeira vez, a tela **Verificar PC e preparar** baixa o modelo de transcrição (~1,6 GB, uma única vez)
 
-O FFmpeg já vem embutido. Na primeira abertura, o Windows pode exibir *"O Windows protegeu o computador"*, porque o app ainda não tem assinatura digital: clique em **Mais informações → Executar assim mesmo**.
+Python e FFmpeg já vêm embutidos. Na primeira abertura, o Windows pode exibir *"O Windows protegeu o computador"*, porque o app ainda não tem assinatura digital: clique em **Mais informações → Executar assim mesmo**.
 
 ### Opção B: pelo código-fonte (Python 3.10+)
 

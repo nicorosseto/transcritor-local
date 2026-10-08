@@ -1,0 +1,24 @@
+TRANSCRITOR LOCAL — COMO ABRIR
+================================
+
+1. Deixe esta pasta inteira em um lugar fixo, por exemplo:  C:\TranscritorLocal
+   (evite o OneDrive e a Área de Trabalho sincronizada)
+
+2. Dê dois cliques em:  TranscritorLocal.exe
+
+   Se o Windows mostrar "O Windows protegeu o computador":
+   clique em "Mais informações" e depois em "Executar assim mesmo".
+   (O aviso aparece porque o app ainda não tem assinatura digital paga.)
+
+3. Na primeira vez, o app mostra a tela "Verificar PC e preparar":
+   ele baixa o modelo de transcrição (~1,6 GB, uma única vez).
+   Depois disso, tudo funciona sem internet.
+
+IMPORTANTE
+- NÃO mova o TranscritorLocal.exe para fora desta pasta: ele precisa das
+  pastas "_internal" e "bin" ao lado dele.
+- Para criar um atalho na Área de Trabalho: clique com o botão direito no
+  TranscritorLocal.exe > Mostrar mais opções > Enviar para > Área de trabalho.
+- Você NÃO precisa instalar Python nem FFmpeg: já vêm dentro desta pasta.
+
+Ajuda e código-fonte: https://github.com/nicorosseto/transcritor-local

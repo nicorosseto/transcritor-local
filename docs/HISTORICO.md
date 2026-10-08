@@ -32,3 +32,19 @@ Todos foram pegos por testes (automatizados ou de fumaça) **antes** de chegar a
 | 5 | Ponto de entrada do PyInstaller com import relativo | Build real do PyInstaller | `packaging/entrada_*.py` |
 | 6 | Excluir o PyAV do pacote quebrava o carregamento do modelo | Execução do binário congelado | PyAV mantido no pacote |
 | 7 | `.exe` de janela sem stdout/stderr derrubaria o download do modelo | Revisão do empacotamento | `garantir_saidas_padrao()` + exe de terminal separado |
+
+## v0.1.1 (08/10/2026): o primeiro teste real no Windows
+
+O usuário baixou o build do GitHub e rodou o vídeo de referência no próprio PC. O que o teste revelou:
+
+| Achado | Correção |
+|---|---|
+| OCR marcado, mas não rodou: o Tesseract não estava instalado e o aviso se perdeu no log | Diálogo bloqueante antes de iniciar |
+| Dois `.exe`: o de terminal "abriu uma tela preta e sumiu"; zip dentro de zip | Um `.exe`, um zip, `COMO_ABRIR.txt` |
+| Em PC novo, ninguém explica que há um download de 1,6 GB | Tela "Verificar PC e preparar" com download e progresso |
+| Linhas de log ("Extraindo áudio...") pareciam processo em andamento | Painel de etapas + log recolhível com horário |
+| Janela "Verificar PC" abria atrás da principal | Modal, centralizada, com som |
+| App 18% mais lento que o script | Diagnóstico no registro (P17) |
+| Vocabulário vazio → mesmos erros de marcas | Correções automáticas por projeto (ADR-011) |
+
+Durante a reconstrução da interface, um teste em display virtual pegou um **travamento** que congelaria o app no primeiro vídeo (C19): objetos de fonte do Tk destruídos pelo coletor de lixo numa thread de trabalho.

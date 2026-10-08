@@ -37,6 +37,10 @@ class Linha:
     velocidade: float = 0.0      # minutos de vídeo por minuto real (só a transcrição)
     palavras: int = 0
     capturas: int = 0
+    correcoes: int = 0           # trocas feitas pela lista correcoes.json
+    threads: int = 0             # diagnóstico de desempenho
+    dispositivo: str = ""        # cpu | cuda
+    motor: str = ""              # versões do faster-whisper/ctranslate2
     observacao: str = ""
 
     @property
@@ -45,7 +49,7 @@ class Linha:
 
 
 _NUMERICOS = {"duracao_s", "seg_transcricao", "seg_ocr", "velocidade"}
-_INTEIROS = {"tamanho_bytes", "palavras", "capturas"}
+_INTEIROS = {"tamanho_bytes", "palavras", "capturas", "correcoes", "threads"}
 
 
 def _assinatura(arquivo: Path) -> tuple[int, str]:

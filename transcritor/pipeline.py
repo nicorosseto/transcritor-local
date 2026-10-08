@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Callable
 
-from . import consolidacao, markdown, midia, ocr
+from . import consolidacao, correcoes, markdown, midia, ocr, preparacao
 from .config import EXTENSOES_VIDEO, Config
 from .estimativa import Estimativa, estimar
 from .registro import ERRO, OK, Linha, Registro
@@ -41,6 +41,19 @@ class Item:
 class Evento:
     tipo: str            # lote_inicio | etapa | progresso | video_fim | video_erro | aviso | lote_fim
     dados: dict = field(default_factory=dict)
+
+
+def modelo_baixado(nome: str) -> bool:
+    """Separado para os testes poderem simular (não há download no ambiente de teste)."""
+    return preparacao.estado_modelo(nome).baixado
+
+
+def versao_motor() -> str:
+    try:
+        from importlib.metadata import version
+        return f"faster-whisper {version('faster-whisper')} / ctranslate2 {version('ctranslate2')}"
+    except Exception:
+        return "desconhecida"
 
 
 def listar_videos(pasta: Path) -> list[tuple[str, Path]]:
@@ -107,15 +120,19 @@ class Projeto:
         return [i for i in self.itens if i.status != OK]
 
     # ---------------------------------------------------------------- execução
-    def _garantir_modelo(self, emitir):
+    def _garantir_modelo(self, emitir, cancelar=None):
         if self._modelo is not None and self._modelo_nome == self.cfg.modelo:
             return
-        emitir("etapa", texto=f"Carregando modelo {self.cfg.modelo} "
-                              "(na primeira vez ele é baixado: até ~1,6 GB, pode demorar)...")
+        if not modelo_baixado(self.cfg.modelo):
+            emitir("etapa", codigo="modelo", texto=f"Baixando o modelo de transcrição ({self.cfg.modelo})...")
+            preparacao.baixar_modelo(self.cfg.modelo,
+                                     lambda feito, total: emitir("download", feito=feito, total=total),
+                                     cancelar)
+        emitir("etapa", codigo="modelo", texto=f"Carregando o modelo {self.cfg.modelo}...")
         self._modelo, self.dispositivo = carregar_modelo(
             self.cfg.modelo, self.cfg.dispositivo, self.cfg.threads_efetivas)
         self._modelo_nome = self.cfg.modelo
-        emitir("etapa", texto=f"Modelo pronto, rodando em: {self.dispositivo.upper()}")
+        emitir("etapa", codigo="modelo", texto=f"Modelo pronto, rodando em: {self.dispositivo.upper()}")
 
     def _preparar_ocr(self, emitir) -> ocr.EstadoOCR | None:
         if not self.cfg.ocr:
@@ -125,7 +142,7 @@ class Projeto:
             emitir("aviso", texto=estado.mensagem + " Seguindo SEM leitura de tela.")
             return None
         if not estado.tem_portugues:
-            emitir("etapa", texto="Baixando pacote de português do Tesseract (~2 MB)...")
+            emitir("etapa", codigo="modelo", texto="Baixando pacote de português do Tesseract (~2 MB)...")
             try:
                 ocr.baixar_portugues()
                 estado = ocr.verificar()
@@ -159,8 +176,12 @@ class Projeto:
         emitir("lote_inicio", total=len(itens), segundos_previstos=estimativa_lote.total,
                duracao_total=sum(i.duracao for i in itens))
         estado_ocr = self._preparar_ocr(emitir)
+        regras, aviso_corr = correcoes.carregar(self.cfg.pasta_saida)
+        if aviso_corr:
+            emitir("aviso", texto=aviso_corr)
+        compiladas = correcoes.compilar(regras)
         try:
-            self._garantir_modelo(emitir)
+            self._garantir_modelo(emitir, cancelar)
         except Exception as e:
             dica = ""
             texto = str(e).lower()
@@ -183,9 +204,9 @@ class Projeto:
             t0 = time.perf_counter()
             try:
                 audio = self.caminho_audio(item.rel)
-                emitir("etapa", texto="Extraindo áudio...")
+                emitir("etapa", codigo="audio", texto="Extraindo o áudio...")
                 midia.extrair_audio(item.caminho, audio)
-                emitir("etapa", texto="Transcrevendo...")
+                emitir("etapa", codigo="transcricao", texto="Transcrevendo a fala...")
                 array = midia.carregar_audio(audio)
                 t_trans = time.perf_counter()
 
@@ -211,6 +232,10 @@ class Projeto:
                     ao_progredir=progresso, cancelar=cancelar)
                 del array
                 seg_trans = time.perf_counter() - t_trans
+                trocas = 0
+                for p in paragrafos:
+                    p.texto, n_trocas = correcoes.aplicar(p.texto, compiladas)
+                    trocas += n_trocas
 
                 telas: list[markdown.Tela] = []
                 seg_ocr = 0.0
@@ -219,11 +244,12 @@ class Projeto:
                     telas = self._ler_telas(item, estado_ocr, emitir, cancelar)
                     seg_ocr = time.perf_counter() - t_ocr
 
+                emitir("etapa", codigo="salvar", texto="Salvando a transcrição...")
                 destino = self.caminho_md(item.rel)
                 conteudo, palavras = markdown.montar(
                     titulo=Path(item.rel).stem, origem=item.rel, duracao=dur,
                     modelo=self.cfg.modelo, preset=self.cfg.preset,
-                    paragrafos=paragrafos, telas=telas, destino=destino)
+                    paragrafos=paragrafos, telas=telas, destino=destino, correcoes=trocas)
                 markdown.salvar(conteudo, destino)
 
                 l = item.linha
@@ -234,10 +260,12 @@ class Projeto:
                 l.seg_transcricao, l.seg_ocr = round(seg_trans, 1), round(seg_ocr, 1)
                 l.velocidade = round(dur / seg_trans, 2) if seg_trans > 0 else 0.0
                 l.palavras, l.capturas = palavras, len(telas)
+                l.correcoes = trocas
+                l.threads, l.dispositivo, l.motor = self.cfg.threads_efetivas, self.dispositivo, versao_motor()
                 l.observacao = ""
                 resumo["ok"] += 1
                 emitir("video_fim", rel=item.rel, palavras=palavras, segundos=time.perf_counter() - t0,
-                       velocidade=l.velocidade, telas=len(telas))
+                       velocidade=l.velocidade, telas=len(telas), correcoes=trocas)
                 feito_lote += dur
                 gasto_lote += seg_trans
             except Cancelado:
@@ -261,14 +289,14 @@ class Projeto:
         return resumo
 
     def _ler_telas(self, item: Item, estado: ocr.EstadoOCR, emitir, cancelar) -> list[markdown.Tela]:
-        emitir("etapa", texto="Capturando mudanças de tela...")
+        emitir("etapa", codigo="telas", texto="Procurando trocas de tela...")
         capturas = midia.extrair_capturas(item.caminho, self.pasta_capturas(item.rel), cancelar=cancelar)
         telas: list[markdown.Tela] = []
         ultimo = ""
         for i, (t, img) in enumerate(capturas, 1):
             if cancelar.is_set():
                 raise Cancelado()
-            emitir("etapa", texto=f"Lendo texto da tela {i}/{len(capturas)}...")
+            emitir("progresso_telas", feito=i, total=len(capturas))
             texto = ocr.limpar(ocr.ler_imagem(estado, img))
             if not ocr.e_util(texto) or ocr.parecido(texto, ultimo):
                 continue

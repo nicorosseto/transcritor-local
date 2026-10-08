@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller: gera uma pasta (onedir) com TranscritorLocal.exe.
+# PyInstaller: gera uma pasta (onedir) com TranscritorLocal.exe (um único executável).
 # "onedir" abre mais rápido e costuma disparar menos falsos positivos de antivírus que "onefile".
 # Uso (na raiz do repositório):  pyinstaller packaging/transcritor.spec --noconfirm
 
@@ -27,16 +27,9 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-# Dois executáveis na mesma pasta, compartilhando as bibliotecas:
-#   TranscritorLocal.exe          -> janela (sem console)
-#   TranscritorLocal-terminal.exe -> modo terminal (precisa de console para perguntar/mostrar progresso)
-exe_janela = EXE(pyz, a.scripts, [], exclude_binaries=True, name="TranscritorLocal",
-                 console=False, icon=None)
+# Um único executável, de janela. O modo terminal fica para quem roda pelo código-fonte
+# (python transcrever.py): dois .exe na mesma pasta confundiam o usuário.
+exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="TranscritorLocal",
+          console=False, icon=None)
 
-b = Analysis(["entrada_terminal.py"], pathex=[RAIZ], binaries=[], datas=[],
-             hiddenimports=["transcritor.cli"], excludes=["torch", "tensorflow", "matplotlib"])
-exe_terminal = EXE(PYZ(b.pure), b.scripts, [], exclude_binaries=True,
-                   name="TranscritorLocal-terminal", console=True, icon=None)
-
-coll = COLLECT(exe_janela, exe_terminal, a.binaries, a.datas, b.binaries, b.datas,
-               strip=False, upx=False, name="TranscritorLocal")
+coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="TranscritorLocal")

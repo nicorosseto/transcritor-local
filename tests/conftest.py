@@ -71,6 +71,7 @@ def modelo_falso(monkeypatch):
     from transcritor import pipeline
     m = ModeloFalso()
     monkeypatch.setattr(pipeline, "carregar_modelo", lambda *a, **k: (m, "cpu"))
+    monkeypatch.setattr(pipeline, "modelo_baixado", lambda nome: True)
     return m
 
 

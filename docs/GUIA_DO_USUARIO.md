@@ -20,7 +20,9 @@ O Tesseract é **opcional** nos dois caminhos: só é necessário para ler o tex
 3. Abra **`TranscritorLocal.exe`**.
 4. Se aparecer "O Windows protegeu o computador": **Mais informações → Executar assim mesmo**. Isso ocorre porque o app não tem assinatura digital paga, não porque é perigoso. O código é aberto e está neste repositório.
 
-> Existe também o `TranscritorLocal-terminal.exe`, para quem prefere o modo texto.
+5. Na primeira vez, aparece a tela **Verificar PC e preparar**. Clique em **Baixar agora** no item "Modelo de transcrição" (~1,6 GB, uma única vez). Você não precisa instalar Python nem FFmpeg.
+
+> O modo terminal existe só para quem roda pelo código-fonte (`python transcrever.py`).
 
 ## 3. Caminho B: código-fonte
 

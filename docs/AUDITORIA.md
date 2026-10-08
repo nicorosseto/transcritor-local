@@ -23,6 +23,13 @@ Severidade: 🔴 alta · 🟠 média · 🟡 baixa. Status: ✅ corrigido · ⏳
 | C12 | Duas janelas gravando na mesma saída | 🟠 | ✅ trava por PID |
 | C13 | Erro de rede no download do modelo, incompreensível para leigo | 🟡 | ✅ mensagem explicativa (proxy corporativo) |
 | C14 | Detecção de troca de slide falhava em fundos claros | 🟠 | ✅ dHash 16x16 |
+| C15 | "Ler texto da tela" marcado sem Tesseract: o app seguia sem OCR e só avisava no log (achado no teste real de 07/10/2026) | 🔴 | ✅ v0.1.1: diálogo bloqueante com "Instalar / Continuar sem / Cancelar" |
+| C16 | Dois `.exe` + zip dentro de zip confundiam o usuário (o de terminal "piscava e sumia") | 🟠 | ✅ v0.1.1: um `.exe`, um zip, `COMO_ABRIR.txt` |
+| C17 | PC "virgem" sem explicação do que falta (modelo de 1,6 GB baixado sem aviso nem progresso) | 🟠 | ✅ v0.1.1: tela "Verificar PC e preparar", download com progresso (resolve P4) |
+| C18 | Log técnico misturado à interface parecia atividade em andamento | 🟡 | ✅ v0.1.1: etapas visuais, barra única da rodada, log recolhível com horário |
+| C19 | **Travamento:** fontes do Tk recriadas a cada etapa e destruídas pelo coletor de lixo na thread de trabalho congelavam o app no 1º vídeo | 🔴 | ✅ v0.1.1: fontes únicas + coleta de lixo só na thread principal |
+| C20 | Janela "Verificar PC" abria atrás da principal | 🟡 | ✅ v0.1.1: modal, centralizada, na frente, com som de aviso |
+| C21 | Saída sugerida ignorava a pasta `saida` já existente (retranscreveu 30 min) | 🟡 | ✅ v0.1.1: reaproveita saída existente ao lado |
 
 ## 2. Pendências
 
@@ -31,7 +38,7 @@ Severidade: 🔴 alta · 🟠 média · 🟡 baixa. Status: ✅ corrigido · ⏳
 | P1 | **A janela (GUI) ainda não rodou em Windows real.** Já validado no CI Windows: os 14 testes do motor (Python 3.11 e 3.13), o build do PyInstaller e o `.exe` de terminal abrindo | 🔴 | Teste manual do `.zip` no PC de referência; depois, teste de GUI automatizado |
 | P2 | Efeito do `hotwords` e velocidade do beam 1 **não medidos** com o modelo real (o ambiente de build não baixa modelos) | 🟠 | Rodar o vídeo de referência com e sem vocabulário e comparar os erros |
 | P3 | Limiares de captura (4 s, 8 bits) não calibrados: vídeo com pessoa falando pode gerar muitas capturas | 🟠 | Medir capturas por hora em 3 tipos de vídeo; expor a "sensibilidade" na interface |
-| P4 | Sem barra de progresso do **download do modelo** (até 1,6 GB): parece travado | 🟠 | Pré-baixar com `huggingface_hub` e progresso próprio |
+| P4 | ~~Sem barra de progresso do download do modelo~~ | — | ✅ Resolvido na v0.1.1 (C17) |
 | P5 | **NVIDIA no `.exe`**: as bibliotecas CUDA (cuBLAS/cuDNN 12) não vêm no pacote; `pip install nvidia-*` não alcança o Python embutido | 🟡 | Documentar a instalação do CUDA Toolkit 12 ou oferecer um build "GPU" separado |
 | P6 | VRAM no Windows via `AdapterRAM` (32 bits) aparece limitada a 4 GB | 🟡 | Ler `HardwareInformation.qwMemorySize` no registro do Windows (só importa para a v0.2) |
 | P7 | **SmartScreen/antivírus** em `.exe` sem assinatura (falsos positivos são comuns com PyInstaller) | 🟠 | Avaliar assinatura gratuita para projetos open source (ex.: SignPath) antes de tornar público |
@@ -43,6 +50,8 @@ Severidade: 🔴 alta · 🟠 média · 🟡 baixa. Status: ✅ corrigido · ⏳
 | P13 | Testes de GUI não rodam no CI | 🟡 | Job Linux com `xvfb-run` (o teste de fumaça já existe) |
 | P14 | Estimativa de OCR padrão (10 min/h) é chute conservador | 🟡 | Substituída automaticamente após o 1º vídeo com OCR |
 | P15 | Sem atualização automática | 🟡 | Verificar a última Release no GitHub ao abrir (opcional) |
+| P17 | App ~18% mais lento que o script com a mesma qualidade (1,22x vs 1,48x no vídeo de referência) | 🟠 | Comparar com o diagnóstico novo do `registro.csv` (threads, dispositivo, versões do motor) |
+| P18 | Correções automáticas podem trocar palavras reais (ex.: "Hulk") | 🟡 | Documentado; regra só vale para palavra inteira e o total aparece no `.md` |
 | P16 | Alucinação residual em música/ruído de fundo | 🟡 | Avaliar `hallucination_silence_threshold` + `word_timestamps` (custo) |
 
 ## 3. Riscos de uso (não técnicos)

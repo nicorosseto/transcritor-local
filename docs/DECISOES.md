@@ -115,3 +115,28 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 **Data:** 07/10/2026 · **Status:** aceita
 
 `vad_filter=True` (o silêncio não chega ao modelo), `condition_on_previous_text=False` (quebra loops de repetição) e o *fallback* de temperatura padrão mantido (desligá-lo é causa conhecida de loops). `hallucination_silence_threshold` não é usado, porque exigiria `word_timestamps=True` e mais processamento. Fica reavaliável.
+
+---
+
+## ADR-011: Dica (antes) e correção (depois) são mecanismos separados
+
+**Data:** 08/10/2026 · **Status:** aceita
+
+**Contexto.** Não existe um dicionário de correção "universal" validado para Whisper: os erros dependem do sotaque, do assunto e do áudio. Apps como MacWhisper, Superwhisper e OpenWhispr dão a cada usuário a própria lista. O guia da OpenAI mostra que listas de termos no prompt corrigem só parte dos nomes, e que revisar por LLM é mais confiável, porém pode inventar texto.
+
+**Decisão.** `hotwords` (dica, antes) + `correcoes.json` por projeto (troca determinística, depois, só palavra inteira, sem diferenciar maiúsculas). O total de trocas vai para o cabeçalho do `.md` e para o `registro.csv`. A revisão por LLM fica fora do app; a IA que lê o `.md` já entende boa parte dos erros pelo contexto.
+
+---
+
+## ADR-012: Experiência no Windows segue as diretrizes da Microsoft
+
+**Data:** 08/10/2026 · **Status:** aceita
+
+- **Primeira abertura sem perguntas:** a tela de preparação só abre sozinha quando falta algo **obrigatório**; itens opcionais viram selo + piscada no botão "Verificar PC".
+- **Barra de progresso única** por rodada, ponderada pela duração dos vídeos, que **nunca volta**; etapas mostradas como texto (Áudio › Transcrição › Texto da tela › Salvar), não como barras duplas.
+- **Tempo restante** só depois de 30 s de medição, sem falsa precisão ("1 h 20 min").
+- **Diálogos** com botões de ação específicos ("Instalar Tesseract", "Continuar sem ler a tela"), sempre com uma saída segura.
+- **Conclusão** sinalizada com som do sistema e ícone piscando na barra de tarefas, para lotes que rodam sem ninguém olhando.
+- **Um único executável** na distribuição; o modo terminal é para quem usa o código-fonte.
+
+**Regra técnica derivada:** nenhum objeto do Tk pode ser criado em loop nem destruído fora da thread principal. O app desativa a coleta automática de lixo e a executa periodicamente na thread da interface (ver C19 na Auditoria).
