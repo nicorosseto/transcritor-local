@@ -132,6 +132,7 @@ Exemplo de trecho gerado (conteúdo fictício):
 | [Histórico do projeto](docs/HISTORICO.md) | Como o projeto evoluiu e o que aprendemos |
 | [Auditoria](docs/AUDITORIA.md) | Lacunas encontradas, corrigidas e pendentes |
 | [Auditoria independente — Codex (08/10/2026)](docs/auditorias/2026-10-08/README.md) | Achados técnicos, evidências, revisão de interface e proposta de layout |
+| [Status das auditorias](docs/auditorias/STATUS.md) | O que foi corrigido, em qual teste, e o que falta |
 | [Roadmap](docs/ROADMAP.md) | Próximas versões |
 | [Licenças de terceiros](docs/LICENCAS_TERCEIROS.md) | FFmpeg, Whisper, Tesseract e bibliotecas |
 

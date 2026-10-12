@@ -87,22 +87,27 @@ sequenceDiagram
 | `video_fim` | `rel`, `palavras`, `segundos`, `velocidade`, `telas` | Marca concluído |
 | `video_erro` | `rel`, `erro` | Marca erro, o lote continua |
 | `aviso` | `texto` | Problemas não fatais |
-| `lote_fim` | `ok`, `erro`, `cancelado`, `parado` | Libera a interface |
+| `lote_fim` | `ok`, `erro`, `cancelado`, `parado` e, em falha, `fatal` | Libera a interface; emitido **exatamente uma vez** por rodada |
 
-A GUI recebe os eventos de uma thread de trabalho por `queue.Queue` e os consome a cada 150 ms na thread principal, porque o Tkinter não é thread-safe.
+A GUI recebe os eventos de uma thread de trabalho por `queue.Queue` e os consome a cada 150 ms na thread principal, porque o Tkinter não é thread-safe. Threads de trabalho nunca chamam o Tk (nem `.after()`); para rodar algo na interface usam `App.na_interface(fn)`, que vira um evento `chamar` na mesma fila ([ADR-014](DECISOES.md)). O texto final da rodada vem de `gui/estado.py`.
 
 ## Identidade e estados (registro.csv)
 
 Um vídeo é identificado por **caminho relativo + tamanho + data de modificação**.
 
+- **Chave de saída** (coluna `saida`): atribuída uma vez; define `transcricoes_md/<chave>.md`, `audio_mp3/<chave>.mp3` e `capturas/<chave>/`. Em conflito de nome, vira `aula [mp4]` ([ADR-013](DECISOES.md)).
+- **`audio_de`**: assinatura do vídeo quando o `.mp3` foi extraído; se o vídeo mudou, o áudio é refeito.
+- **`projeto.json`** na pasta de saída: pasta de vídeos de origem. Outra origem só com confirmação.
+
 ```mermaid
 stateDiagram-v2
     [*] --> pendente: vídeo novo
-    [*] --> ok: .md já existia (importado)
+    [*] --> ok: .md já existia (só em saída de versão antiga)
     pendente --> ok: transcrito
     pendente --> erro: falhou
     erro --> ok: nova tentativa
     ok --> substituido: tamanho/data mudou
+    ok --> pendente: .md sumiu da saída
     substituido --> ok: retranscrito
     ok --> orfao: vídeo removido (.md → _orfaos)
     pendente --> orfao: vídeo removido
@@ -111,7 +116,7 @@ stateDiagram-v2
 
 - O CSV usa `;` e vírgula decimal, para abrir corretamente no Excel/Power BI em português.
 - A gravação é atômica (`.tmp` → `replace`). Se o Excel travar o arquivo, o app tenta 5 vezes e depois grava uma cópia `registro_PENDENTE_feche_o_excel.csv`.
-- Apenas vídeos com status `ok` entram na base consolidada.
+- Apenas vídeos com status `ok` entram na base consolidada, que é refeita ao ler a pasta e ao fim de cada rodada. A troca é transacional: a base nova é montada numa pasta temporária e só substitui a anterior quando está completa.
 
 ## Robustez
 
@@ -119,6 +124,8 @@ stateDiagram-v2
 |---|---|
 | Queda/interrupção no meio | Áudio, `.md` e CSV são escritos em temporário e renomeados no fim |
 | Vídeo corrompido | Exceção por vídeo: vira `erro`, o lote segue |
+| Erro inesperado fora de um vídeo | Vira `fatal` no `lote_fim`; a tela mostra falha, nunca sucesso |
+| Fechar a janela no meio | Pede parada e espera até ~10 s a thread salvar o registro |
 | Duas janelas na mesma saída | `Trava` com PID em `.em_uso.lock` |
 | PC suspende à noite | `SetThreadExecutionState` (Windows) durante o lote |
 | `.exe` sem console (stdout `None`) | `garantir_saidas_padrao()` redireciona para `transcritor.log` |
@@ -127,6 +134,6 @@ stateDiagram-v2
 
 ## Empacotamento
 
-- **PyInstaller onedir** (`packaging/transcritor.spec`): dois executáveis compartilhando `_internal/`: `TranscritorLocal.exe` (janela) e `TranscritorLocal-terminal.exe`.
+- **PyInstaller onedir** (`packaging/transcritor.spec`): um único `TranscritorLocal.exe` (janela). O mesmo executável aceita `--autoteste`, usado pelo CI para provar que o pacote abre e carrega as dependências.
 - O workflow `build-windows.yml` gera o `.zip` no GitHub Actions (Windows), embute `ffmpeg.exe`/`ffprobe.exe` em `bin/` com as licenças e roda um teste de fumaça.
 - `util.localizar_binario` procura primeiro em `<app>/bin`, depois no PATH.

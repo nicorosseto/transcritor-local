@@ -48,3 +48,21 @@ O usuário baixou o build do GitHub e rodou o vídeo de referência no próprio 
 | Vocabulário vazio → mesmos erros de marcas | Correções automáticas por projeto (ADR-011) |
 
 Durante a reconstrução da interface, um teste em display virtual pegou um **travamento** que congelaria o app no primeiro vídeo (C19): objetos de fonte do Tk destruídos pelo coletor de lixo numa thread de trabalho.
+
+## v0.1.2 (11/10/2026): correções da auditoria independente (fase 1)
+
+O Codex auditou a v0.1.1 de forma independente e encontrou 16 problemas (X1 a X16). O Claude revisou a auditoria, reproduziu os achados e reordenou as severidades ([contra-auditoria](auditorias/2026-10-08/CONTRA_AUDITORIA_CLAUDE.md)). A fase 1 corrigiu os nove que podiam **corromper ou esconder** resultados. Para cada um, o teste foi escrito antes da correção e falhou pelo motivo certo.
+
+| Problema | Correção |
+|---|---|
+| Vídeo substituído era refeito com o **áudio antigo** em cache (X1) | O registro sabe de qual versão do vídeo veio o `.mp3` |
+| `aula.mp4` e `aula.mkv` escreviam no mesmo `.md` (X2) | Chave de saída fixa por vídeo (ADR-013) |
+| Trocar a pasta depois de "Ler pasta" misturava registro e saídas (X3) | Leitura descartada ao editar; rodada recusa pastas diferentes |
+| Base consolidada era apagada antes de a nova ficar pronta (X5) | Troca só no fim, a partir de uma pasta temporária |
+| `.md` apagado continuava "concluído" (X6) | Volta a pendente |
+| Saída de outro curso era aceita em silêncio (X7) | `projeto.json` + confirmação |
+| "Ler pasta" não atualizava a base (X11) | Atualiza |
+| Threads de trabalho ainda agendavam no Tk (X13) | Só pela fila (ADR-014); fechamento seguro |
+| Erro inesperado aparecia como **sucesso**, com som (X16) | Estado fatal explícito |
+
+Status completo por ID: [auditorias/STATUS.md](auditorias/STATUS.md).

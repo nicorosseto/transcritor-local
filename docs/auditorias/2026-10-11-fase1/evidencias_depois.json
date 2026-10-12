@@ -1,0 +1,38 @@
+{
+  "substituicao_audio": {
+    "status": "substituido",
+    "ffmpeg_chamado": false,
+    "cache": "audio antigo"
+  },
+  "md_ausente": {
+    "pendentes": 1,
+    "md_existe": false
+  },
+  "colisao_extensoes": {
+    "md": true,
+    "audio": true,
+    "capturas": true
+  },
+  "troca_raiz": {
+    "bloqueado_ate_confirmar": true,
+    "texto": "transcricao da pasta anterior"
+  },
+  "limite_base": {
+    "limite": 10,
+    "palavras_resultado": 33
+  },
+  "trava_reentrante": {
+    "trava_existe_com_primeiro_contexto_ativo": false
+  },
+  "link_base": {
+    "link": "../../capturas/modulo/aula/cap.jpg",
+    "resolve_no_original": true,
+    "resolve_na_base": false
+  },
+  "falha_capturas": {
+    "resultado": []
+  },
+  "falha_ocr": {
+    "resultado": ""
+  }
+}

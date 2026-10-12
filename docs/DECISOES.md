@@ -140,3 +140,27 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 - **Um único executável** na distribuição; o modo terminal é para quem usa o código-fonte.
 
 **Regra técnica derivada:** nenhum objeto do Tk pode ser criado em loop nem destruído fora da thread principal. O app desativa a coleta automática de lixo e a executa periodicamente na thread da interface (ver C19 na Auditoria).
+
+---
+
+## ADR-013: Chave de saída fixa por vídeo e identidade do projeto
+
+**Data:** 11/10/2026 · **Status:** aceita · **Origem:** achados X2 e X7 da [auditoria de 08/10/2026](auditorias/STATUS.md)
+
+**Contexto.** O nome do `.md`, do `.mp3` e da pasta de capturas era derivado do caminho do vídeo **sem a extensão**: `aula.mp4` e `aula.mkv` escreviam no mesmo lugar. E nada ligava a pasta de saída à pasta de vídeos de origem: apontar outro curso para a mesma saída adotava transcrições alheias como "concluídas".
+
+**Decisão.**
+- Cada vídeo recebe, uma única vez, uma **chave de saída** gravada na coluna `saida` do `registro.csv`. O padrão continua sendo o nome sem extensão (compatível com saídas antigas). Só em caso de conflito a extensão entra no nome: `aula [mp4].md`. A chave nunca muda depois de atribuída, mesmo que surja um vídeo "irmão".
+- A pasta de saída ganha um `projeto.json` com a pasta de vídeos de origem. Origem diferente exige confirmação explícita ("A pasta foi movida, continuar" na janela; `--pasta-movida` no terminal). As origens anteriores ficam registradas.
+- Um `.md` existente só é adotado como concluído em saídas **sem** `projeto.json` (feitas por versões antigas).
+
+**Alternativas descartadas.** Sempre incluir a extensão no nome (`aula.mp4.md`): quebraria a compatibilidade com todas as saídas existentes. ID numérico: nomes ilegíveis para quem navega na pasta.
+
+---
+
+## ADR-014: Threads de trabalho só falam com a interface pela fila
+
+**Data:** 11/10/2026 · **Status:** aceita · **Origem:** X13 e X16; amplia a regra do ADR-012
+
+- Threads de trabalho **não chamam nenhum método do Tk**, nem `.after()`. Para executar algo na interface, usam `App.na_interface(fn)`, que coloca um evento `chamar` na fila consumida pela thread principal. Um teste de guarda impede a volta de `.after(0, ...)`.
+- Toda rodada termina com **exatamente um** `lote_fim`. Erro inesperado vira o campo `fatal`. O texto final vem de `gui/estado.py` (testável sem Tk), que nunca mostra sucesso sem nenhum vídeo concluído.

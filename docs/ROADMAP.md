@@ -10,13 +10,23 @@
 - [ ] Validação em Windows real (pendência P1)
 - [ ] Medição do vocabulário e do beam 1 com o modelo real (P2)
 
+## v0.1.2: correções da auditoria (fase 1) ✅
+- [x] X1, X2, X3, X5, X6, X7, X11, X13 e X16 ([status](auditorias/STATUS.md))
+
+## v0.1.3: auditoria fase 2 + desempenho
+- [ ] X4, X10, X15, X8, X9 e o restante do X12
+- [ ] Padrão de threads pelo resultado do benchmark (P17)
+
+## v0.1.4: novo layout aprovado
+- Fundo preto, barra lateral `#0A1612`, verde só no que é clicável, logotipo "da onda à linha" e ícone do `.exe`
+
 ## v0.2: IA visual local (segunda fase)
 - Coluna "IA visual" na tabela: escolher **por vídeo**
 - Aplicação sobre as capturas já salvas (sem refazer a transcrição)
 - Ollama local + modelo de visão pequeno (candidatos: `qwen3-vl:2b` / `qwen3-vl:4b`), sem conta e sem nuvem
 - Estimativa separada para a fase visual, aprendida no PC
 - Detecção do Ollama e da RAM disponível no "Verificar PC"
-- Calibração dos limiares de captura (P3) e progresso do download do modelo (P4)
+- Calibração dos limiares de captura (P3) (o progresso do download, P4, já entrou na v0.1.1)
 
 ## v0.3: acabamento e publicação
 - Repositório público + Release assinada (P7)
@@ -24,7 +34,16 @@
 - Modo "deixar o PC usável" (P11)
 - Ícone e instalador (Inno Setup)
 
+## Formatos de saída (pesquisa de 11/10/2026)
+O núcleo que os concorrentes oferecem é TXT, SRT e VTT; o diferencial deste app é juntar fala e texto da tela.
+- **Primeiro:** página HTML única com busca, tempo clicável e capturas dos slides (o diferencial)
+- **Depois:** SRT/VTT (modo próprio de segmentos curtos: até ~7 s, 2 linhas de até 42 caracteres), TXT, JSONL e CSV por segmento (`;` e vírgula decimal)
+- **Mais tarde:** capítulos do YouTube a partir das trocas de slide, notas Obsidian, DOCX/PDF
+- **Fora do escopo:** legenda gravada no vídeo, EPUB, Parquet
+- Na interface: seção "Formatos de saída" com caixas de seleção; Markdown e base consolidada marcados por padrão
+
 ## Em pesquisa
+- Busca local em todo o acervo (SQLite FTS5) abrindo o vídeo no minuto exato
 - `whisper.cpp` com Vulkan para acelerar em **placas AMD** (ex.: RX 560 XT 8 GB)
 - Diarização (quem fala)
 - Resumo automático por vídeo como arquivo **separado** (o `.md` literal continua sendo a fonte da verdade)

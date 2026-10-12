@@ -88,6 +88,8 @@ O pacote de **português** é baixado automaticamente pelo app na primeira vez (
 - No **vocabulário**, coloque nomes que aparecem nos vídeos e que o Whisper costuma errar: `Power BI, DAX, ChatGPT, Claude, Gemini, hook`.
 - A primeira estimativa é **conservadora**. Depois do primeiro vídeo, o app passa a usar a velocidade real do seu PC.
 
+**Se a rodada não terminar bem**, a mensagem final diz exatamente o que houve: ✅ concluída, ⚠️ parcial (alguns com erro), ⏸ parada/cancelada ou ❌ falha. O som de conclusão só toca quando tudo deu certo.
+
 **Para lotes grandes:** escolha um número de vídeos que caiba em uma noite. O app impede o PC de suspender enquanto trabalha, mas **não desligue** o computador.
 
 ## 6. Levando para a IA
@@ -115,6 +117,9 @@ O pacote de **português** é baixado automaticamente pelo app na primeira vez (
 | Muito lento | CPU antiga ou poucos núcleos | Use **Rápido**; rode à noite |
 | Vídeo com status "erro" | Arquivo corrompido ou sem áudio | Abra no player para conferir; ele é tentado de novo na próxima rodada |
 | Caminho muito longo | Limite de 260 caracteres do Windows | Use nomes de pasta mais curtos ou ative "caminhos longos" no Windows |
+| "Pasta de saída de outro projeto" | A saída escolhida já guarda transcrições de **outra** pasta de vídeos | Vídeos diferentes: escolha outra saída. Só moveu ou renomeou a pasta de vídeos: "A pasta foi movida, continuar" (no terminal, `--pasta-movida`) |
+| "As pastas mudaram" | Você trocou uma pasta depois de "Ler pasta" | Clique em **Ler pasta** de novo |
+| Arquivo `aula [mp4].md` | Dois vídeos com o mesmo nome e extensões diferentes na mesma pasta | Normal: cada um tem a própria transcrição |
 
 ## 8. Acelerar com NVIDIA (opcional)
 
