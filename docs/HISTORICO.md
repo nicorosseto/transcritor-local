@@ -68,3 +68,17 @@ O Codex auditou a v0.1.1 de forma independente e encontrou 16 problemas (X1 a X1
 Status completo por ID: [auditorias/STATUS.md](auditorias/STATUS.md).
 
 **Lentidão resolvida na mesma versão.** O usuário rodou o `medir_threads.py` no PC de referência: 4 threads = 1,57x, 6 = 1,56x, 12 = 1,34x. O app usava 12 (todas as threads lógicas). Com o padrão em núcleos físicos (ADR-015), a transcrição fica ~15% mais rápida, o que explica a diferença para o script v1.
+
+## v0.1.3 (11/10/2026): auditoria fase 2
+
+| Problema | Correção |
+|---|---|
+| A trava aceitava a mesma janela duas vezes e não era atômica (X4) | Criação exclusiva, sem reentrada; "Ler pasta" também trava |
+| Falha do Tesseract ou do FFmpeg nas capturas parecia "sem texto na tela" (X10) | Erro explícito; rodada termina **parcial** e a tabela mostra "tela não lida" |
+| Terminal saía com código 0 mesmo com tudo falhando (X12) | Códigos 0/1/2/3 |
+| Cancelar não interrompia a extração do áudio (X13) | FFmpeg encerrado na hora |
+| A cópia de emergência do registro (Excel aberto) era ignorada (X15) | Recuperada ao abrir |
+| Links das capturas quebravam na base consolidada (X8) | Recalculados |
+| Um vídeo enorme estourava o limite de palavras da base (X9) | Dividido entre parágrafos |
+
+Com isso, 15 dos 16 achados da auditoria independente estão corrigidos; falta só o X14 (reprodutibilidade do build), previsto para antes de publicar.

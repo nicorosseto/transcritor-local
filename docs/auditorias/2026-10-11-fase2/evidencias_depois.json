@@ -1,0 +1,39 @@
+{
+  "substituicao_audio": {
+    "status": "substituido",
+    "ffmpeg_chamado": false,
+    "cache": "audio antigo"
+  },
+  "md_ausente": {
+    "pendentes": 1,
+    "md_existe": false
+  },
+  "colisao_extensoes": {
+    "md": true,
+    "audio": true,
+    "capturas": true
+  },
+  "troca_raiz": {
+    "bloqueado_ate_confirmar": true,
+    "texto": "transcricao da pasta anterior"
+  },
+  "limite_base": {
+    "limite": 10,
+    "palavras_resultado": 10
+  },
+  "trava_reentrante": {
+    "segunda_entrada_recusada": true,
+    "trava_existe_com_primeiro_contexto_ativo": true
+  },
+  "link_base": {
+    "link": "../saida/capturas/modulo/aula/cap.jpg",
+    "resolve_no_original": false,
+    "resolve_na_base": true
+  },
+  "falha_capturas": {
+    "erro_explicito": "Falha ao procurar trocas de tela: Error opening input files: Invalid data found "
+  },
+  "falha_ocr": {
+    "erro_explicito": "Tesseract falhou: Error during processing."
+  }
+}

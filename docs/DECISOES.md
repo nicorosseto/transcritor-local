@@ -184,3 +184,16 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 **Decisão.** Padrão = núcleos físicos (`psutil.cpu_count(logical=False)`; sem essa informação, metade das threads lógicas). O valor escolhido pelo usuário em `threads` continua tendo prioridade.
 
 **Por que não 4 fixo.** No PC de referência, 4 e 6 empatam, mas um processador com mais núcleos físicos ganharia com mais threads. Núcleos físicos é a regra que generaliza. A opção de deixar núcleos livres para usar o PC durante o lote continua prevista (P11).
+
+**CPU híbrida (adendo, 11/10/2026).** Nos Intel de 12ª geração em diante, os núcleos eficientes (E-cores) são bem mais lentos, e o Whisper espera a thread mais lenta a cada passo. No Windows, o app lê a "classe de eficiência" de cada núcleo (`GetLogicalProcessorInformationEx`) e, se houver mais de uma, usa só os núcleos de desempenho. **Dedução, não medida**: não houve PC híbrido para testar. Se a leitura falhar, vale a regra dos núcleos físicos.
+
+---
+
+## ADR-016: Resultado parcial é um estado próprio
+
+**Data:** 11/10/2026 · **Status:** aceita · **Origem:** X10, X12, X16
+
+- Toda rodada termina em um de cinco estados (`transcritor/resultado.py`): **sucesso**, **parcial**, **interrompido**, **falha** e **vazio**. A janela e a CLI usam a mesma função.
+- **Parcial** cobre vídeos com erro **e** vídeos cuja fala foi transcrita, mas a leitura da tela falhou. Nesse segundo caso, o vídeo fica concluído (refazer custaria a transcrição inteira), com `ocr = falhou` no registro e o motivo no `.md`.
+- "Não havia texto na tela" e "o Tesseract falhou" são coisas diferentes: a segunda vira `ErroOCR`, nunca texto vazio.
+- Códigos da CLI: 0 sucesso/vazio · 1 falha · 2 parcial · 3 interrompido · 130 Ctrl+C.

@@ -125,8 +125,10 @@ stateDiagram-v2
 | Queda/interrupção no meio | Áudio, `.md` e CSV são escritos em temporário e renomeados no fim |
 | Vídeo corrompido | Exceção por vídeo: vira `erro`, o lote segue |
 | Erro inesperado fora de um vídeo | Vira `fatal` no `lote_fim`; a tela mostra falha, nunca sucesso |
-| Fechar a janela no meio | Pede parada e espera até ~10 s a thread salvar o registro |
-| Duas janelas na mesma saída | `Trava` com PID em `.em_uso.lock` |
+| Fechar a janela ou cancelar no meio | FFmpeg e Whisper obedecem ao cancelamento; a janela espera até ~10 s a thread salvar o registro |
+| Duas janelas (ou leitura + rodada) na mesma saída | `Trava` atômica (`O_EXCL`) com PID + identificador em `.em_uso.lock`, sem reentrada; cobre leitura e rodada |
+| Tesseract ou FFmpeg falham na leitura da tela | Fala salva; vídeo marcado `ocr = falhou`; rodada **parcial** (ADR-016) |
+| `registro.csv` aberto no Excel | Cópia de emergência, recuperada automaticamente na próxima abertura |
 | PC suspende à noite | `SetThreadExecutionState` (Windows) durante o lote |
 | `.exe` sem console (stdout `None`) | `garantir_saidas_padrao()` redireciona para `transcritor.log` |
 | ffmpeg "comendo" o teclado no terminal | Todos os subprocessos com `stdin=DEVNULL` |

@@ -47,7 +47,7 @@ Severidade: 🔴 alta · 🟠 média · 🟡 baixa. Status: ✅ corrigido · ⏳
 | P8 | **FFmpeg GPL embutido**: exige distribuir a licença (feito) e indicar onde obter o código-fonte da build | 🟠 | Conferir o texto da build gyan.dev e adicionar o link do fonte em `LICENCAS_TERCEIROS.md` |
 | P9 | Caminhos acima de 260 caracteres no Windows (subpastas profundas) | 🟡 | Teste com caminho longo; prefixo `\\?\` ou aviso na varredura |
 | P10 | Áudio inteiro em memória (~230 MB/h) | 🟡 | Ok até ~10 h por arquivo com 16 GB; processar em blocos se necessário |
-| P11 | GUI usa todos os threads → PC fica lento durante o lote | 🟡 | Opção "deixar o PC usável" (threads − 2) |
+| P11 | PC fica lento durante o lote (desde a v0.1.2 usa só os núcleos físicos, o que já alivia) | 🟡 | Opção "deixar o PC usável" (núcleos − 2) |
 | P12 | Sem identificação de falantes (diarização) | 🟡 | Avaliar pyannote (pesado) ou deixar fora do escopo |
 | P13 | Testes de GUI não rodam no CI | 🟡 | Job Linux com `xvfb-run` (o teste de fumaça já existe) |
 | P14 | Estimativa de OCR padrão (10 min/h) é chute conservador | 🟡 | Substituída automaticamente após o 1º vídeo com OCR |

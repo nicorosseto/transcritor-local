@@ -90,6 +90,8 @@ O pacote de **português** é baixado automaticamente pelo app na primeira vez (
 
 **Se a rodada não terminar bem**, a mensagem final diz exatamente o que houve: ✅ concluída, ⚠️ parcial (alguns com erro), ⏸ parada/cancelada ou ❌ falha. O som de conclusão só toca quando tudo deu certo.
 
+**No terminal**, o código de saída diz o resultado: 0 concluído · 1 falha · 2 parcial · 3 parado/cancelado.
+
 **Para lotes grandes:** escolha um número de vídeos que caiba em uma noite. O app impede o PC de suspender enquanto trabalha, mas **não desligue** o computador.
 
 ## 6. Levando para a IA
@@ -116,12 +118,31 @@ O pacote de **português** é baixado automaticamente pelo app na primeira vez (
 | "Pasta de saída já está sendo usada" | Duas janelas na mesma saída | Feche a outra janela |
 | Muito lento | CPU antiga ou poucos núcleos | Use **Rápido**; rode à noite |
 | Vídeo com status "erro" | Arquivo corrompido ou sem áudio | Abra no player para conferir; ele é tentado de novo na próxima rodada |
+| Vídeo "✅ concluído · ⚠️ tela não lida" | O Tesseract ou o FFmpeg falhou ao ler a tela; a fala está salva | Veja o motivo no `.md` (linha "Texto de tela") e no `registro.csv`. Rode **Verificar PC** |
+| `.em_uso.lock` / "pasta já está sendo usada" | Outra janela, ou uma leitura em andamento | Aguarde ou feche a outra janela. Uma trava esquecida por um app que fechou à força é retomada sozinha |
 | Caminho muito longo | Limite de 260 caracteres do Windows | Use nomes de pasta mais curtos ou ative "caminhos longos" no Windows |
 | "Pasta de saída de outro projeto" | A saída escolhida já guarda transcrições de **outra** pasta de vídeos | Vídeos diferentes: escolha outra saída. Só moveu ou renomeou a pasta de vídeos: "A pasta foi movida, continuar" (no terminal, `--pasta-movida`) |
 | "As pastas mudaram" | Você trocou uma pasta depois de "Ler pasta" | Clique em **Ler pasta** de novo |
 | Arquivo `aula [mp4].md` | Dois vídeos com o mesmo nome e extensões diferentes na mesma pasta | Normal: cada um tem a própria transcrição |
 
-## 8. Acelerar com NVIDIA (opcional)
+## 8. Medir a velocidade no seu PC (opcional)
+
+O app escolhe sozinho quantos núcleos usar (os núcleos **físicos**; em Intel híbrido, só os de desempenho). Para conferir no seu processador:
+
+1. Baixe `ferramentas/medir_threads.py` do repositório e salve numa pasta onde o Python e o `faster-whisper` funcionem.
+2. Abra o PowerShell **nessa pasta** (Shift + botão direito num espaço vazio → "Abrir janela do PowerShell aqui"). Digite `dir` para conferir que o arquivo aparece.
+3. Rode, trocando pelo caminho de um **arquivo** de vídeo com fala nos primeiros 3 minutos (botão direito no vídeo → "Copiar como caminho"):
+   ```
+   python medir_threads.py "C:\pasta\do\video.mp4"
+   ```
+4. Espere 10 a 15 minutos sem usar o PC. O resultado mostra a velocidade com 4, 6 e 12 threads (mude com `--threads 4,8,16`).
+
+| Erro comum | Correção |
+|---|---|
+| `Arquivo não encontrado: C:\...\videos` | Aponte para o **arquivo** (`...\videos\aula.mp4`), não para a pasta |
+| Espaço depois da aspa: `" C:\..."` | Tire o espaço: `"C:\..."` |
+
+## 9. Acelerar com NVIDIA (opcional)
 
 Só para placas **NVIDIA**. Placas AMD e Intel não são usadas pelo motor atual.
 
