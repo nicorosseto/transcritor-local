@@ -168,7 +168,7 @@ class JanelaVerificacao(ctk.CTkToplevel):
             barra.set(0)
             barra.pack(side="left", padx=10)
             rotulo.pack(side="left")
-            self.app.baixar_modelo(modelo, lambda f, t: self.after(0, lambda: atualizar(f, t)), concluido)
+            self.app.baixar_modelo(modelo, lambda f, t: self.app.na_interface(lambda: atualizar(f, t)), concluido)
 
         def atualizar(f, t):
             if barra.winfo_exists():
@@ -195,7 +195,7 @@ class JanelaVerificacao(ctk.CTkToplevel):
 
         def tarefa():
             s = verificar(self.preset, self.pasta_saida)
-            self.after(0, lambda: self._depois(s))
+            self.app.na_interface(lambda: self._depois(s))
         threading.Thread(target=tarefa, daemon=True).start()
 
     def _depois(self, s):

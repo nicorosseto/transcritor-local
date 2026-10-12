@@ -24,13 +24,14 @@ import customtkinter as ctk
 
 from .. import __version__, correcoes, ocr, preparacao
 from ..config import NOME_ARQUIVO_CONFIG, PRESETS, Config, vocabulario_de_texto
-from ..pipeline import Evento, Item, Projeto, modelo_baixado
+from ..pipeline import Evento, Item, PastasMudaram, Projeto, ProjetoDeOutraOrigem, modelo_baixado
 from ..registro import ERRO as ST_ERRO
 from ..registro import OK as ST_OK
 from ..registro import SUBSTITUIDO
 from ..util import hhmmss
 from . import textos
-from .componentes import Dialogo, Dica, piscar_barra_de_tarefas, som_sucesso
+from .componentes import Dialogo, Dica, piscar_barra_de_tarefas, som_aviso, som_sucesso
+from .estado import resumo_final
 from .verificacao import JanelaVerificacao, Situacao, verificar
 
 MARCADO, DESMARCADO = "☑", "☐"
@@ -69,6 +70,7 @@ class App(ctk.CTk):
         self.situacao: Situacao | None = None
         self._janela_verif = None
         self._baixando = False
+        self._trabalho: threading.Thread | None = None
 
         # Coleta de lixo só na thread principal: se ela rodar numa thread de trabalho e destruir
         # objetos do Tk (fontes, imagens), o app trava. Padrão conhecido em Tkinter com threads.
@@ -108,11 +110,16 @@ class App(ctk.CTk):
         ctk.CTkLabel(topo, text="① Pasta dos vídeos", font=negrito).grid(row=0, column=0, padx=10, pady=6, sticky="w")
         self.ent_videos = ctk.CTkEntry(topo, placeholder_text="Escolha a pasta com os vídeos (pode ter subpastas)")
         self.ent_videos.grid(row=0, column=1, sticky="ew", pady=6)
-        ctk.CTkButton(topo, text="Procurar", width=100, command=self._escolher_videos).grid(row=0, column=2, padx=8)
+        self.btn_proc_videos = ctk.CTkButton(topo, text="Procurar", width=100, command=self._escolher_videos)
+        self.btn_proc_videos.grid(row=0, column=2, padx=8)
         ctk.CTkLabel(topo, text="② Pasta de saída", font=negrito).grid(row=1, column=0, padx=10, pady=6, sticky="w")
         self.ent_saida = ctk.CTkEntry(topo, placeholder_text="Onde salvar as transcrições")
         self.ent_saida.grid(row=1, column=1, sticky="ew", pady=6)
-        ctk.CTkButton(topo, text="Procurar", width=100, command=self._escolher_saida).grid(row=1, column=2, padx=8)
+        self.btn_proc_saida = ctk.CTkButton(topo, text="Procurar", width=100, command=self._escolher_saida)
+        self.btn_proc_saida.grid(row=1, column=2, padx=8)
+        # Trocar a pasta à mão invalida a leitura anterior (achado X3)
+        for ent in (self.ent_videos, self.ent_saida):
+            ent.bind("<KeyRelease>", lambda _e: self._pastas_mudaram())
         self.btn_ler = ctk.CTkButton(topo, text="Ler pasta", width=110, command=self._ler_pasta)
         self.btn_ler.grid(row=0, column=3, rowspan=2, padx=(0, 10))
         Dica(self.btn_ler, "Lista os vídeos e mostra quais já foram transcritos. "
@@ -152,10 +159,12 @@ class App(ctk.CTk):
         self.tabela.bind("<Button-1>", self._clique_tabela)
         botoes = ctk.CTkFrame(tab, fg_color="transparent")
         botoes.grid(row=2, column=0, columnspan=2, sticky="ew", padx=8, pady=8)
+        self.btns_marcar = []
         for txt, fn in (("Marcar pendentes", self._marcar_pendentes), ("Marcar todos", self._marcar_todos),
                         ("Desmarcar todos", self._desmarcar_todos)):
-            ctk.CTkButton(botoes, text=txt, width=130, fg_color="gray55", hover_color="gray45",
-                          command=fn).pack(side="left", padx=(0, 6))
+            b = ctk.CTkButton(botoes, text=txt, width=130, fg_color="gray55", hover_color="gray45", command=fn)
+            b.pack(side="left", padx=(0, 6))
+            self.btns_marcar.append(b)
 
         direita = ctk.CTkFrame(meio, fg_color="transparent")
         direita.grid(row=0, column=1, sticky="nsew")
@@ -364,10 +373,28 @@ class App(ctk.CTk):
             except Exception as e:
                 erro = str(e)
             self._baixando = False
-            self.after(0, lambda: ao_terminar(erro))
+            self.na_interface(lambda: ao_terminar(erro))
         threading.Thread(target=tarefa, daemon=True).start()
 
+    def na_interface(self, fn) -> None:
+        """Agenda fn na thread principal. Threads de trabalho NUNCA chamam o Tk direto (achado X13):
+        nem .after(); tudo passa pela fila consumida em _consumir_fila."""
+        self.fila.put(Evento("chamar", {"fn": fn}))
+
     # ================================================================== pastas
+    def _pastas_mudaram(self):
+        """Se as pastas na tela não são as da última leitura, descarta a leitura (achado X3)."""
+        if self.projeto is None or self.rodando:
+            return
+        v, s = self._pasta(self.ent_videos), self._pasta(self.ent_saida)
+        cfg = self.projeto.cfg
+        if v == cfg.pasta_videos and s == cfg.pasta_saida:
+            return
+        self.projeto, self.itens, self.marcados = None, [], set()
+        self._preencher_tabela()
+        self.btn_iniciar.configure(state="disabled")
+        self.lbl_resumo.configure(text="As pastas mudaram. Clique em \"Ler pasta\" para listar os vídeos.")
+
     def _sugerir_saida(self, pv: Path) -> Path:
         """Reaproveita uma saída já existente ao lado (ex.: a pasta 'saida' da versão antiga)."""
         for candidata in (pv.parent / "saida", pv.parent / f"{pv.name}_transcricoes"):
@@ -380,6 +407,7 @@ class App(ctk.CTk):
         p = filedialog.askdirectory(title="Pasta com os vídeos")
         if p:
             self._definir(self.ent_videos, p)
+            self._pastas_mudaram()
             if not self.ent_saida.get().strip():
                 self._definir(self.ent_saida, str(self._sugerir_saida(Path(p))))
             self._ler_pasta()
@@ -388,6 +416,7 @@ class App(ctk.CTk):
         p = filedialog.askdirectory(title="Pasta de saída")
         if p:
             self._definir(self.ent_saida, p)
+            self._pastas_mudaram()
 
     def _ler_pasta(self):
         if self.rodando:
@@ -410,17 +439,37 @@ class App(ctk.CTk):
             self.chk_ocr.select() if cfg.ocr else self.chk_ocr.deselect()
             self._definir(self.ent_vocab, ", ".join(cfg.vocabulario))
             self._opcoes_mudaram()
+        self._escanear(cfg)
+
+    def _escanear(self, cfg: Config, aceitar_nova_origem: bool = False):
         self.btn_ler.configure(state="disabled")
         self.lbl_resumo.configure(text="Lendo a pasta e medindo as durações...")
 
         def tarefa():
             try:
-                proj = Projeto(cfg)
+                proj = Projeto(cfg, aceitar_nova_origem=aceitar_nova_origem)
                 proj.escanear(lambda n, t: self.fila.put(Evento("medindo", {"n": n, "t": t})))
                 self.fila.put(Evento("escaneado", {"projeto": proj}))
+            except ProjetoDeOutraOrigem as e:
+                self.fila.put(Evento("outra_origem", {"erro": e, "cfg": cfg}))
             except Exception as e:
                 self.fila.put(Evento("falha_leitura", {"erro": str(e)}))
         threading.Thread(target=tarefa, daemon=True).start()
+
+    def _outra_origem(self, erro: ProjetoDeOutraOrigem, cfg: Config):
+        """Saída de outro curso: não mistura sem o usuário confirmar (achado X7)."""
+        self.btn_ler.configure(state="normal")
+        self.lbl_resumo.configure(text="Escolha outra pasta de saída ou confirme que a pasta de vídeos foi movida.")
+        r = Dialogo(self, "Pasta de saída de outro projeto",
+                    f"{erro}\n\nSe forem vídeos diferentes, use outra pasta de saída para não misturar "
+                    "transcrições. Se você só moveu ou renomeou a pasta de vídeos, pode continuar.",
+                    [("Escolher outra saída", "outra", True),
+                     ("A pasta foi movida, continuar", "mover", False),
+                     ("Cancelar", None, False)]).perguntar()
+        if r == "outra":
+            self._escolher_saida()
+        elif r == "mover":
+            self._escanear(cfg, aceitar_nova_origem=True)
 
     def _atualizar_correcoes(self):
         saida = self._pasta(self.ent_saida)
@@ -586,8 +635,13 @@ class App(ctk.CTk):
                     [("Começar", "ok", True), ("Cancelar", None, False)], icone="▶️", som=False).perguntar()
         if r != "ok":
             return
+        try:
+            cfg = self.projeto.preparar_rodada(cfg)  # mesmas pastas da leitura (achado X3)
+        except PastasMudaram as ex:
+            Dialogo(self, "As pastas mudaram", str(ex), [("Entendi", None, True)], icone="ℹ️").perguntar()
+            self._pastas_mudaram()
+            return
         cfg.salvar()
-        self.projeto.cfg = cfg
         self.parar.clear()
         self.cancelar.clear()
         self._modo_rodando(True)
@@ -603,13 +657,16 @@ class App(ctk.CTk):
         self._log(f"Rodada iniciada: {len(rodada)} vídeo(s), qualidade {PRESETS[cfg.preset]['rotulo']}"
                   f"{', com leitura de tela' if cfg.ocr else ''}.")
 
+        projeto = self.projeto
+
         def tarefa():
             try:
-                self.projeto.executar(rodada, self.fila.put, self.parar, self.cancelar)
-            except Exception as ex:
+                projeto.executar(rodada, self.fila.put, self.parar, self.cancelar)
+            except Exception as ex:  # executar já trata; isto é a última rede de proteção (achado X16)
                 self.fila.put(Evento("aviso", {"texto": f"Erro inesperado: {ex}"}))
-                self.fila.put(Evento("lote_fim", {"ok": 0, "erro": 0}))
-        threading.Thread(target=tarefa, daemon=True).start()
+                self.fila.put(Evento("lote_fim", {"ok": 0, "erro": 0, "fatal": str(ex)}))
+        self._trabalho = threading.Thread(target=tarefa, daemon=True)
+        self._trabalho.start()
 
     def _parar(self):
         self.parar.set()
@@ -627,7 +684,9 @@ class App(ctk.CTk):
     def _modo_rodando(self, sim: bool):
         self.rodando = sim
         estado = "disabled" if sim else "normal"
-        for w in (self.btn_ler, self.seg_preset, self.chk_ocr, self.ent_vocab, self.opt_qtd):
+        for w in (self.btn_ler, self.seg_preset, self.chk_ocr, self.ent_vocab, self.opt_qtd,
+                  self.ent_videos, self.ent_saida, self.btn_proc_videos, self.btn_proc_saida,
+                  self.btn_corr, *self.btns_marcar):
             w.configure(state=estado)
         self.btn_iniciar.configure(state="disabled" if sim else "normal")
         self.btn_parar.configure(state="normal" if sim else "disabled", text="⏸ Parar após o vídeo atual")
@@ -667,7 +726,11 @@ class App(ctk.CTk):
 
     def _tratar(self, ev: Evento):
         d, t = ev.dados, ev.tipo
-        if t == "verificacao":
+        if t == "chamar":
+            d["fn"]()
+        elif t == "outra_origem":
+            self._outra_origem(d["erro"], d["cfg"])
+        elif t == "verificacao":
             self._aplicar_situacao(d["situacao"], d["abrir"])
         elif t == "medindo":
             self.lbl_resumo.configure(text=f"Medindo durações... {d['n']} de {d['t']}")
@@ -758,28 +821,24 @@ class App(ctk.CTk):
         self._modo_rodando(False)
         self._etapa(None, {"audio", "transcricao", "telas", "salvar"} if d.get("ok") else set())
         dur = datetime.now() - getattr(self, "_inicio", datetime.now())
-        ok, erro = d.get("ok", 0), d.get("erro", 0)
-        if d.get("cancelado"):
-            texto, cor = f"✖ Rodada cancelada · {ok} vídeo(s) concluído(s) antes do cancelamento", LARANJA
-        elif d.get("parado"):
-            texto, cor = f"⏸ Rodada parada · {ok} vídeo(s) concluído(s)", LARANJA
-        elif erro and not ok:
-            texto, cor = f"❌ A rodada não concluiu nenhum vídeo ({erro} com erro). Veja os detalhes abaixo.", VERMELHO
-        elif erro:
-            texto, cor = f"⚠️ Rodada concluída com {erro} erro(s) · {ok} vídeo(s) prontos", LARANJA
-        else:
-            texto, cor = f"✅ Rodada concluída · {ok} vídeo(s) · {self._palavras:,} palavras".replace(",", "."), VERDE
+        erro = d.get("erro", 0)
+        nivel, frase = resumo_final(d)  # nunca "sucesso" sem nenhum sucesso (achado X16)
+        icone, cor = {"sucesso": ("✅", VERDE), "parcial": ("⚠️", LARANJA), "interrompido": ("⏸", LARANJA),
+                      "vazio": ("ℹ️", LARANJA), "falha": ("❌", VERMELHO)}[nivel]
+        texto = f"{icone} {frase}"
+        if nivel == "sucesso":
+            texto += f" · {self._palavras:,} palavras".replace(",", ".")
             self.pb.set(1.0)
         self.lbl_status.configure(text=texto, text_color=cor)
         self.lbl_tempo.configure(text=f"Duração da rodada: {tempo_humano(dur.total_seconds())}. "
                                       "Resultado na pasta de saída (botão 📂).")
-        self._log("Rodada encerrada. Base consolidada atualizada.")
+        self._log("Rodada encerrada." + ("" if d.get("fatal") else " Base consolidada atualizada."))
         self._rodar_verificacao()  # o modelo pode ter sido baixado nesta rodada
-        if erro and not self._log_visivel:
+        if (erro or nivel == "falha") and not self._log_visivel:
             self._alternar_log()
         self._atualizar_resumo()
         self._atualizar_quantidades()
-        som_sucesso(self)
+        som_sucesso(self) if nivel == "sucesso" else som_aviso(self)
         piscar_barra_de_tarefas(self)
         self.after(8000, lambda: self.lbl_status.configure(text_color=("gray10", "gray90")))
 
@@ -814,7 +873,16 @@ class App(ctk.CTk):
             if r != "sair":
                 return
         self.cancelar.set()
-        self.after(300, self.destroy)
+        self.parar.set()
+        self.lbl_status.configure(text="Encerrando com segurança (salvando o registro)...")
+        self._aguardar_e_fechar(50)
+
+    def _aguardar_e_fechar(self, tentativas: int):
+        """Espera a thread de trabalho soltar a trava e salvar o registro (até ~10 s)."""
+        if self._trabalho is not None and self._trabalho.is_alive() and tentativas > 0:
+            self.after(200, lambda: self._aguardar_e_fechar(tentativas - 1))
+            return
+        self.destroy()
 
 
 def main() -> int:

@@ -10,7 +10,7 @@ from pathlib import Path
 from . import __version__
 from .config import PRESETS, Config, vocabulario_de_texto
 from .hardware import AVISO, ERRO, OK, diagnosticar
-from .pipeline import Evento, Projeto
+from .pipeline import Evento, Projeto, ProjetoDeOutraOrigem
 from .util import hhmmss
 
 ICONE = {OK: "✅", AVISO: "⚠️ ", ERRO: "❌", "info": "ℹ️ "}
@@ -60,6 +60,8 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="transcritor", description="Transcreve vídeos para Markdown, localmente.")
     p.add_argument("--videos", type=Path, default=Path("videos"), help="pasta com os vídeos (padrão: ./videos)")
     p.add_argument("--saida", type=Path, default=Path("saida"), help="pasta de resultados (padrão: ./saida)")
+    p.add_argument("--pasta-movida", action="store_true",
+                   help="confirma que a pasta de vídeos foi movida/renomeada e a saída é a mesma")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     args = p.parse_args(argv)
 
@@ -79,7 +81,12 @@ def main(argv: list[str] | None = None) -> int:
         print("\n❌ Corrija os itens marcados com ❌ antes de continuar.")
         return 1
 
-    projeto = Projeto(cfg)
+    try:
+        projeto = Projeto(cfg, aceitar_nova_origem=args.pasta_movida)
+    except ProjetoDeOutraOrigem as e:
+        print(f"\n❌ {e}\n\nUse outra pasta em --saida. Se você só moveu a pasta de vídeos, "
+              "rode de novo com --pasta-movida.")
+        return 1
     print("\nLendo a pasta de vídeos...")
     itens = projeto.escanear(lambda n, t: print(f"\r  medindo durações {n}/{t}", end="", flush=True))
     print()
@@ -93,7 +100,6 @@ def main(argv: list[str] | None = None) -> int:
         if s.get(chave):
             print(f"  • {s[chave]} {rotulo}")
     if not pend:
-        projeto.consolidar()
         print("\nNada pendente. Base consolidada atualizada.")
         return 0
 
@@ -172,16 +178,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"\n    ⚠️  {d['texto']}")
         elif ev.tipo == "lote_fim":
             print(f"\nFim: {d['ok']} ok, {d['erro']} com erro. Registro: {cfg.arquivo_registro}")
+            if d.get("fatal"):
+                print(f"❌ A rodada parou por um erro: {d['fatal']}")
 
     cancelar = threading.Event()
     try:
-        projeto.executar(selecionados, ao_evento, cancelar=cancelar)
+        resumo = projeto.executar(selecionados, ao_evento, cancelar=cancelar)
     except KeyboardInterrupt:
         cancelar.set()
         projeto.registro.salvar()
         print("\nInterrompido. O que já terminou está salvo.")
         return 130
-    return 0
+    return 1 if resumo.get("fatal") else 0
 
 
 if __name__ == "__main__":

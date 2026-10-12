@@ -2,7 +2,11 @@
 
 Um vídeo é identificado por caminho relativo + tamanho + data de modificação.
 Isso permite detectar: vídeo novo, vídeo substituído (mesmo nome, outro conteúdo),
-vídeo excluído (vira "órfão") e vídeo com erro (tentado de novo).
+vídeo excluído (vira "órfão"), transcrição apagada (volta a pendente) e vídeo com erro.
+
+Cada vídeo tem uma "chave de saída" fixa (coluna `saida`), atribuída uma vez: é o nome
+usado no .md, no .mp3 e na pasta de capturas. Assim `aula.mp4` e `aula.mkv` na mesma
+pasta não colidem, e o nome não muda se um vídeo "irmão" aparecer depois (achado X2).
 
 O CSV usa ';' e vírgula decimal para abrir direto no Excel/Power BI em português.
 """
@@ -37,6 +41,8 @@ class Linha:
     velocidade: float = 0.0      # minutos de vídeo por minuto real (só a transcrição)
     palavras: int = 0
     capturas: int = 0
+    saida: str = ""              # chave de saída fixa (sem extensão), ex.: "Mod 1/aula"
+    audio_de: str = ""           # assinatura do vídeo quando o .mp3 foi extraído (achado X1)
     correcoes: int = 0           # trocas feitas pela lista correcoes.json
     threads: int = 0             # diagnóstico de desempenho
     dispositivo: str = ""        # cpu | cuda
@@ -55,6 +61,15 @@ _INTEIROS = {"tamanho_bytes", "palavras", "capturas", "correcoes", "threads"}
 def _assinatura(arquivo: Path) -> tuple[int, str]:
     st = arquivo.stat()
     return st.st_size, datetime.fromtimestamp(int(st.st_mtime)).isoformat()
+
+
+def assinatura_da_linha(linha: Linha) -> str:
+    return f"{linha.tamanho_bytes}|{linha.modificado_em}"
+
+
+def chave_padrao(rel: str) -> str:
+    """'Mod 1/aula.mp4' -> 'Mod 1/aula' (o que versões anteriores usavam)."""
+    return str(Path(rel).with_suffix("").as_posix())
 
 
 class Registro:
@@ -80,7 +95,10 @@ class Registro:
                     else:
                         dados[campo.name] = v or campo.default
                 if dados.get("caminho"):
-                    self.linhas[dados["caminho"]] = Linha(**dados)
+                    linha = Linha(**dados)
+                    if not linha.saida:  # registro de versão anterior
+                        linha.saida = chave_padrao(linha.caminho)
+                    self.linhas[linha.caminho] = linha
 
     def salvar(self) -> None:
         """Grava de forma atômica. Se o Excel estiver com o arquivo aberto (Windows trava),
@@ -110,13 +128,27 @@ class Registro:
                       f"Os dados foram salvos em {copia.name}; feche o arquivo e rode de novo.")
 
     # ---------------------------------------------------------------- sincronização
-    def sincronizar(self, videos: list[tuple[str, Path]], caminho_md, mover_orfao) -> dict[str, int]:
+    def _chave_livre(self, rel: str) -> str:
+        em_uso = {l.saida.lower() for c, l in self.linhas.items() if c != rel and l.status != ORFAO}
+        base = chave_padrao(rel)
+        if base.lower() not in em_uso:
+            return base
+        ext = Path(rel).suffix.lstrip(".").lower() or "video"
+        candidato, n = f"{base} [{ext}]", 2
+        while candidato.lower() in em_uso:
+            candidato, n = f"{base} [{ext} {n}]", n + 1
+        return candidato
+
+    def sincronizar(self, videos: list[tuple[str, Path]], caminho_md, mover_orfao,
+                    permitir_importar: bool = True) -> dict[str, int]:
         """Compara o que está na pasta com o registro.
 
         videos: [(caminho_relativo, caminho_absoluto)]
         caminho_md(rel) -> Path do .md esperado; mover_orfao(rel) move o .md para _orfaos.
+        permitir_importar: adotar .md já existente de um vídeo novo (só para saídas criadas por
+        versões antigas, sem identidade de projeto; ver achado X7).
         """
-        contagem = {"novos": 0, "substituidos": 0, "orfaos": 0, "importados": 0}
+        contagem = {"novos": 0, "substituidos": 0, "orfaos": 0, "importados": 0, "ausentes": 0}
         vistos = set()
         for rel, absoluto in videos:
             vistos.add(rel)
@@ -124,8 +156,10 @@ class Registro:
             linha = self.linhas.get(rel)
             if linha is None or linha.status == ORFAO:
                 linha = Linha(caminho=rel, tamanho_bytes=tamanho, modificado_em=mod)
+                self.linhas[rel] = linha
+                linha.saida = self._chave_livre(rel)
                 md = caminho_md(rel)
-                if md.is_file():
+                if permitir_importar and md.is_file():
                     # .md feito por versão antiga (sem registro): adota, não refaz
                     linha.status = OK
                     linha.observacao = "importado de execução anterior"
@@ -133,7 +167,6 @@ class Registro:
                     contagem["importados"] += 1
                 else:
                     contagem["novos"] += 1
-                self.linhas[rel] = linha
             elif (linha.tamanho_bytes, linha.modificado_em) != (tamanho, mod):
                 if linha.status == OK:
                     linha.status = SUBSTITUIDO
@@ -141,6 +174,10 @@ class Registro:
                     contagem["substituidos"] += 1
                 linha.tamanho_bytes, linha.modificado_em = tamanho, mod
                 linha.duracao_s = 0.0  # força medir de novo
+            elif linha.status == OK and not caminho_md(rel).is_file():
+                linha.status = PENDENTE
+                linha.observacao = "transcrição não encontrada na pasta de saída; será refeita"
+                contagem["ausentes"] += 1
         for rel, linha in self.linhas.items():
             if rel not in vistos and linha.status != ORFAO:
                 mover_orfao(rel)

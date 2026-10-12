@@ -6,6 +6,9 @@ Assim, a mesma lógica serve para a CLI e para o app desktop.
 
 from __future__ import annotations
 
+import dataclasses
+import json
+import os
 import shutil
 import threading
 import time
@@ -17,7 +20,7 @@ from typing import Callable
 from . import consolidacao, correcoes, markdown, midia, ocr, preparacao
 from .config import EXTENSOES_VIDEO, Config
 from .estimativa import Estimativa, estimar
-from .registro import ERRO, OK, Linha, Registro
+from .registro import ERRO, OK, Linha, Registro, assinatura_da_linha, chave_padrao
 from .transcricao import Cancelado, carregar_modelo, dispositivo_disponivel, transcrever
 from .util import ManterAcordado, PastaEmUso, Trava
 
@@ -69,10 +72,38 @@ def listar_videos(pasta: Path) -> list[tuple[str, Path]]:
     return sorted(achados, key=lambda x: x[0].lower())
 
 
+NOME_PROJETO = "projeto.json"
+
+
+class PastasMudaram(Exception):
+    """As pastas na tela não são as que foram lidas (achado X3)."""
+
+
+class ProjetoDeOutraOrigem(Exception):
+    """A pasta de saída pertence a outra pasta de vídeos (achado X7)."""
+
+    def __init__(self, registrada: str, atual: Path):
+        self.registrada, self.atual = registrada, atual
+        super().__init__(
+            f"Esta pasta de saída já guarda as transcrições de outra pasta de vídeos:\n{registrada}\n\n"
+            f"A pasta escolhida agora é:\n{atual}")
+
+
+def _mesma_pasta(a, b) -> bool:
+    def norm(x):
+        try:
+            x = Path(x).resolve()
+        except OSError:
+            x = Path(x).absolute()
+        return os.path.normcase(str(x))
+    return norm(a) == norm(b)
+
+
 class Projeto:
-    def __init__(self, cfg: Config):
+    def __init__(self, cfg: Config, aceitar_nova_origem: bool = False):
         self.cfg = cfg
         cfg.pasta_saida.mkdir(parents=True, exist_ok=True)
+        self.legado = self._identificar(aceitar_nova_origem)
         self.registro = Registro(cfg.arquivo_registro)
         self.itens: list[Item] = []
         self.ultima_sincronizacao: dict[str, int] = {}
@@ -80,27 +111,67 @@ class Projeto:
         self._modelo_nome = None
         self.dispositivo = dispositivo_disponivel(cfg.dispositivo)
 
+    # ---------------------------------------------------------------- identidade
+    def _identificar(self, aceitar_nova_origem: bool) -> bool:
+        """Grava/confere projeto.json. Retorna True se a saída é de versão antiga (sem identidade)."""
+        arq = self.cfg.pasta_saida / NOME_PROJETO
+        atual = str(self.cfg.pasta_videos.resolve())
+        dados: dict = {}
+        if arq.is_file():
+            try:
+                dados = json.loads(arq.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                dados = {}
+        registrada = dados.get("pasta_videos")
+        legado = registrada is None
+        if registrada and not _mesma_pasta(registrada, atual) and not aceitar_nova_origem:
+            raise ProjetoDeOutraOrigem(registrada, self.cfg.pasta_videos)
+        if registrada != atual:
+            if registrada:
+                dados.setdefault("origens_anteriores", []).append(registrada)
+            dados["pasta_videos"] = atual
+            dados.setdefault("criado_em", datetime.now().strftime("%d/%m/%Y %H:%M"))
+            tmp = arq.with_suffix(".tmp")
+            tmp.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
+            os.replace(tmp, arq)
+        return legado
+
+    def preparar_rodada(self, da_tela: Config) -> Config:
+        """Aplica as opções da tela à rodada, recusando se as pastas não forem as lidas."""
+        if not (_mesma_pasta(da_tela.pasta_videos, self.cfg.pasta_videos)
+                and _mesma_pasta(da_tela.pasta_saida, self.cfg.pasta_saida)):
+            raise PastasMudaram("As pastas mudaram desde a última leitura. Clique em \"Ler pasta\" de novo.")
+        self.cfg = dataclasses.replace(
+            self.cfg, preset=da_tela.preset, ocr=da_tela.ocr, vocabulario=list(da_tela.vocabulario),
+            idioma=da_tela.idioma, dispositivo=da_tela.dispositivo, threads=da_tela.threads)
+        return self.cfg
+
     # ---------------------------------------------------------------- caminhos
+    def _chave(self, rel: str) -> str:
+        linha = self.registro.linhas.get(rel)
+        return linha.saida if linha is not None and linha.saida else chave_padrao(rel)
+
     def caminho_md(self, rel: str) -> Path:
-        return (self.cfg.pasta_md / rel).with_suffix(".md")
+        return self.cfg.pasta_md / (self._chave(rel) + ".md")
 
     def caminho_audio(self, rel: str) -> Path:
-        return (self.cfg.pasta_audio / rel).with_suffix(".mp3")
+        return self.cfg.pasta_audio / (self._chave(rel) + ".mp3")
 
     def pasta_capturas(self, rel: str) -> Path:
-        return (self.cfg.pasta_capturas / rel).with_suffix("")
+        return self.cfg.pasta_capturas / self._chave(rel)
 
     def _mover_orfao(self, rel: str) -> None:
         md = self.caminho_md(rel)
         if md.is_file():
-            destino = (self.cfg.pasta_orfaos / rel).with_suffix(".md")
+            destino = self.cfg.pasta_orfaos / (self._chave(rel) + ".md")
             destino.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(md), str(destino))
 
     # ---------------------------------------------------------------- varredura
     def escanear(self, ao_medir: Callable[[int, int], None] | None = None) -> list[Item]:
         videos = listar_videos(self.cfg.pasta_videos)
-        self.ultima_sincronizacao = self.registro.sincronizar(videos, self.caminho_md, self._mover_orfao)
+        self.ultima_sincronizacao = self.registro.sincronizar(
+            videos, self.caminho_md, self._mover_orfao, permitir_importar=self.legado)
         self.itens = []
         for n, (rel, abs_) in enumerate(videos, 1):
             linha = self.registro.linhas[rel]
@@ -110,6 +181,7 @@ class Projeto:
                 ao_medir(n, len(videos))
             self.itens.append(Item(rel, abs_, linha))
         self.registro.salvar()
+        self.consolidar()  # a base reflete a pasta já na leitura (achado X11)
         return self.itens
 
     def estimar(self, itens: list[Item], com_ocr: bool | None = None) -> Estimativa:
@@ -155,14 +227,25 @@ class Projeto:
     def executar(self, itens: list[Item], ao_evento: Callable[[Evento], None],
                  parar_apos_atual: threading.Event | None = None,
                  cancelar: threading.Event | None = None) -> dict:
+        self._resumo = {"ok": 0, "erro": 0, "cancelado": False, "parado": False}
+        self._fim_emitido = False
+
+        def repassar(ev: Evento):
+            if ev.tipo == "lote_fim":
+                self._fim_emitido = True
+            ao_evento(ev)
         try:
             with Trava(self.cfg.pasta_saida), ManterAcordado():
-                return self._executar(itens, ao_evento, parar_apos_atual, cancelar)
+                return self._executar(itens, repassar, parar_apos_atual, cancelar)
         except PastaEmUso as e:
             ao_evento(Evento("aviso", {"texto": str(e)}))
-            resumo = {"ok": 0, "erro": 0, "cancelado": False, "parado": False}
+            resumo = dict(self._resumo, fatal=str(e))
+        except Exception as e:  # nunca terminar em silêncio nem como "sucesso" (achado X16)
+            resumo = dict(self._resumo, fatal=f"{type(e).__name__}: {e}")
+            ao_evento(Evento("aviso", {"texto": f"Erro inesperado: {resumo['fatal']}"}))
+        if not self._fim_emitido:
             ao_evento(Evento("lote_fim", resumo))
-            return resumo
+        return resumo
 
     def _executar(self, itens, ao_evento, parar_apos_atual, cancelar) -> dict:
         parar_apos_atual = parar_apos_atual or threading.Event()
@@ -171,7 +254,7 @@ class Projeto:
         def emitir(tipo, **dados):
             ao_evento(Evento(tipo, dados))
 
-        resumo = {"ok": 0, "erro": 0, "cancelado": False, "parado": False}
+        resumo = self._resumo
         estimativa_lote = self.estimar(itens)
         emitir("lote_inicio", total=len(itens), segundos_previstos=estimativa_lote.total,
                duracao_total=sum(i.duracao for i in itens))
@@ -191,6 +274,7 @@ class Projeto:
                         "tente em outra rede. Depois do primeiro download, funciona offline.")
             emitir("aviso", texto=f"Falha ao carregar o modelo: {e}.{dica}")
             resumo["erro"] = len(itens)
+            resumo["fatal"] = f"Falha ao carregar o modelo: {e}"
             emitir("lote_fim", **resumo)
             return resumo
 
@@ -205,7 +289,11 @@ class Projeto:
             try:
                 audio = self.caminho_audio(item.rel)
                 emitir("etapa", codigo="audio", texto="Extraindo o áudio...")
+                assinatura = assinatura_da_linha(item.linha)
+                if audio.exists() and item.linha.audio_de != assinatura:
+                    audio.unlink()  # áudio de uma versão anterior do vídeo (achado X1)
                 midia.extrair_audio(item.caminho, audio)
+                item.linha.audio_de = assinatura
                 emitir("etapa", codigo="transcricao", texto="Transcrevendo a fala...")
                 array = midia.carregar_audio(audio)
                 t_trans = time.perf_counter()
