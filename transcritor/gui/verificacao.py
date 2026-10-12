@@ -1,4 +1,4 @@
-"""Janela "Verificar PC e preparar": o que o app precisa, o que falta, e botões para resolver."""
+"""Página "Preparação do PC": o que o app precisa, o que falta, e botões para resolver."""
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ from .. import ocr, preparacao
 from ..config import PRESETS
 from ..hardware import AVISO, ERRO, OK, diagnosticar
 from ..util import localizar_binario, pasta_do_app
-from .componentes import som_aviso, trazer_para_frente
+from . import tema
+from .tema import CINZA, LARANJA, VERDE, VERMELHO
 
-ICONE = {OK: "✅", AVISO: "⚠️", ERRO: "❌", "info": "ℹ️"}
-VERDE, LARANJA, VERMELHO, CINZA = "#2e7d32", "#c77700", "#c62828", "gray50"
+ICONE = {OK: "✓", AVISO: "!", ERRO: "✕", "info": "i"}
 
 
 @dataclass
@@ -57,26 +57,28 @@ def verificar(preset: str, pasta_saida: Path | None) -> Situacao:
     return s
 
 
-class JanelaVerificacao(ctk.CTkToplevel):
-    def __init__(self, app, situacao: Situacao, preset: str, pasta_saida: Path | None, ao_mudar=None):
-        super().__init__(app)
-        self.app, self.preset, self.pasta_saida, self.ao_mudar = app, preset, pasta_saida, ao_mudar
-        self.title("Verificar PC e preparar")
-        self.geometry("760x640")
-        self.minsize(680, 520)
+class PainelVerificacao(ctk.CTkFrame):
+    """Página da janela principal (antes era uma janela por cima; layout aprovado em 11/10/2026)."""
+
+    def __init__(self, pai, app, ao_mudar=None):
+        super().__init__(pai, fg_color="transparent")
+        self.app, self.ao_mudar = app, ao_mudar
+        self.preset, self.pasta_saida = "equilibrado", None
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        ctk.CTkLabel(self, text="Preparação do PC", font=ctk.CTkFont(size=22, weight="bold"),
+                     anchor="w").grid(row=0, column=0, sticky="w")
+        self.btn_reverificar = ctk.CTkButton(self, text="Verificar de novo", width=150,
+                                             command=self._reverificar, **tema.secundario())
+        self.btn_reverificar.grid(row=0, column=1, sticky="e")
+        self.lbl_sub = ctk.CTkLabel(self, text="Verificando o PC...", anchor="w", text_color=CINZA)
+        self.lbl_sub.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(2, 10))
         self.corpo = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        self.corpo.pack(fill="both", expand=True, padx=14, pady=(14, 6))
-        rodape = ctk.CTkFrame(self, fg_color="transparent")
-        rodape.pack(fill="x", padx=14, pady=(0, 14))
-        ctk.CTkButton(rodape, text="Fechar", width=120, fg_color="gray55", hover_color="gray45",
-                      command=self._fechar).pack(side="right")
-        self.btn_reverificar = ctk.CTkButton(rodape, text="Verificar de novo", width=150, command=self._reverificar)
-        self.btn_reverificar.pack(side="right", padx=8)
-        self.protocol("WM_DELETE_WINDOW", self._fechar)
+        self.corpo.grid(row=2, column=0, columnspan=2, sticky="nsew")
+
+    def mostrar(self, situacao: Situacao, preset: str, pasta_saida: Path | None) -> None:
+        self.preset, self.pasta_saida = preset, pasta_saida
         self._desenhar(situacao)
-        trazer_para_frente(self, app)
-        if situacao.total_pendencias:
-            self.after(80, lambda: som_aviso(self))
 
     # ------------------------------------------------------------------ desenho
     def _limpar(self):
@@ -86,16 +88,15 @@ class JanelaVerificacao(ctk.CTkToplevel):
     def _desenhar(self, s: Situacao):
         self._limpar()
         if s.obrigatorios:
-            titulo, cor = f"⚠️ Falta {len(s.obrigatorios)} item obrigatório antes de começar", VERMELHO
+            n = len(s.obrigatorios)
+            titulo, cor = f"Falta {n} item obrigatório antes de começar." if n == 1 else \
+                f"Faltam {n} itens obrigatórios antes de começar.", VERMELHO
         elif s.opcionais:
-            titulo, cor = "✅ Pronto para transcrever (1 item opcional disponível)", LARANJA
+            titulo, cor = "Pronto para transcrever. Há 1 item opcional.", CINZA
         else:
-            titulo, cor = "✅ Tudo pronto", VERDE
-        ctk.CTkLabel(self.corpo, text=titulo, font=ctk.CTkFont(size=18, weight="bold"),
-                     text_color=cor, anchor="w").pack(fill="x", pady=(0, 4))
-        ctk.CTkLabel(self.corpo, anchor="w", justify="left", wraplength=680, text_color=CINZA,
-                     text="O Transcritor roda 100% no seu PC. Alguns componentes são grandes demais para vir "
-                          "no instalador e são baixados uma única vez, só quando você precisar deles.").pack(fill="x")
+            titulo, cor = "Tudo pronto.", VERDE
+        self.lbl_sub.configure(text=titulo + " Componentes grandes são baixados uma vez, só quando precisar.",
+                               text_color=cor)
 
         self._secao("O que o app precisa")
         self._cartao("✅", "Motor do app (Python e bibliotecas)",
@@ -124,8 +125,8 @@ class JanelaVerificacao(ctk.CTkToplevel):
             c = self._cartao("ℹ️", "Tesseract (opcional)",
                              "Só é necessário para a opção \"Ler texto da tela\" (slides, código, menus). "
                              "Sem ele, a transcrição da fala funciona normalmente. Instalação: ~50 MB.", CINZA)
-            ctk.CTkButton(c, text="Instalar Tesseract", width=160, command=self._instalar_tesseract
-                          ).pack(anchor="w", padx=(46, 0), pady=(4, 2))
+            ctk.CTkButton(c, text="Instalar Tesseract", width=160, command=self._instalar_tesseract,
+                          **tema.secundario()).pack(anchor="w", padx=(46, 0), pady=(4, 10))
 
         self._secao("Seu computador")
         d = s.diagnostico
@@ -139,12 +140,14 @@ class JanelaVerificacao(ctk.CTkToplevel):
                           f"rodando em {d.dispositivo.upper()}.").pack(fill="x", pady=(10, 0))
 
     def _secao(self, texto):
-        ctk.CTkLabel(self.corpo, text=texto, font=ctk.CTkFont(size=14, weight="bold"),
+        ctk.CTkLabel(self.corpo, text=texto.upper(), font=ctk.CTkFont(size=11), text_color=CINZA,
                      anchor="w").pack(fill="x", pady=(16, 4))
 
     def _cartao(self, icone, titulo, texto, cor):
-        c = ctk.CTkFrame(self.corpo)
-        c.pack(fill="x", pady=3)
+        destaque = cor in (VERMELHO, LARANJA)
+        c = ctk.CTkFrame(self.corpo, border_width=1, corner_radius=10,
+                         border_color=cor if destaque else tema.BORDA)
+        c.pack(fill="x", pady=4)
         linha = ctk.CTkFrame(c, fg_color="transparent")
         linha.pack(fill="x", padx=10, pady=(8, 0))
         ctk.CTkLabel(linha, text=icone, width=28, font=ctk.CTkFont(size=16)).pack(side="left")
@@ -158,7 +161,7 @@ class JanelaVerificacao(ctk.CTkToplevel):
     def _acao_baixar(self, cartao, modelo):
         linha = ctk.CTkFrame(cartao, fg_color="transparent")
         linha.pack(fill="x", padx=(46, 10), pady=(0, 10))
-        btn = ctk.CTkButton(linha, text="Baixar agora", width=140)
+        btn = ctk.CTkButton(linha, text="Baixar agora", width=140, font=ctk.CTkFont(weight="bold"))
         btn.pack(side="left")
         barra = ctk.CTkProgressBar(linha, width=300)
         rotulo = ctk.CTkLabel(linha, text="")
@@ -205,10 +208,3 @@ class JanelaVerificacao(ctk.CTkToplevel):
         self._desenhar(s)
         if self.ao_mudar:
             self.ao_mudar(s)
-
-    def _fechar(self):
-        try:
-            self.grab_release()
-        except Exception:
-            pass
-        self.destroy()

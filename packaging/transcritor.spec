@@ -30,6 +30,6 @@ pyz = PYZ(a.pure)
 # Um único executável, de janela. O modo terminal fica para quem roda pelo código-fonte
 # (python transcrever.py): dois .exe na mesma pasta confundiam o usuário.
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="TranscritorLocal",
-          console=False, icon=None)
+          console=False, icon=os.path.join(SPECPATH, "icone.ico"))  # noqa: F821
 
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="TranscritorLocal")

@@ -7,6 +7,8 @@ import tkinter as tk
 
 import customtkinter as ctk
 
+_FONTE = "Segoe UI" if sys.platform == "win32" else "Roboto"
+
 
 class Dica:
     """Dica que aparece ao parar o mouse sobre um widget (tooltip)."""
@@ -37,8 +39,8 @@ class Dica:
         tw.wm_overrideredirect(True)
         tw.wm_geometry(f"+{x}+{y}")
         tw.attributes("-topmost", True)
-        tk.Label(tw, text=self.texto, justify="left", wraplength=340, bg="#ffffe6", fg="#222",
-                 relief="solid", borderwidth=1, padx=8, pady=6, font=("Segoe UI", 9)).pack()
+        tk.Label(tw, text=self.texto, justify="left", wraplength=340, bg="#141414", fg="#FFFFFF",
+                 relief="solid", borderwidth=1, padx=10, pady=7, font=(_FONTE, 9)).pack()
 
     def _esconder(self, _=None):
         self._cancelar()
@@ -127,13 +129,18 @@ class Dialogo(ctk.CTkToplevel):
         barra = ctk.CTkFrame(self, fg_color="transparent")
         barra.pack(fill="x", padx=20, pady=(4, 16))
         for texto, valor, destaque in reversed(botoes):
-            b = ctk.CTkButton(barra, text=texto, width=150,
-                              command=lambda v=valor: self._escolher(v),
-                              fg_color=None if destaque else "gray55",
-                              hover_color=None if destaque else "gray45")
+            estilo = {} if destaque else dict(fg_color="#141414", hover_color="#1F1F1F", text_color="#FFFFFF",
+                                              border_width=1, border_color="#3A3A3A")
+            b = ctk.CTkButton(barra, text=texto, width=150, height=34,
+                              command=lambda v=valor: self._escolher(v), **estilo)
             b.pack(side="right", padx=(8, 0))
         self.protocol("WM_DELETE_WINDOW", lambda: self._escolher(botoes[-1][1]))
         self.bind("<Escape>", lambda _: self._escolher(botoes[-1][1]))
+        try:
+            from .marca import aplicar_icone
+            aplicar_icone(self)
+        except Exception:
+            pass
         trazer_para_frente(self, pai)
         if som:
             self.after(80, lambda: som_aviso(self))

@@ -29,19 +29,20 @@ from ..registro import ERRO as ST_ERRO
 from ..registro import OK as ST_OK
 from ..registro import SUBSTITUIDO
 from ..util import hhmmss
-from . import textos
-from .componentes import Dialogo, Dica, piscar_barra_de_tarefas, som_aviso, som_sucesso
 from ..resultado import resumo_final
-from .verificacao import JanelaVerificacao, Situacao, verificar
+from . import marca, tema, textos
+from .componentes import Dialogo, Dica, piscar_barra_de_tarefas, som_aviso, som_sucesso
+from .verificacao import PainelVerificacao, Situacao, verificar
 
 MARCADO, DESMARCADO = "☑", "☐"
-STATUS_ROTULO = {ST_OK: "✅ concluído", "pendente": "⏳ pendente", ST_ERRO: "⚠️ erro (tentar de novo)",
-                 SUBSTITUIDO: "🔄 arquivo mudou"}
-ROTULO_TELA_FALHOU = "✅ concluído · ⚠️ tela não lida"
+STATUS_ROTULO = {ST_OK: "✓ Concluído", "pendente": "○ Pendente", ST_ERRO: "! Erro (tentar de novo)",
+                 SUBSTITUIDO: "↻ Arquivo mudou"}
+ROTULO_TELA_FALHOU = "✓ Concluído · ⚠ tela não lida"
+ROTULO_NA_FILA, ROTULO_PROCESSANDO = "… Na fila", "▶ Transcrevendo"
 ROTULO_PRESET = {v["rotulo"]: k for k, v in PRESETS.items()}
 ETAPAS = [("audio", "Áudio"), ("transcricao", "Transcrição"), ("telas", "Texto da tela"), ("salvar", "Salvar")]
-COR_ATIVA, COR_FEITA, COR_ESPERA = "#1f6aa5", "#2e7d32", "gray55"
-VERDE, LARANJA, VERMELHO = "#2e7d32", "#c77700", "#c62828"
+COR_ATIVA, COR_FEITA, COR_ESPERA = tema.VERDE, tema.VERDE_ESCURO, tema.CINZA_ESCURO
+VERDE, LARANJA, VERMELHO = tema.VERDE, tema.LARANJA, tema.VERMELHO
 
 
 def tempo_humano(seg: float) -> str:
@@ -53,13 +54,22 @@ def tempo_humano(seg: float) -> str:
     return f"{h} h {m:02d} min" if h else f"{m} min"
 
 
+def nome_do_projeto(pasta: Path) -> str:
+    """'D:/Cursos/Power BI/videos' -> 'Power BI' (nomes genéricos usam a pasta de cima)."""
+    genericos = {"videos", "vídeos", "video", "vídeo", "aulas", "gravacoes", "gravações"}
+    if pasta.name.lower() in genericos and pasta.parent.name:
+        return pasta.parent.name
+    return pasta.name or str(pasta)
+
+
 class App(ctk.CTk):
     def __init__(self):
+        tema.aplicar_tema()
         super().__init__()
-        ctk.set_appearance_mode("system")
         self.title(f"Transcritor Local {__version__}")
-        self.geometry("1120x800")
-        self.minsize(980, 700)
+        self.geometry("1240x780")
+        self.minsize(1100, 680)  # cabe em telas de 1366x768
+        marca.aplicar_icone(self)
 
         self.fila: queue.Queue = queue.Queue()
         self.projeto: Projeto | None = None
@@ -69,7 +79,6 @@ class App(ctk.CTk):
         self.parar = threading.Event()
         self.cancelar = threading.Event()
         self.situacao: Situacao | None = None
-        self._janela_verif = None
         self._baixando = False
         self._trabalho: threading.Thread | None = None
 
@@ -85,200 +94,473 @@ class App(ctk.CTk):
 
     # ================================================================== layout
     def _montar(self):
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(3, weight=1)
+        """Layout aprovado em 11/10/2026: barra lateral + 3 páginas + barra de ação (ADR-017)."""
+        self.grid_columnconfigure(2, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         # Fontes criadas UMA vez: objetos de fonte destruídos pelo coletor de lixo numa thread de
         # trabalho chamam o Tk fora da thread principal e TRAVAM o app (bug real, pego em teste).
         self.f_normal = ctk.CTkFont()
-        self.f_negrito = negrito = ctk.CTkFont(weight="bold")
+        self.f_negrito = ctk.CTkFont(weight="bold")
+        self.f_titulo = ctk.CTkFont(size=22, weight="bold")
+        self.f_pequena = ctk.CTkFont(size=11)
+        self.f_qtd = ctk.CTkFont(size=12)
+        self.f_principal = ctk.CTkFont(size=15, weight="bold")
+        tema.estilo_tabela(self)
 
-        # ---- cabeçalho
-        cab = ctk.CTkFrame(self, fg_color="transparent")
-        cab.grid(row=0, column=0, sticky="ew", padx=14, pady=(12, 4))
-        ctk.CTkLabel(cab, text="Transcritor Local", font=ctk.CTkFont(size=20, weight="bold")).pack(side="left")
-        ctk.CTkLabel(cab, text=f"  v{__version__} · tudo roda no seu PC", text_color="gray50").pack(side="left")
-        ctk.CTkButton(cab, text="❓ Como usar", width=110, command=self._ajuda).pack(side="right", padx=(6, 0))
-        self.btn_verif = ctk.CTkButton(cab, text="🖥 Verificar PC", width=150, command=self._abrir_verificacao)
-        self.btn_verif.pack(side="right")
-        self._cor_verif = self.btn_verif.cget("fg_color")
-        Dica(self.btn_verif, "Confere se o seu PC tem tudo o que o app precisa (modelo de transcrição, "
-                             "FFmpeg, Tesseract) e ajuda a baixar ou instalar o que faltar.")
+        self._montar_lateral()
+        ctk.CTkFrame(self, fg_color=tema.LATERAL_BORDA, width=1, corner_radius=0).grid(row=0, column=1, sticky="ns")
+        self.miolo = ctk.CTkFrame(self, fg_color=tema.PRETO, corner_radius=0)
+        self.miolo.grid(row=0, column=2, sticky="nsew", padx=22, pady=(16, 18))
+        self.miolo.grid_columnconfigure(0, weight=1)
+        self.miolo.grid_rowconfigure(0, weight=1)
+        self.paginas = {
+            "videos": self._montar_pagina_videos(self.miolo),
+            "resultados": self._montar_pagina_resultados(self.miolo),
+        }
+        self.painel_verif = PainelVerificacao(self.miolo, self, ao_mudar=lambda s: self._aplicar_situacao(s, False))
+        self.paginas["preparacao"] = self.painel_verif
+        for pg in self.paginas.values():
+            pg.grid(row=0, column=0, sticky="nsew")
+        self._mostrar_pagina("videos")
+        self._log("Aplicativo aberto.")
+        self._opcoes_mudaram()
 
-        # ---- pastas
-        topo = ctk.CTkFrame(self)
-        topo.grid(row=1, column=0, sticky="ew", padx=14, pady=4)
-        topo.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(topo, text="① Pasta dos vídeos", font=negrito).grid(row=0, column=0, padx=10, pady=6, sticky="w")
-        self.ent_videos = ctk.CTkEntry(topo, placeholder_text="Escolha a pasta com os vídeos (pode ter subpastas)")
-        self.ent_videos.grid(row=0, column=1, sticky="ew", pady=6)
-        self.btn_proc_videos = ctk.CTkButton(topo, text="Procurar", width=100, command=self._escolher_videos)
-        self.btn_proc_videos.grid(row=0, column=2, padx=8)
-        ctk.CTkLabel(topo, text="② Pasta de saída", font=negrito).grid(row=1, column=0, padx=10, pady=6, sticky="w")
-        self.ent_saida = ctk.CTkEntry(topo, placeholder_text="Onde salvar as transcrições")
-        self.ent_saida.grid(row=1, column=1, sticky="ew", pady=6)
-        self.btn_proc_saida = ctk.CTkButton(topo, text="Procurar", width=100, command=self._escolher_saida)
-        self.btn_proc_saida.grid(row=1, column=2, padx=8)
+    # ------------------------------------------------------------------ barra lateral
+    def _montar_lateral(self):
+        lat = ctk.CTkFrame(self, fg_color=tema.LATERAL, corner_radius=0, width=230)
+        lat.grid(row=0, column=0, sticky="nsw")
+        lat.grid_propagate(False)
+        lat.grid_columnconfigure(0, weight=1)
+        lat.grid_rowconfigure(5, weight=1)
+
+        cab = ctk.CTkFrame(lat, fg_color="transparent")
+        cab.grid(row=0, column=0, sticky="ew", padx=18, pady=(20, 18))
+        img = marca.desenhar(72)
+        self._img_logo = ctk.CTkImage(light_image=img, dark_image=img, size=(36, 36))
+        ctk.CTkLabel(cab, image=self._img_logo, text="").pack(side="left")
+        ctk.CTkLabel(cab, text="Transcritor", font=ctk.CTkFont(size=16, weight="bold")).pack(side="left", padx=(10, 0))
+        ctk.CTkLabel(cab, text=" local", font=ctk.CTkFont(size=16), text_color=tema.VERDE).pack(side="left")
+
+        ctk.CTkLabel(lat, text="PROJETO", font=self.f_pequena, text_color=tema.CINZA, anchor="w").grid(
+            row=1, column=0, sticky="ew", padx=20)
+        cartao = ctk.CTkFrame(lat, fg_color="#0F1E18", border_width=1, border_color=tema.LATERAL_BORDA,
+                              corner_radius=10)
+        cartao.grid(row=2, column=0, sticky="ew", padx=12, pady=(6, 14))
+        self.lbl_proj_nome = ctk.CTkLabel(cartao, text="Nenhuma pasta", font=self.f_negrito, anchor="w")
+        self.lbl_proj_nome.pack(fill="x", padx=12, pady=(10, 0))
+        self.lbl_proj_det = ctk.CTkLabel(cartao, text="Escolha a pasta dos vídeos", text_color=tema.CINZA,
+                                         anchor="w", font=self.f_pequena)
+        self.lbl_proj_det.pack(fill="x", padx=12, pady=(0, 10))
+
+        nav = ctk.CTkFrame(lat, fg_color="transparent")
+        nav.grid(row=3, column=0, sticky="ew", padx=10)
+        self.nav, self.selos = {}, {}
+        for chave, icone, texto in (("videos", "▤", "Vídeos"), ("resultados", "✓", "Resultados"),
+                                    ("preparacao", "⚙", "Preparação do PC")):
+            b = ctk.CTkButton(nav, text=f"{icone}   {texto}", anchor="w", height=40, corner_radius=8,
+                              fg_color="transparent", hover_color=tema.LATERAL_ATIVO, text_color=tema.BRANCO,
+                              command=lambda c=chave: self._mostrar_pagina(c))
+            b.pack(fill="x", pady=2)
+            selo = ctk.CTkLabel(b, text="", width=24, height=20, corner_radius=10, fg_color="#1F2A25",
+                                text_color=tema.BRANCO, font=self.f_pequena)
+            selo.bind("<Button-1>", lambda _e, c=chave: self._mostrar_pagina(c))
+            self.nav[chave], self.selos[chave] = b, selo
+
+        rod = ctk.CTkFrame(lat, fg_color="transparent")
+        rod.grid(row=6, column=0, sticky="ew", padx=18, pady=(0, 16))
+        ctk.CTkFrame(rod, fg_color=tema.LATERAL_BORDA, height=1).pack(fill="x", pady=(0, 12))
+        self.lbl_lat_titulo = ctk.CTkLabel(rod, text="Verificando o PC...", anchor="w", font=self.f_negrito,
+                                           text_color=tema.CINZA)
+        self.lbl_lat_titulo.pack(fill="x")
+        self.lbl_lat_det = ctk.CTkLabel(rod, text="", anchor="w", text_color=tema.CINZA, font=self.f_pequena)
+        self.lbl_lat_det.pack(fill="x")
+        self.pb_lat = ctk.CTkProgressBar(rod, height=6)
+        self.pb_lat.set(0)
+        self.lbl_lat_fim = ctk.CTkLabel(rod, text="", anchor="w", text_color=tema.CINZA, font=self.f_pequena)
+        linha = ctk.CTkFrame(rod, fg_color="transparent")
+        linha.pack(fill="x", pady=(8, 0))
+        ctk.CTkButton(linha, text="Ajuda", width=60, height=24, command=self._ajuda,
+                      **tema.link()).pack(side="left")
+        ctk.CTkLabel(linha, text=f"v{__version__}", text_color=tema.CINZA_ESCURO,
+                     font=self.f_pequena).pack(side="right")
+        self._lat_linha = linha
+
+    def _mostrar_pagina(self, nome: str):
+        self.pagina = nome
+        self.paginas[nome].tkraise()
+        for chave, b in self.nav.items():
+            ativo = chave == nome
+            b.configure(fg_color=tema.LATERAL_ATIVO if ativo else "transparent",
+                        text_color=tema.VERDE if ativo else tema.BRANCO)
+        if nome == "resultados":
+            self._atualizar_resultados()
+        elif nome == "preparacao" and self.situacao is not None:
+            self.painel_verif.mostrar(self.situacao, self._preset(), self._pasta(self.ent_saida))
+
+    def _selo(self, chave: str, n: int, cor: str = "#1F2A25", texto_cor: str = tema.BRANCO):
+        selo = self.selos[chave]
+        if n:
+            selo.configure(text=str(n), fg_color=cor, text_color=texto_cor)
+            selo.place(relx=1.0, x=-10, rely=0.5, anchor="e")
+        else:
+            selo.place_forget()
+
+    def _atualizar_lateral(self):
+        if self.projeto is not None:
+            feitos = sum(1 for i in self.itens if i.status == ST_OK)
+            self.lbl_proj_nome.configure(text=nome_do_projeto(self.projeto.cfg.pasta_videos))
+            self.lbl_proj_det.configure(text=f"{len(self.itens)} vídeo(s) · {feitos} concluído(s)")
+            self._selo("videos", len(self.itens) - feitos)
+        else:
+            self.lbl_proj_nome.configure(text="Nenhuma pasta")
+            self.lbl_proj_det.configure(text="Escolha a pasta dos vídeos")
+            self._selo("videos", 0)
+        if self.rodando:
+            return
+        self.pb_lat.pack_forget()
+        self.lbl_lat_fim.pack_forget()
+        s = self.situacao
+        if s is None:
+            self.lbl_lat_titulo.configure(text="Verificando o PC...", text_color=tema.CINZA)
+            self.lbl_lat_det.configure(text="")
+        elif s.obrigatorios:
+            self.lbl_lat_titulo.configure(text="⚠ Falta preparar o PC", text_color=tema.VERMELHO)
+            self.lbl_lat_det.configure(text=", ".join(s.obrigatorios))
+        else:
+            disp = getattr(s.diagnostico, "dispositivo", "cpu").upper()
+            self.lbl_lat_titulo.configure(text=f"✓ PC pronto · {disp}", text_color=tema.CINZA)
+            self.lbl_lat_det.configure(text="Tesseract não instalado (opcional)" if s.opcionais else "")
+
+    def _lateral_rodada(self, pct: float, detalhe: str, fim: str = ""):
+        self.lbl_lat_titulo.configure(text="Rodada em andamento", text_color=tema.VERDE)
+        self.lbl_lat_det.configure(text=detalhe, text_color=tema.BRANCO)
+        if not self.pb_lat.winfo_ismapped():
+            self.pb_lat.pack(fill="x", pady=(6, 4), before=self._lat_linha)
+            self.lbl_lat_fim.pack(fill="x", before=self._lat_linha)
+        self.pb_lat.set(pct)
+        if fim:
+            self.lbl_lat_fim.configure(text=fim)
+
+    # ------------------------------------------------------------------ página: vídeos
+    def _montar_pagina_videos(self, pai):
+        pg = ctk.CTkFrame(pai, fg_color=tema.PRETO)
+        pg.grid_columnconfigure(0, weight=1)
+        pg.grid_rowconfigure(3, weight=1)
+
+        topo = ctk.CTkFrame(pg, fg_color="transparent")
+        topo.grid(row=0, column=0, sticky="ew")
+        ctk.CTkLabel(topo, text="Vídeos", font=self.f_titulo).pack(side="left")
+        self.lbl_trava = ctk.CTkLabel(topo, text="🔒 travado durante a rodada", fg_color=tema.SUPERFICIE_2,
+                                      corner_radius=12, text_color=tema.CINZA, font=self.f_pequena, height=26)
+
+        pastas = ctk.CTkFrame(pg, fg_color="transparent")
+        pastas.grid(row=1, column=0, sticky="ew", pady=(12, 2))
+        pastas.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(pastas, text="Origem", text_color=tema.CINZA, width=64, anchor="w").grid(row=0, column=0, sticky="w")
+        self.ent_videos = ctk.CTkEntry(pastas, height=36,
+                                       placeholder_text="Pasta com os vídeos (pode ter subpastas)")
+        self.ent_videos.grid(row=0, column=1, sticky="ew", pady=4)
+        self.btn_proc_videos = ctk.CTkButton(pastas, text="Escolher", width=96, height=36,
+                                             command=self._escolher_videos, **tema.secundario())
+        self.btn_proc_videos.grid(row=0, column=2, padx=(8, 0))
+        self.btn_ler = ctk.CTkButton(pastas, text="Ler pasta", width=96, height=36, command=self._ler_pasta,
+                                     **tema.secundario())
+        self.btn_ler.grid(row=0, column=3, padx=(8, 0))
+        Dica(self.btn_ler, "Lista os vídeos e mostra quais já foram transcritos. "
+                           "Use de novo se você adicionar ou remover vídeos.")
+        ctk.CTkLabel(pastas, text="Saída", text_color=tema.CINZA, width=64, anchor="w").grid(row=1, column=0, sticky="w")
+        self.ent_saida = ctk.CTkEntry(pastas, height=36, placeholder_text="Onde salvar as transcrições")
+        self.ent_saida.grid(row=1, column=1, sticky="ew", pady=4)
+        self.btn_proc_saida = ctk.CTkButton(pastas, text="Escolher", width=96, height=36,
+                                            command=self._escolher_saida, **tema.secundario())
+        self.btn_proc_saida.grid(row=1, column=2, padx=(8, 0))
+        ctk.CTkButton(pastas, text="Abrir", width=96, height=36, command=self._abrir_saida,
+                      **tema.secundario()).grid(row=1, column=3, padx=(8, 0))
         # Trocar a pasta à mão invalida a leitura anterior (achado X3)
         for ent in (self.ent_videos, self.ent_saida):
             ent.bind("<KeyRelease>", lambda _e: self._pastas_mudaram())
-        self.btn_ler = ctk.CTkButton(topo, text="Ler pasta", width=110, command=self._ler_pasta)
-        self.btn_ler.grid(row=0, column=3, rowspan=2, padx=(0, 10))
-        Dica(self.btn_ler, "Lista os vídeos e mostra quais já foram transcritos. "
-                           "Use de novo se você adicionar ou remover vídeos.")
 
-        self.lbl_resumo = ctk.CTkLabel(self, text="Comece pelo passo ①: escolha a pasta com os vídeos.",
-                                       anchor="w", text_color="gray45")
-        self.lbl_resumo.grid(row=2, column=0, sticky="ew", padx=18)
+        self.lbl_resumo = ctk.CTkLabel(pg, text="Comece escolhendo a pasta com os vídeos.", anchor="w",
+                                       text_color=tema.CINZA, font=self.f_pequena)
+        self.lbl_resumo.grid(row=2, column=0, sticky="ew", pady=(0, 8))
 
-        # ---- meio: tabela + opções
-        meio = ctk.CTkFrame(self, fg_color="transparent")
-        meio.grid(row=3, column=0, sticky="nsew", padx=14, pady=4)
+        meio = ctk.CTkFrame(pg, fg_color="transparent")
+        meio.grid(row=3, column=0, sticky="nsew")
         meio.grid_columnconfigure(0, weight=1)
-        meio.grid_columnconfigure(1, weight=0, minsize=400)
         meio.grid_rowconfigure(0, weight=1)
+        self._montar_tabela(meio)
+        self._montar_opcoes(meio)
+        self._montar_barra(pg)
+        return pg
 
-        tab = ctk.CTkFrame(meio)
-        tab.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+    def _montar_tabela(self, pai):
+        tab = ctk.CTkFrame(pai, border_width=1, border_color=tema.BORDA, corner_radius=10)
+        tab.grid(row=0, column=0, sticky="nsew", padx=(0, 12))
         tab.grid_rowconfigure(1, weight=1)
         tab.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(tab, text="③ Vídeos (clique na caixinha para marcar)", font=negrito,
-                     anchor="w").grid(row=0, column=0, columnspan=2, sticky="ew", padx=10, pady=(8, 4))
-        estilo = ttk.Style()
-        estilo.configure("Treeview", rowheight=26, font=("Segoe UI", 10))
-        estilo.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
+        cab = ctk.CTkFrame(tab, fg_color="transparent")
+        cab.grid(row=0, column=0, columnspan=2, sticky="ew", padx=12, pady=(10, 4))
+        self.lbl_contagem = ctk.CTkLabel(cab, text="Nenhum vídeo listado", text_color=tema.CINZA)
+        self.lbl_contagem.pack(side="left")
+        self.btns_marcar = []
+        for txt, fn, dica in (("Nenhum", self._desmarcar_todos, "Desmarca todos"),
+                              ("Todos", self._marcar_todos, "Marca todos, inclusive os concluídos"),
+                              ("Pendentes", self._marcar_pendentes, "Marca só o que falta transcrever")):
+            b = ctk.CTkButton(cab, text=txt, width=86, height=28, command=fn, **tema.secundario())
+            b.pack(side="right", padx=(6, 0))
+            Dica(b, dica)
+            self.btns_marcar.append(b)
         self.tabela = ttk.Treeview(tab, columns=("sel", "video", "dur", "status"), show="headings",
-                                   selectmode="none")
-        for col, txt, larg, anc, est in (("sel", "", 36, "center", False), ("video", "Vídeo", 380, "w", True),
-                                         ("dur", "Duração", 80, "center", False),
-                                         ("status", "Status", 170, "w", False)):
+                                   selectmode="browse", style="Escuro.Treeview")
+        for col, txt, larg, anc, est in (("sel", MARCADO, 40, "center", False), ("video", "Vídeo", 360, "w", True),
+                                         ("dur", "Duração", 84, "center", False),
+                                         ("status", "Status", 210, "w", False)):
             self.tabela.heading(col, text=txt, anchor=anc)
-            self.tabela.column(col, width=larg, minwidth=larg if not est else 200, anchor=anc, stretch=est)
-        self.tabela.grid(row=1, column=0, sticky="nsew", padx=(8, 0))
-        rolagem = ttk.Scrollbar(tab, orient="vertical", command=self.tabela.yview)
-        rolagem.grid(row=1, column=1, sticky="ns", padx=(0, 8))
+            self.tabela.column(col, width=larg, minwidth=larg if not est else 180, anchor=anc, stretch=est)
+        self.tabela.tag_configure("rodando", foreground=tema.VERDE)
+        self.tabela.tag_configure("erro", foreground=tema.VERMELHO)
+        self.tabela.tag_configure("mudou", foreground=tema.LARANJA)
+        self.tabela.tag_configure("feito", foreground=tema.CINZA)
+        self.tabela.grid(row=1, column=0, sticky="nsew", padx=(10, 0), pady=(0, 10))
+        rolagem = ctk.CTkScrollbar(tab, command=self.tabela.yview)
+        rolagem.grid(row=1, column=1, sticky="ns", padx=(0, 6), pady=(0, 10))
         self.tabela.configure(yscrollcommand=rolagem.set)
         self.tabela.bind("<Button-1>", self._clique_tabela)
-        botoes = ctk.CTkFrame(tab, fg_color="transparent")
-        botoes.grid(row=2, column=0, columnspan=2, sticky="ew", padx=8, pady=8)
-        self.btns_marcar = []
-        for txt, fn in (("Marcar pendentes", self._marcar_pendentes), ("Marcar todos", self._marcar_todos),
-                        ("Desmarcar todos", self._desmarcar_todos)):
-            b = ctk.CTkButton(botoes, text=txt, width=130, fg_color="gray55", hover_color="gray45", command=fn)
-            b.pack(side="left", padx=(0, 6))
-            self.btns_marcar.append(b)
+        self.tabela.heading("sel", command=self._alternar_todos)
+        self.tabela.bind("<<TreeviewSelect>>", lambda _e: self._mostrar_info_video())
 
-        direita = ctk.CTkFrame(meio, fg_color="transparent")
-        direita.grid(row=0, column=1, sticky="nsew")
-        direita.grid_rowconfigure(0, weight=1)
-        direita.grid_columnconfigure(0, weight=1)
-        op = ctk.CTkScrollableFrame(direita, label_text="④ Opções", width=370, height=250)
-        op.grid(row=0, column=0, sticky="nsew")
-
-        ctk.CTkLabel(op, text="Qualidade", font=negrito).pack(anchor="w")
+    def _montar_opcoes(self, pai):
+        op = ctk.CTkScrollableFrame(pai, width=290, border_width=1, border_color=tema.BORDA, corner_radius=10,
+                                    fg_color=tema.SUPERFICIE)
+        op.grid(row=0, column=1, sticky="nsew")
+        ctk.CTkLabel(op, text="Opções da rodada", font=self.f_negrito, anchor="w").pack(fill="x", padx=4, pady=(6, 8))
         self.seg_preset = ctk.CTkSegmentedButton(op, values=[v["rotulo"] for v in PRESETS.values()],
-                                                 command=lambda _: self._opcoes_mudaram())
+                                                 command=lambda _: self._opcoes_mudaram(), height=32)
         self.seg_preset.set(PRESETS["equilibrado"]["rotulo"])
-        self.seg_preset.pack(fill="x", pady=2)
-        self.lbl_preset = ctk.CTkLabel(op, text="", wraplength=340, justify="left", text_color="gray50")
-        self.lbl_preset.pack(anchor="w", pady=(0, 8))
+        self.seg_preset.pack(fill="x", padx=4)
+        self.lbl_preset = ctk.CTkLabel(op, text="", wraplength=270, justify="left", anchor="w",
+                                       text_color=tema.CINZA, font=self.f_pequena)
+        self.lbl_preset.pack(fill="x", padx=4, pady=(4, 12))
 
-        self.chk_ocr = ctk.CTkCheckBox(op, text="Ler texto da tela (slides, código, menus)",
-                                       command=self._opcoes_mudaram)
-        self.chk_ocr.pack(anchor="w", pady=2)
-        self.lbl_ocr = ctk.CTkLabel(op, text="", text_color="gray50", wraplength=340, justify="left")
-        self.lbl_ocr.pack(anchor="w")
-        ctk.CTkCheckBox(op, text="Descrever telas com IA visual (em breve: v0.2)",
-                        state="disabled").pack(anchor="w", pady=(8, 0))
+        self.chk_ocr = ctk.CTkCheckBox(op, text="Ler texto da tela", command=self._opcoes_mudaram)
+        self.chk_ocr.pack(anchor="w", padx=4)
+        Dica(self.chk_ocr, "Lê slides, código e menus que aparecem no vídeo e junta ao texto. "
+                           "Precisa do Tesseract (veja Preparação do PC).")
+        self.lbl_ocr = ctk.CTkLabel(op, text="", text_color=tema.CINZA, wraplength=270, justify="left",
+                                    anchor="w", font=self.f_pequena)
+        self.lbl_ocr.pack(fill="x", padx=4, pady=(2, 10))
 
-        ctk.CTkLabel(op, text="Vocabulário de dicas", font=negrito).pack(anchor="w", pady=(12, 0))
-        self.ent_vocab = ctk.CTkEntry(op, placeholder_text="Ex.: Power BI, DAX, ChatGPT, Claude, hook")
+        self.btn_vocab = ctk.CTkButton(op, text="▸  Vocabulário e correções", height=28,
+                                       command=self._alternar_vocab, **tema.link())
+        self.btn_vocab.pack(fill="x", padx=0)
+        self.frm_vocab = ctk.CTkFrame(op, fg_color="transparent")
+        ctk.CTkLabel(self.frm_vocab, text="Vocabulário de dicas", anchor="w").pack(fill="x", pady=(4, 0))
+        self.ent_vocab = ctk.CTkEntry(self.frm_vocab, placeholder_text="Ex.: Power BI, DAX, ChatGPT, hook")
         self.ent_vocab.pack(fill="x", pady=2)
-        ctk.CTkLabel(op, text="Ajuda o Whisper a OUVIR certo nomes e termos técnicos. Não garante.",
-                     text_color="gray50", wraplength=340, justify="left").pack(anchor="w")
-
-        ctk.CTkLabel(op, text="Correções automáticas", font=negrito).pack(anchor="w", pady=(12, 0))
-        linha_corr = ctk.CTkFrame(op, fg_color="transparent")
-        linha_corr.pack(fill="x")
-        self.lbl_corr = ctk.CTkLabel(linha_corr, text="Leia uma pasta primeiro.", text_color="gray50")
+        ctk.CTkLabel(self.frm_vocab, text="Ajuda o Whisper a ouvir certo nomes e termos técnicos. Não garante.",
+                     text_color=tema.CINZA, wraplength=260, justify="left", anchor="w",
+                     font=self.f_pequena).pack(fill="x")
+        ctk.CTkLabel(self.frm_vocab, text="Correções automáticas", anchor="w").pack(fill="x", pady=(10, 0))
+        linha_corr = ctk.CTkFrame(self.frm_vocab, fg_color="transparent")
+        linha_corr.pack(fill="x", pady=(2, 0))
+        self.lbl_corr = ctk.CTkLabel(linha_corr, text="Leia uma pasta primeiro.", text_color=tema.CINZA,
+                                     font=self.f_pequena)
         self.lbl_corr.pack(side="left")
-        self.btn_corr = ctk.CTkButton(linha_corr, text="Editar lista", width=110, state="disabled",
-                                      command=self._editar_correcoes)
+        self.btn_corr = ctk.CTkButton(linha_corr, text="Editar lista", width=100, height=28, state="disabled",
+                                      command=self._editar_correcoes, **tema.secundario())
         self.btn_corr.pack(side="right")
         Dica(self.btn_corr, "Troca o texto DEPOIS de transcrever, sempre: \"Chatepte\" vira \"ChatGPT\". "
                             "Só palavras inteiras. Cuidado com palavras reais (ex.: \"Hulk\").")
 
-        ctk.CTkLabel(op, text="Processar nesta rodada (obrigatório)", font=negrito).pack(anchor="w", pady=(12, 0))
-        self.opt_qtd = ctk.CTkOptionMenu(op, values=["Escolha..."], command=lambda _: self._atualizar_estimativa())
-        self.opt_qtd.pack(fill="x", pady=2)
+        ctk.CTkFrame(op, fg_color=tema.BORDA, height=1).pack(fill="x", padx=4, pady=(12, 10))
+        self.lbl_info_tit = ctk.CTkLabel(op, text="VÍDEO SELECIONADO", text_color=tema.CINZA, anchor="w",
+                                         font=self.f_pequena)
+        self.lbl_info_tit.pack(fill="x", padx=4)
+        self.lbl_info_nome = ctk.CTkLabel(op, text="Clique num vídeo da lista.", anchor="w", font=self.f_negrito,
+                                          wraplength=270, justify="left")
+        self.lbl_info_nome.pack(fill="x", padx=4)
+        self.lbl_info_det = ctk.CTkLabel(op, text="", anchor="w", text_color=tema.CINZA, wraplength=270,
+                                         justify="left", font=self.f_pequena)
+        self.lbl_info_det.pack(fill="x", padx=4, pady=(0, 6))
 
-        caixa_est = ctk.CTkFrame(direita)
-        caixa_est.grid(row=1, column=0, sticky="ew", pady=(6, 0))
-        self.lbl_estimativa = ctk.CTkLabel(caixa_est, text="A estimativa aparece aqui depois de ler a pasta.",
-                                           justify="left", anchor="w", font=ctk.CTkFont(family="Consolas", size=12))
-        self.lbl_estimativa.pack(fill="x", padx=10, pady=8)
+    def _montar_barra(self, pg):
+        self.barra = ctk.CTkFrame(pg, border_width=1, border_color=tema.BORDA, corner_radius=10)
+        self.barra.grid(row=4, column=0, sticky="ew", pady=(12, 0))
+        self.barra.grid_columnconfigure(0, weight=1)
 
-        # ---- execução
-        exe = ctk.CTkFrame(self)
-        exe.grid(row=4, column=0, sticky="ew", padx=14, pady=(4, 4))
-        exe.grid_columnconfigure(1, weight=1)
-        self.btn_iniciar = ctk.CTkButton(exe, text="▶  INICIAR", width=170, height=44, state="disabled",
-                                         font=ctk.CTkFont(size=15, weight="bold"), command=self._iniciar)
-        self.btn_iniciar.grid(row=0, column=0, rowspan=3, padx=12, pady=12)
-        self.lbl_status = ctk.CTkLabel(exe, text="Pronto para começar.", anchor="w",
-                                       font=ctk.CTkFont(size=15, weight="bold"))
-        self.lbl_status.grid(row=0, column=1, sticky="ew", pady=(10, 0))
-        linha_etapas = ctk.CTkFrame(exe, fg_color="transparent")
-        linha_etapas.grid(row=1, column=1, sticky="w")
+        # ---- modo "escolher a rodada"
+        self.barra_acao = acao = ctk.CTkFrame(self.barra, fg_color="transparent")
+        acao.grid_columnconfigure(0, weight=1)
+        txt = ctk.CTkFrame(acao, fg_color="transparent")
+        txt.grid(row=0, column=0, sticky="w", padx=(16, 8), pady=12)
+        self.lbl_sel_resumo = ctk.CTkLabel(txt, text="Nenhuma pasta lida", font=self.f_negrito, anchor="w")
+        self.lbl_sel_resumo.pack(fill="x")
+        self.lbl_sel_det = ctk.CTkLabel(txt, text="Escolha a pasta dos vídeos para começar.", anchor="w",
+                                        text_color=tema.CINZA, font=self.f_pequena, justify="left")
+        self.lbl_sel_det.pack(fill="x")
+        self.frm_qtd = ctk.CTkFrame(acao, fg_color="transparent")
+        self.frm_qtd.grid(row=0, column=1, padx=4)
+        self.btns_qtd: dict[str, ctk.CTkButton] = {}
+        self._qtd: str | None = None
+        self.btn_iniciar = ctk.CTkButton(acao, text="Transcrever", width=170, height=52, state="disabled",
+                                         font=self.f_principal, command=self._iniciar)
+        self.btn_iniciar.grid(row=0, column=2, padx=(8, 14), pady=12)
+        self._estado_principal(False)
+
+        # ---- modo "rodada em andamento / terminada"
+        self.barra_rodada = rod = ctk.CTkFrame(self.barra, fg_color="transparent")
+        rod.grid_columnconfigure(0, weight=1)
+        self.lbl_status = ctk.CTkLabel(rod, text="", anchor="w", font=self.f_negrito, justify="left")
+        self.lbl_status.grid(row=0, column=0, sticky="ew", padx=(16, 8), pady=(12, 0))
+        botoes = ctk.CTkFrame(rod, fg_color="transparent")
+        botoes.grid(row=0, column=1, rowspan=2, sticky="ne", padx=14, pady=(10, 0))
+        self.btn_parar = ctk.CTkButton(botoes, text="Parar após este vídeo", width=170, height=34,
+                                       state="disabled", command=self._parar, **tema.secundario())
+        Dica(self.btn_parar, "Termina o vídeo em andamento e para. Nada se perde.")
+        self.btn_cancelar = ctk.CTkButton(botoes, text="Cancelar", width=100, height=34, state="disabled",
+                                          command=self._cancelar, **tema.perigo())
+        Dica(self.btn_cancelar, "Interrompe na hora. O vídeo em andamento será refeito na próxima vez.")
+        self.btn_ver_resultado = ctk.CTkButton(botoes, text="Ver resultados", width=130, height=34,
+                                               command=lambda: self._mostrar_pagina("resultados"),
+                                               **tema.secundario())
+        self.btn_nova = ctk.CTkButton(botoes, text="Nova rodada", width=120, height=34,
+                                      command=self._mostrar_acao)
+        linha_etapas = ctk.CTkFrame(rod, fg_color="transparent")
+        linha_etapas.grid(row=1, column=0, sticky="w", padx=16, pady=(4, 0))
         self.lbl_etapas = {}
         for n, (cod, rot) in enumerate(ETAPAS):
             if n:
-                ctk.CTkLabel(linha_etapas, text="›", text_color="gray60").pack(side="left", padx=4)
+                ctk.CTkLabel(linha_etapas, text="·", text_color=tema.CINZA_ESCURO).pack(side="left", padx=6)
             lb = ctk.CTkLabel(linha_etapas, text=f"○ {rot}", text_color=COR_ESPERA)
             lb.pack(side="left")
             self.lbl_etapas[cod] = (lb, rot)
-        self.pb = ctk.CTkProgressBar(exe, height=14)
+        self.pb = ctk.CTkProgressBar(rod, height=10)
         self.pb.set(0)
-        self.pb.grid(row=2, column=1, sticky="ew", padx=(0, 12), pady=(4, 0))
-        self.lbl_tempo = ctk.CTkLabel(exe, text="", anchor="w", text_color="gray45")
-        self.lbl_tempo.grid(row=3, column=1, sticky="ew", pady=(0, 8))
-        lado = ctk.CTkFrame(exe, fg_color="transparent")
-        lado.grid(row=0, column=2, rowspan=4, padx=12)
-        self.btn_parar = ctk.CTkButton(lado, text="⏸ Parar após o vídeo atual", width=200, state="disabled",
-                                       command=self._parar)
-        self.btn_parar.pack(pady=2)
-        Dica(self.btn_parar, "Termina o vídeo em andamento e para. Nada se perde.")
-        self.btn_cancelar = ctk.CTkButton(lado, text="✖ Cancelar agora", width=200, state="disabled",
-                                          fg_color="#8a2a2a", hover_color="#6e1f1f", command=self._cancelar)
-        self.btn_cancelar.pack(pady=2)
-        Dica(self.btn_cancelar, "Interrompe na hora. O vídeo em andamento será refeito na próxima vez.")
-        ctk.CTkButton(lado, text="📂 Abrir pasta de saída", width=200, command=self._abrir_saida).pack(pady=2)
+        self.pb.grid(row=2, column=0, columnspan=2, sticky="ew", padx=16, pady=(8, 0))
+        self.lbl_tempo = ctk.CTkLabel(rod, text="", anchor="w", text_color=tema.CINZA, font=self.f_pequena)
+        self.lbl_tempo.grid(row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=(2, 10))
+        self._mostrar_acao()
 
-        # ---- detalhes (log) recolhível
-        rod = ctk.CTkFrame(self, fg_color="transparent")
-        rod.grid(row=5, column=0, sticky="ew", padx=14, pady=(0, 10))
-        rod.grid_columnconfigure(0, weight=1)
-        self.btn_log = ctk.CTkButton(rod, text="▸ Mostrar detalhes técnicos (registro de atividades)",
-                                     fg_color="transparent", text_color=("gray30", "gray75"),
-                                     hover_color=("gray85", "gray25"), anchor="w", command=self._alternar_log)
-        self.btn_log.grid(row=0, column=0, sticky="w")
-        self.log = ctk.CTkTextbox(rod, height=120, font=ctk.CTkFont(family="Consolas", size=11))
-        self._log_visivel = False
-        self._log("Aplicativo aberto.")
-        self._opcoes_mudaram()
+    def _estado_principal(self, ativo: bool):
+        """Botão principal: verde só quando dá para clicar (verde = clicável)."""
+        if ativo:
+            self.btn_iniciar.configure(state="normal", fg_color=tema.VERDE, hover_color=tema.VERDE_ESCURO,
+                                       text_color=tema.PRETO)
+        else:
+            self.btn_iniciar.configure(state="disabled", fg_color=tema.SUPERFICIE_2,
+                                       text_color_disabled=tema.CINZA_ESCURO)
+
+    def _mostrar_acao(self):
+        if self.rodando:
+            return
+        self.barra_rodada.grid_remove()
+        self.barra_acao.grid(row=0, column=0, sticky="ew", padx=2, pady=2)  # sem cobrir a borda
+        self.barra.configure(border_color=tema.BORDA)
+        self._atualizar_quantidades()
+
+    def _mostrar_rodada(self, rodando: bool):
+        self.barra_acao.grid_remove()
+        self.barra_rodada.grid(row=0, column=0, sticky="ew", padx=2, pady=2)
+        self.barra.configure(border_color=tema.VERDE if rodando else tema.BORDA, border_width=2 if rodando else 1)
+        for b in (self.btn_parar, self.btn_cancelar, self.btn_ver_resultado, self.btn_nova):
+            b.pack_forget()
+        mostrar = (self.btn_parar, self.btn_cancelar) if rodando else (self.btn_ver_resultado, self.btn_nova)
+        for b in mostrar:
+            b.pack(side="left", padx=(8, 0))
+
+    def _alternar_vocab(self):
+        if self.frm_vocab.winfo_ismapped():
+            self.frm_vocab.pack_forget()
+            self.btn_vocab.configure(text="▸  Vocabulário e correções")
+        else:
+            self.frm_vocab.pack(fill="x", padx=4, after=self.btn_vocab)
+            self.btn_vocab.configure(text="▾  Vocabulário e correções")
+
+    def _mostrar_info_video(self):
+        sel = self.tabela.selection()
+        if self.rodando or not sel:
+            return
+        it = next((i for i in self.itens if i.rel == sel[0]), None)
+        if it is None:
+            return
+        l = it.linha
+        self.lbl_info_tit.configure(text="VÍDEO SELECIONADO")
+        self.lbl_info_nome.configure(text=Path(it.rel).name)
+        partes = [str(Path(it.rel).parent) if "/" in it.rel else "pasta principal", hhmmss(it.duracao)]
+        if it.status == ST_OK:
+            partes.append(f"{l.palavras:,} palavras".replace(",", "."))
+            if l.transcrito_em:
+                partes.append(f"transcrito em {l.transcrito_em}")
+        else:
+            partes.append(self._rotulo(it).lstrip("○!↻ ").lower())
+        if l.observacao:
+            partes.append(l.observacao)
+        self.lbl_info_det.configure(text=" · ".join(partes))
+
+    # ------------------------------------------------------------------ página: resultados
+    def _montar_pagina_resultados(self, pai):
+        pg = ctk.CTkFrame(pai, fg_color=tema.PRETO)
+        pg.grid_columnconfigure(0, weight=1)
+        pg.grid_rowconfigure(2, weight=1)
+        topo = ctk.CTkFrame(pg, fg_color="transparent")
+        topo.grid(row=0, column=0, sticky="ew")
+        ctk.CTkLabel(topo, text="Resultados", font=self.f_titulo).pack(side="left")
+        ctk.CTkButton(topo, text="Abrir base consolidada", width=170, height=34,
+                      command=lambda: self._abrir_saida("base_consolidada"), **tema.secundario()).pack(side="right")
+        ctk.CTkButton(topo, text="Abrir pasta de saída", width=160, height=34, command=self._abrir_saida,
+                      **tema.secundario()).pack(side="right", padx=(0, 8))
+        self.lbl_res_resumo = ctk.CTkLabel(pg, text="", anchor="w", text_color=tema.CINZA, justify="left")
+        self.lbl_res_resumo.grid(row=1, column=0, sticky="ew", pady=(6, 10))
+        cartao = ctk.CTkFrame(pg, border_width=1, border_color=tema.BORDA, corner_radius=10)
+        cartao.grid(row=2, column=0, sticky="nsew")
+        cartao.grid_columnconfigure(0, weight=1)
+        cartao.grid_rowconfigure(0, weight=1)
+        self.res_tabela = ttk.Treeview(cartao, columns=("video", "palavras", "vel", "tela", "data"),
+                                       show="headings", selectmode="browse", style="Escuro.Treeview")
+        for col, txt, larg, anc, est in (("video", "Vídeo", 340, "w", True), ("palavras", "Palavras", 90, "e", False),
+                                         ("vel", "Velocidade", 90, "center", False),
+                                         ("tela", "Texto da tela", 120, "center", False),
+                                         ("data", "Transcrito em", 140, "center", False)):
+            self.res_tabela.heading(col, text=txt, anchor=anc)
+            self.res_tabela.column(col, width=larg, minwidth=larg if not est else 180, anchor=anc, stretch=est)
+        self.res_tabela.tag_configure("falhou", foreground=tema.LARANJA)
+        self.res_tabela.grid(row=0, column=0, sticky="nsew", padx=(10, 0), pady=10)
+        rol = ctk.CTkScrollbar(cartao, command=self.res_tabela.yview)
+        rol.grid(row=0, column=1, sticky="ns", padx=(0, 6), pady=10)
+        self.res_tabela.configure(yscrollcommand=rol.set)
+        ctk.CTkLabel(pg, text="REGISTRO DE ATIVIDADES", text_color=tema.CINZA, font=self.f_pequena,
+                     anchor="w").grid(row=3, column=0, sticky="ew", pady=(14, 4))
+        self.log = ctk.CTkTextbox(pg, height=150, border_width=1, corner_radius=10,
+                                  font=ctk.CTkFont(family=tema.FONTE_MONO, size=11))
+        self.log.grid(row=4, column=0, sticky="ew")
+        return pg
+
+    def _atualizar_resultados(self):
+        if not hasattr(self, "res_tabela"):
+            return
+        self.res_tabela.delete(*self.res_tabela.get_children())
+        if self.projeto is None:
+            self.lbl_res_resumo.configure(text="Leia uma pasta de vídeos para ver os resultados.")
+            return
+        feitos = [l for l in self.projeto.registro.ativos() if l.status == ST_OK]
+        tela = {"sim": "lido", "nao": "—", "falhou": "⚠ não lido"}
+        for l in feitos:
+            self.res_tabela.insert("", "end", values=(
+                l.caminho.replace("/", " / "), f"{l.palavras:,}".replace(",", "."),
+                f"{l.velocidade:.1f}x".replace(".", ",") if l.velocidade else "—",
+                tela.get(l.ocr, l.ocr), l.transcrito_em or "—"), tags=("falhou",) if l.ocr == "falhou" else ())
+        palavras = sum(l.palavras for l in feitos)
+        horas = sum(l.duracao_s for l in feitos)
+        self.lbl_res_resumo.configure(
+            text=(f"{len(feitos)} vídeo(s) concluído(s) · {palavras:,} palavras · ".replace(",", ".")
+                  + f"{tempo_humano(horas)} de vídeo transcrito. Os arquivos .md ficam em "
+                    "transcricoes_md; a base para a IA, em base_consolidada.") if feitos else
+                 "Nenhum vídeo concluído ainda.")
 
     # ================================================================== utilidades
     def _log(self, texto: str):
         self.log.insert("end", f"[{datetime.now():%H:%M:%S}] {texto}\n")
         self.log.see("end")
-
-    def _alternar_log(self):
-        self._log_visivel = not self._log_visivel
-        if self._log_visivel:
-            self.log.grid(row=1, column=0, sticky="ew", pady=(4, 0))
-            self.btn_log.configure(text="▾ Esconder detalhes técnicos")
-        else:
-            self.log.grid_forget()
-            self.btn_log.configure(text="▸ Mostrar detalhes técnicos (registro de atividades)")
 
     def _pasta(self, entrada) -> Path | None:
         t = entrada.get().strip().strip('"')
@@ -317,49 +599,37 @@ class App(ctk.CTk):
         self.situacao = s
         n = s.total_pendencias
         if s.obrigatorios:
-            self.btn_verif.configure(text=f"⚠ Verificar PC ({n})", fg_color=VERMELHO)
+            self._selo("preparacao", len(s.obrigatorios), cor="#5A1F1F", texto_cor=tema.VERMELHO)
         elif n:
-            self.btn_verif.configure(text=f"🖥 Verificar PC ({n})", fg_color=LARANJA)
+            self._selo("preparacao", n)
         else:
-            self.btn_verif.configure(text="✅ PC pronto", fg_color=self._cor_verif)
-        self.lbl_ocr.configure(text="+15–35% de tempo. " + (
-            "Tesseract instalado." if s.tesseract_ok else "Precisa do Tesseract (não instalado)."))
-        if n:
+            self._selo("preparacao", 0)
+        self.lbl_ocr.configure(text="+15–35% de tempo · " + (
+            "Tesseract pronto." if s.tesseract_ok else "precisa do Tesseract (não instalado)."))
+        self._atualizar_lateral()
+        if getattr(self, "pagina", "") == "preparacao":
+            self.painel_verif.mostrar(s, self._preset(), self._pasta(self.ent_saida))
+        if s.obrigatorios:
             self._pulsar(6)
         if abrir and s.obrigatorios:
             self._log("Verificação: falta " + ", ".join(s.obrigatorios) + ". Abrindo a preparação.")
             self._abrir_verificacao()
+            som_aviso(self)
 
     def _pulsar(self, vezes):
-        """Pisca o botão para chamar atenção sem bloquear nada."""
-        if vezes <= 0:
-            self._aplicar_cor_verif()
+        """Pisca o item "Preparação do PC" para chamar atenção sem bloquear nada."""
+        b = self.nav["preparacao"]
+        if vezes <= 0 or getattr(self, "pagina", "") == "preparacao":
+            self._mostrar_pagina(self.pagina) if hasattr(self, "pagina") else None
             return
-        atual = self.btn_verif.cget("fg_color")
-        self.btn_verif.configure(fg_color="#f2b134" if atual != "#f2b134" else self._cor_pendencia())
+        b.configure(fg_color="#3A2A10" if vezes % 2 else "transparent")
         self.after(350, lambda: self._pulsar(vezes - 1))
 
-    def _cor_pendencia(self):
-        if self.situacao and self.situacao.obrigatorios:
-            return VERMELHO
-        if self.situacao and self.situacao.total_pendencias:
-            return LARANJA
-        return self._cor_verif
-
-    def _aplicar_cor_verif(self):
-        self.btn_verif.configure(fg_color=self._cor_pendencia())
-
     def _abrir_verificacao(self):
-        if self._janela_verif is not None and self._janela_verif.winfo_exists():
-            self._janela_verif.lift()
-            self._janela_verif.focus_force()
-            return
         if self.situacao is None:
             self._rodar_verificacao(abrir_se_obrigatorio=True)
             self._log("Verificando o PC...")
-            return
-        self._janela_verif = JanelaVerificacao(self, self.situacao, self._preset(), self._pasta(self.ent_saida),
-                                               ao_mudar=lambda s: self._aplicar_situacao(s, False))
+        self._mostrar_pagina("preparacao")
 
     def baixar_modelo(self, modelo, ao_progredir, ao_terminar):
         """Usado pela janela de verificação. ao_terminar(erro_ou_None) roda na thread da interface."""
@@ -483,9 +753,9 @@ class App(ctk.CTk):
         if aviso:
             self.lbl_corr.configure(text="⚠️ arquivo com erro (será ignorado)", text_color=VERMELHO)
         elif regras:
-            self.lbl_corr.configure(text=f"{len(regras)} regra(s) ativa(s)", text_color="gray50")
+            self.lbl_corr.configure(text=f"{len(regras)} regra(s) ativa(s)", text_color=tema.CINZA)
         else:
-            self.lbl_corr.configure(text="Nenhuma regra (opcional).", text_color="gray50")
+            self.lbl_corr.configure(text="Nenhuma regra (opcional).", text_color=tema.CINZA)
 
     def _editar_correcoes(self):
         saida = self._pasta(self.ent_saida)
@@ -504,9 +774,14 @@ class App(ctk.CTk):
         self.tabela.delete(*self.tabela.get_children())
         for it in self.itens:
             sel = MARCADO if it.rel in self.marcados else DESMARCADO
-            self.tabela.insert("", "end", iid=it.rel,
-                               values=(sel, it.rel, hhmmss(it.duracao), self._rotulo(it)))
+            self.tabela.insert("", "end", iid=it.rel, tags=self._tags(it),
+                               values=(sel, it.rel.replace("/", " / "), hhmmss(it.duracao), self._rotulo(it)))
         self._atualizar_quantidades()
+        self._atualizar_lateral()
+
+    @staticmethod
+    def _tags(it: Item) -> tuple:
+        return {ST_ERRO: ("erro",), SUBSTITUIDO: ("mudou",)}.get(it.status, ())
 
     @staticmethod
     def _rotulo(it: Item) -> str:
@@ -515,14 +790,20 @@ class App(ctk.CTk):
         return STATUS_ROTULO.get(it.status, it.status)
 
     def _clique_tabela(self, ev):
-        if self.rodando:
+        """Clique na caixinha (1ª coluna) marca/desmarca; no resto da linha, só seleciona."""
+        if self.rodando or self.tabela.identify_region(ev.x, ev.y) != "cell":
             return
         linha = self.tabela.identify_row(ev.y)
-        if not linha:
+        if not linha or self.tabela.identify_column(ev.x) != "#1":
             return
         self.marcados.symmetric_difference_update({linha})
         self.tabela.set(linha, "sel", MARCADO if linha in self.marcados else DESMARCADO)
         self._atualizar_quantidades()
+
+    def _alternar_todos(self):
+        if self.rodando or not self.itens:
+            return
+        (self._desmarcar_todos if len(self.marcados) == len(self.itens) else self._marcar_todos)()
 
     def _marcar_pendentes(self):
         self.marcados = {i.rel for i in self.itens if i.status != ST_OK}
@@ -540,20 +821,37 @@ class App(ctk.CTk):
         return [i for i in self.itens if i.rel in self.marcados]
 
     def _atualizar_quantidades(self):
+        if not hasattr(self, "frm_qtd"):
+            return
         n = len(self._selecionados())
-        valores = ["Escolha..."]
-        if n:
-            valores += [str(q) for q in (1, 3, 5, 10) if q < n] + [f"Todos os marcados ({n})"]
-        self.opt_qtd.configure(values=valores)
-        if self.opt_qtd.get() not in valores:
-            self.opt_qtd.set("Escolha...")
+        opcoes = [str(q) for q in (1, 3, 5) if q < n] + (["todos"] if n else [])
+        if list(self.btns_qtd) != opcoes:
+            for b in self.btns_qtd.values():
+                b.destroy()
+            self.btns_qtd = {}
+            for chave in opcoes:
+                b = ctk.CTkButton(self.frm_qtd, text="", width=92, height=52, font=self.f_qtd,
+                                  command=lambda c=chave: self._escolher_qtd(c), **tema.secundario())
+                b.pack(side="left", padx=4)
+                self.btns_qtd[chave] = b
+        if self._qtd not in opcoes:
+            self._qtd = None
+        self.lbl_contagem.configure(text=f"{len(self.itens)} vídeo(s) · {n} marcado(s)" if self.itens
+                                    else "Nenhum vídeo listado")
+        self._atualizar_estimativa()
+
+    def _escolher_qtd(self, chave: str):
+        if self.rodando:
+            return
+        self._qtd = chave
         self._atualizar_estimativa()
 
     def _quantidade(self) -> int:
-        v = self.opt_qtd.get()
-        if v.startswith("Todos"):
+        if self._qtd is None:
+            return 0
+        if self._qtd == "todos":
             return len(self._selecionados())
-        return int(v) if v.isdigit() else 0
+        return int(self._qtd)
 
     def _rodada(self) -> list[Item]:
         return self._selecionados()[: self._quantidade()]
@@ -575,9 +873,10 @@ class App(ctk.CTk):
         if s.get("registro_recuperado"):
             extra.append("registro recuperado da cópia de emergência")
         self.lbl_resumo.configure(
-            text=f"{len(self.itens)} vídeo(s) · {len(self.itens) - len(pend)} concluído(s) · "
-                 f"{len(pend)} pendente(s) ({hhmmss(sum(i.duracao for i in pend))})"
+            text=f"{len(self.itens) - len(pend)} concluído(s) · {len(pend)} pendente(s), "
+                 f"{tempo_humano(sum(i.duracao for i in pend))} de vídeo"
                  + (f" · {', '.join(extra)}" if extra else ""))
+        self._atualizar_lateral()
 
     # ================================================================== estimativa
     def _opcoes_mudaram(self):
@@ -585,23 +884,40 @@ class App(ctk.CTk):
         self._atualizar_estimativa()
 
     def _atualizar_estimativa(self):
-        if not self.projeto or not hasattr(self, "lbl_estimativa"):
+        if not hasattr(self, "btn_iniciar"):
+            return
+        if not self.projeto:
+            self.lbl_sel_resumo.configure(text="Nenhuma pasta lida")
+            self.lbl_sel_det.configure(text="Escolha a pasta dos vídeos para começar.")
+            self._estado_principal(False)
             return
         self.projeto.cfg.preset = self._preset()
         com_ocr = bool(self.chk_ocr.get())
         sel, rodada = self._selecionados(), self._rodada()
-        es, er = self.projeto.estimar(sel, com_ocr), self.projeto.estimar(rodada, com_ocr)
-        fim = (datetime.now() + timedelta(seconds=er.total)).strftime("%d/%m %H:%M") if rodada else "—"
-        base = "medida neste PC" if er.medida else "estimativa inicial (melhora após o 1º vídeo)"
-        texto = (f"ESTIMATIVA\n"
-                 f"Marcados:      {len(sel):>3} vídeo(s) · ≈ {tempo_humano(es.total)}\n"
-                 f"Nesta rodada:  {len(rodada):>3} vídeo(s) · {hhmmss(sum(i.duracao for i in rodada))} de vídeo\n"
-                 f"  transcrição    ≈ {tempo_humano(er.segundos_transcricao)}\n"
-                 + (f"  texto da tela  ≈ {tempo_humano(er.segundos_ocr)}\n" if com_ocr else "")
-                 + f"  TOTAL          ≈ {tempo_humano(er.total)}  (fim ~{fim})\n"
-                 f"Velocidade: {er.velocidade:.1f}x · {base}")
-        self.lbl_estimativa.configure(text=texto)
-        self.btn_iniciar.configure(state="normal" if rodada and not self.rodando else "disabled")
+        self.lbl_sel_resumo.configure(
+            text=f"{len(sel)} marcado(s) · {tempo_humano(sum(i.duracao for i in sel))} de vídeo" if sel
+            else "Nenhum vídeo marcado")
+        for chave, b in self.btns_qtd.items():
+            q = len(sel) if chave == "todos" else int(chave)
+            rot = f"Todos ({len(sel)})" if chave == "todos" else chave
+            e = self.projeto.estimar(sel[:q], com_ocr)
+            escolhido = chave == self._qtd
+            b.configure(text=f"{rot}\n≈ {tempo_humano(e.total)}",
+                        fg_color=tema.VERDE_FUNDO if escolhido else tema.SUPERFICIE_2,
+                        border_color=tema.VERDE if escolhido else tema.BORDA_FORTE,
+                        text_color=tema.BRANCO)
+        if rodada:
+            er = self.projeto.estimar(rodada, com_ocr)
+            fim = (datetime.now() + timedelta(seconds=er.total)).strftime("%H:%M")
+            base = "medida neste PC" if er.medida else "estimativa inicial"
+            self.lbl_sel_det.configure(text=f"Esta rodada: ≈ {tempo_humano(er.total)}, término ~{fim} · "
+                                            f"{er.velocidade:.1f}x ({base})".replace(".", ","))
+            self.btn_iniciar.configure(text=f"Transcrever {len(rodada)}")
+        else:
+            self.lbl_sel_det.configure(text="Quantos vídeos nesta rodada? (obrigatório)" if sel
+                                       else "Marque os vídeos na lista.")
+            self.btn_iniciar.configure(text="Transcrever")
+        self._estado_principal(bool(rodada) and not self.rodando)
 
     # ================================================================== execução
     def _verificar_antes_de_iniciar(self, cfg: Config) -> bool:
@@ -667,6 +983,11 @@ class App(ctk.CTk):
         self._inicio = datetime.now()
         self.pb.set(0)
         self.lbl_tempo.configure(text="Calculando o tempo restante...")
+        self.lbl_status.configure(text="Preparando a rodada...", text_color=tema.BRANCO)
+        self._indice = 0
+        for it in rodada:
+            self.tabela.set(it.rel, "status", ROTULO_NA_FILA)
+        self._lateral_rodada(0.0, f"0 de {len(rodada)} · 0%")
         self._log(f"Rodada iniciada: {len(rodada)} vídeo(s), qualidade {PRESETS[cfg.preset]['rotulo']}"
                   f"{', com leitura de tela' if cfg.ocr else ''}.")
 
@@ -683,7 +1004,7 @@ class App(ctk.CTk):
 
     def _parar(self):
         self.parar.set()
-        self.btn_parar.configure(state="disabled", text="⏸ Vai parar ao fim deste vídeo")
+        self.btn_parar.configure(state="disabled", text="Para ao fim deste vídeo")
         self._log("Pedido de parada recebido: termina o vídeo atual e para.")
 
     def _cancelar(self):
@@ -697,15 +1018,19 @@ class App(ctk.CTk):
     def _modo_rodando(self, sim: bool):
         self.rodando = sim
         estado = "disabled" if sim else "normal"
-        for w in (self.btn_ler, self.seg_preset, self.chk_ocr, self.ent_vocab, self.opt_qtd,
-                  self.ent_videos, self.ent_saida, self.btn_proc_videos, self.btn_proc_saida,
-                  self.btn_corr, *self.btns_marcar):
+        for w in (self.btn_ler, self.seg_preset, self.chk_ocr, self.ent_vocab, self.ent_videos, self.ent_saida,
+                  self.btn_proc_videos, self.btn_proc_saida, self.btn_corr, *self.btns_marcar,
+                  *self.btns_qtd.values()):
             w.configure(state=estado)
-        self.btn_iniciar.configure(state="disabled" if sim else "normal")
-        self.btn_parar.configure(state="normal" if sim else "disabled", text="⏸ Parar após o vídeo atual")
+        if sim:
+            self.lbl_trava.pack(side="right")
+        else:
+            self.lbl_trava.pack_forget()
+        self._mostrar_rodada(sim)
+        self.btn_parar.configure(state="normal" if sim else "disabled", text="Parar após este vídeo")
         self.btn_cancelar.configure(state="normal" if sim else "disabled")
+        self._estado_principal(False)
 
-    # ---- etapas e progresso
     def _etapa(self, ativa: str | None, concluidas: set[str] = frozenset()):
         for cod, (lb, rot) in self.lbl_etapas.items():
             if cod == "telas" and not getattr(self, "_com_ocr", False):
@@ -722,6 +1047,9 @@ class App(ctk.CTk):
         self._frac = max(self._frac, frac_video)
         total = (self._dur_feita + self._frac * self._dur_atual) / self._dur_rodada
         self.pb.set(max(self.pb.get(), min(total, 1.0)))
+        if self.rodando:
+            pct = self.pb.get()
+            self._lateral_rodada(pct, f"{getattr(self, '_indice', 0)} de {self._total_rodada} · {pct:.0%}")
 
     # ================================================================== eventos
     def _consumir_fila(self):
@@ -757,6 +1085,7 @@ class App(ctk.CTk):
             self.itens = self.projeto.itens
             self.marcados = {i.rel for i in self.itens if i.status != ST_OK}
             self.btn_ler.configure(state="normal")
+            self._mostrar_acao()
             self._atualizar_resumo()
             self._preencher_tabela()
             self._atualizar_correcoes()
@@ -775,10 +1104,17 @@ class App(ctk.CTk):
             if self.pb.get() > 0 and self._feitos == 0 and self._dur_feita == 0:
                 self.pb.set(0)  # a barra do download dá lugar à barra da rodada
             nome = Path(d["rel"]).name
-            self.lbl_status.configure(text=f"Processando {nome} ({d['indice']} de {d['total']})...")
+            self._indice = d["indice"]
+            self.lbl_status.configure(text=f"Processando {d['indice']} de {d['total']} · "
+                                           f"{d['rel'].replace('/', ' / ')}", text_color=tema.BRANCO)
             self._etapa("audio")
-            self.tabela.set(d["rel"], "status", "▶ processando")
+            self.tabela.set(d["rel"], "status", ROTULO_PROCESSANDO)
+            self.tabela.item(d["rel"], tags=("rodando",))
             self.tabela.see(d["rel"])
+            self.lbl_info_tit.configure(text="EM ANDAMENTO")
+            self.lbl_info_nome.configure(text=nome)
+            self.lbl_info_det.configure(text=f"0:00 de {hhmmss(d['duracao'])}")
+            self._avancar(0.0)
             self._log(f"Início: {d['rel']} ({hhmmss(d['duracao'])})")
         elif t == "etapa":
             cod = d.get("codigo")
@@ -801,10 +1137,12 @@ class App(ctk.CTk):
             parte = 0.80 if self._com_ocr else 0.95
             if d["total"]:
                 self._avancar(0.03 + parte * d["pos"] / d["total"])
+            self.lbl_info_det.configure(text=f"{hhmmss(d['pos'])} de {hhmmss(d['total'])}")
             if "falta_lote" in d:
                 self.lbl_tempo.configure(
-                    text=f"Faltam ~{tempo_humano(d['falta_lote'])} para terminar a rodada · término previsto "
-                         f"~{d['termino']:%H:%M} · velocidade {d['velocidade']:.1f}x")
+                    text=f"Rodada {self.pb.get():.0%} · faltam ~{tempo_humano(d['falta_lote'])} · término "
+                         f"~{d['termino']:%H:%M} · velocidade {d['velocidade']:.1f}x".replace(".", ","))
+                self.lbl_lat_fim.configure(text=f"término ~{d['termino']:%H:%M}")
         elif t == "progresso_telas":
             if d["total"]:
                 self._avancar(0.83 + 0.15 * d["feito"] / d["total"])
@@ -817,6 +1155,7 @@ class App(ctk.CTk):
                 self._palavras += d["palavras"]
                 self.tabela.set(d["rel"], "status", ROTULO_TELA_FALHOU if d.get("falha_telas")
                                 else STATUS_ROTULO[ST_OK])
+                self.tabela.item(d["rel"], tags=())
                 self.marcados.discard(d["rel"])
                 self.tabela.set(d["rel"], "sel", DESMARCADO)
                 self._log(f"Concluído: {d['rel']} — {d['palavras']} palavras, {d['velocidade']:.1f}x, "
@@ -824,6 +1163,7 @@ class App(ctk.CTk):
             else:
                 self._erros += 1
                 self.tabela.set(d["rel"], "status", STATUS_ROTULO[ST_ERRO])
+                self.tabela.item(d["rel"], tags=("erro",))
                 self._log(f"ERRO em {d['rel']}: {d['erro']}")
         elif t == "aviso":
             self._log("AVISO: " + d["texto"])
@@ -838,42 +1178,50 @@ class App(ctk.CTk):
         self._etapa(None, {"audio", "transcricao", "telas", "salvar"} if d.get("ok") else set())
         dur = datetime.now() - getattr(self, "_inicio", datetime.now())
         erro = d.get("erro", 0)
-        nivel, frase = resumo_final(d)  # nunca "sucesso" sem nenhum sucesso (achado X16)
-        icone, cor = {"sucesso": ("✅", VERDE), "parcial": ("⚠️", LARANJA), "interrompido": ("⏸", LARANJA),
-                      "vazio": ("ℹ️", LARANJA), "falha": ("❌", VERMELHO)}[nivel]
-        texto = f"{icone} {frase}"
+        nivel, frase = resumo_final(d)  # nunca "sucesso" sem nenhum sucesso (achados X16 e X10)
+        icone, cor = {"sucesso": ("✓", tema.VERDE), "parcial": ("⚠", tema.LARANJA), "interrompido": ("⏸", tema.LARANJA),
+                      "vazio": ("i", tema.LARANJA), "falha": ("✕", tema.VERMELHO)}[nivel]
+        texto = f"{icone}  {frase}"
         if nivel == "sucesso":
             texto += f" · {self._palavras:,} palavras".replace(",", ".")
             self.pb.set(1.0)
         self.lbl_status.configure(text=texto, text_color=cor)
         self.lbl_tempo.configure(text=f"Duração da rodada: {tempo_humano(dur.total_seconds())}. "
-                                      "Resultado na pasta de saída (botão 📂).")
+                                      "Os arquivos estão na pasta de saída (botão Abrir).")
         self._log("Rodada encerrada." + ("" if d.get("fatal") else " Base consolidada atualizada."))
+        if erro or nivel == "falha":
+            self._log("Detalhes dos erros: veja as linhas acima e a coluna observacao do registro.csv.")
         self._rodar_verificacao()  # o modelo pode ter sido baixado nesta rodada
-        if (erro or nivel == "falha") and not self._log_visivel:
-            self._alternar_log()
         self._atualizar_resumo()
         self._atualizar_quantidades()
+        self._atualizar_resultados()
+        self.lbl_info_tit.configure(text="ÚLTIMA RODADA")
+        self.lbl_info_nome.configure(text={"sucesso": "Concluída", "parcial": "Concluída com avisos",
+                                           "interrompido": "Interrompida", "vazio": "Nada feito",
+                                           "falha": "Falhou"}[nivel])
+        self.lbl_info_det.configure(text=f"{d.get('ok', 0)} concluído(s) · {erro} com erro · "
+                                         f"{tempo_humano(dur.total_seconds())}")
         som_sucesso(self) if nivel == "sucesso" else som_aviso(self)
         piscar_barra_de_tarefas(self)
-        self.after(8000, lambda: self.lbl_status.configure(text_color=("gray10", "gray90")))
 
     # ================================================================== diálogos
     def _ajuda(self):
         janela = ctk.CTkToplevel(self)
         janela.title("Como usar")
         janela.geometry("700x640")
-        caixa = ctk.CTkTextbox(janela, wrap="word", font=ctk.CTkFont(family="Consolas", size=12))
+        caixa = ctk.CTkTextbox(janela, wrap="word", font=ctk.CTkFont(family=tema.FONTE_MONO, size=12))
         caixa.pack(fill="both", expand=True, padx=10, pady=10)
         caixa.insert("end", textos.COMO_USAR + "\n" + textos.SOBRE_IA_VISUAL)
         caixa.configure(state="disabled")
         from .componentes import trazer_para_frente
         trazer_para_frente(janela, self)
 
-    def _abrir_saida(self):
+    def _abrir_saida(self, sub: str = ""):
         p = self._pasta(self.ent_saida)
+        if p and sub:
+            p = p / sub
         if not p or not p.exists():
-            Dialogo(self, "Pasta de saída", "A pasta de saída ainda não existe. Ela é criada ao ler a pasta "
+            Dialogo(self, "Pasta de saída", "Essa pasta ainda não existe. Ela é criada ao ler a pasta "
                                             "de vídeos.", [("Entendi", None, True)], icone="ℹ️", som=False).perguntar()
             return
         if sys.platform == "win32":

@@ -3,36 +3,38 @@
 COMO_USAR = """COMO USAR — em 5 passos
 
 0) PRIMEIRA VEZ
-   O app abre a tela "Verificar PC e preparar" se faltar algo. O principal é o
-   modelo de transcrição (~1,6 GB), baixado UMA vez. Você NÃO precisa instalar
-   Python nem FFmpeg: já vêm dentro do app. O botão "Verificar PC" (canto
-   superior direito) fica laranja ou vermelho quando há algo pendente.
+   Se faltar algo, o app abre na página "Preparação do PC" (barra lateral).
+   O principal é o modelo de transcrição (~1,6 GB), baixado UMA vez. Você NÃO
+   precisa instalar Python nem FFmpeg: já vêm dentro do app. Enquanto houver
+   pendência, o item "Preparação do PC" mostra um número e pisca.
 
-1) PASTA DOS VÍDEOS
-   Clique em "Procurar" e escolha a pasta. Subpastas ("Módulo 01"...) são
-   respeitadas na saída. Pastas que começam com "_" são ignoradas.
+1) ORIGEM (pasta dos vídeos)
+   Na página "Vídeos", clique em "Escolher" e selecione a pasta. Subpastas
+   ("Módulo 01"...) são respeitadas na saída. Pastas que começam com "_" são
+   ignoradas. Se adicionar ou remover vídeos depois, clique em "Ler pasta".
 
-2) PASTA DE SAÍDA
+2) SAÍDA
    É sugerida automaticamente (e reaproveita uma saída que já exista ao lado).
-   Ela NÃO pode ficar dentro da pasta de vídeos.
+   Ela NÃO pode ficar dentro da pasta de vídeos. "Abrir" mostra a pasta.
 
 3) ESCOLHA OS VÍDEOS
    Clique na caixinha da primeira coluna. Os pendentes já vêm marcados.
+   Clique no nome para ver os detalhes do vídeo ao lado.
 
-4) OPÇÕES
+4) OPÇÕES DA RODADA
    • Qualidade: "Equilibrado" é o recomendado.
    • Ler texto da tela: lê slides, código e menus (precisa do Tesseract).
-   • Vocabulário de dicas: ajuda o Whisper a OUVIR certo (ex.: ChatGPT, DAX).
-   • Correções automáticas: troca o texto DEPOIS ("Chatepte" -> "ChatGPT").
-     Botão "Editar lista" abre o arquivo correcoes.json no Bloco de Notas.
-   • Processar nesta rodada: quantos vídeos fazer agora (obrigatório).
+   • Vocabulário e correções: dicas para o Whisper OUVIR certo (ex.: ChatGPT,
+     DAX) e trocas feitas DEPOIS ("Chatepte" -> "ChatGPT"). "Editar lista"
+     abre o arquivo correcoes.json no Bloco de Notas.
 
-5) INICIAR
-   O painel mostra a etapa atual de cada vídeo (Áudio > Transcrição >
-   Texto da tela > Salvar), uma barra única da rodada e o tempo restante.
-   "Parar após o vídeo atual" não perde nada. Ao terminar, o app avisa com
-   som e faz o ícone piscar na barra de tarefas.
-   O registro técnico fica em "Mostrar detalhes técnicos".
+5) TRANSCREVER
+   Na barra de baixo, escolha quantos vídeos fazer agora (obrigatório). Cada
+   cartão mostra o tempo estimado. Depois, clique em "Transcrever".
+   A barra mostra a etapa (Áudio > Transcrição > Texto da tela > Salvar), o
+   progresso e o término previsto. "Parar após este vídeo" não perde nada.
+   Ao terminar, o app avisa com som e faz o ícone piscar na barra de tarefas.
+   O registro de atividades fica na página "Resultados".
 
 ONDE ESTÁ O RESULTADO
    transcricoes_md\\   -> um .md por vídeo (mesma estrutura de pastas)
