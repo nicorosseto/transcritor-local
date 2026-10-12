@@ -164,3 +164,23 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 
 - Threads de trabalho **não chamam nenhum método do Tk**, nem `.after()`. Para executar algo na interface, usam `App.na_interface(fn)`, que coloca um evento `chamar` na fila consumida pela thread principal. Um teste de guarda impede a volta de `.after(0, ...)`.
 - Toda rodada termina com **exatamente um** `lote_fim`. Erro inesperado vira o campo `fatal`. O texto final vem de `gui/estado.py` (testável sem Tk), que nunca mostra sucesso sem nenhum vídeo concluído.
+
+---
+
+## ADR-015: Threads do Whisper = núcleos físicos
+
+**Data:** 11/10/2026 · **Status:** aceita · **Origem:** P17
+
+**Contexto.** A v0.1.1 passava `cpu_threads=os.cpu_count()`, que conta threads **lógicas** (12 no PC de referência, um Xeon de 6 núcleos com Hyper-Threading). O app ficou mais lento que o script v1, que usava o padrão do faster-whisper (4).
+
+**Medição** (`ferramentas/medir_threads.py`, mesmo vídeo, 3 min de fala, `large-v3-turbo`, beam 1, PC sem uso):
+
+| Threads | Tempo | Velocidade |
+|---|---|---|
+| 4 | 115,0 s | 1,57x |
+| 6 | 115,3 s | 1,56x |
+| 12 | 134,1 s | 1,34x |
+
+**Decisão.** Padrão = núcleos físicos (`psutil.cpu_count(logical=False)`; sem essa informação, metade das threads lógicas). O valor escolhido pelo usuário em `threads` continua tendo prioridade.
+
+**Por que não 4 fixo.** No PC de referência, 4 e 6 empatam, mas um processador com mais núcleos físicos ganharia com mais threads. Núcleos físicos é a regra que generaliza. A opção de deixar núcleos livres para usar o PC durante o lote continua prevista (P11).

@@ -66,3 +66,5 @@ O Codex auditou a v0.1.1 de forma independente e encontrou 16 problemas (X1 a X1
 | Erro inesperado aparecia como **sucesso**, com som (X16) | Estado fatal explícito |
 
 Status completo por ID: [auditorias/STATUS.md](auditorias/STATUS.md).
+
+**Lentidão resolvida na mesma versão.** O usuário rodou o `medir_threads.py` no PC de referência: 4 threads = 1,57x, 6 = 1,56x, 12 = 1,34x. O app usava 12 (todas as threads lógicas). Com o padrão em núcleos físicos (ADR-015), a transcrição fica ~15% mais rápida, o que explica a diferença para o script v1.

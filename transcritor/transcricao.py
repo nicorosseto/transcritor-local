@@ -6,6 +6,8 @@ import os
 import warnings
 from dataclasses import dataclass
 
+from .config import threads_padrao
+
 # Silencia avisos inofensivos do Hugging Face no Windows (symlinks / token)
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
@@ -44,7 +46,7 @@ def carregar_modelo(modelo: str, dispositivo: str = "auto", threads: int = 0):
         except Exception:
             pass
     return (WhisperModel(modelo, device="cpu", compute_type="int8",
-                         cpu_threads=threads or (os.cpu_count() or 4)), "cpu")
+                         cpu_threads=threads or threads_padrao()), "cpu")
 
 
 def transcrever(modelo, audio, *, idioma: str | None, beam_size: int, vocabulario: list[str],

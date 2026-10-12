@@ -38,6 +38,22 @@ PRESETS = {
 NOME_ARQUIVO_CONFIG = "transcritor_config.json"
 
 
+def threads_padrao() -> int:
+    """Núcleos FÍSICOS, não threads lógicas (P17).
+
+    Medido em 11/10/2026 no PC de referência (6 núcleos / 12 threads), 3 min de fala, beam 1:
+    4 threads = 1,57x · 6 = 1,56x · 12 = 1,34x. Passar dos núcleos físicos deixa o Whisper ~15% mais lento.
+    """
+    try:
+        import psutil
+        fisicos = psutil.cpu_count(logical=False)
+    except Exception:
+        fisicos = None
+    if not fisicos:
+        fisicos = max(1, (os.cpu_count() or 8) // 2)  # sem psutil: supõe 2 threads por núcleo
+    return max(1, fisicos)
+
+
 @dataclass
 class Config:
     pasta_videos: Path
@@ -45,7 +61,7 @@ class Config:
     preset: str = "equilibrado"
     idioma: str | None = "pt"
     dispositivo: str = "auto"            # auto | cpu | cuda
-    threads: int = 0                     # 0 = todos os núcleos
+    threads: int = 0                     # 0 = automático (núcleos físicos, ver threads_padrao)
     vocabulario: list[str] = field(default_factory=list)
     ocr: bool = False
     segundos_por_paragrafo: int = 60
@@ -62,7 +78,7 @@ class Config:
 
     @property
     def threads_efetivas(self) -> int:
-        return self.threads if self.threads > 0 else (os.cpu_count() or 4)
+        return self.threads if self.threads > 0 else threads_padrao()
 
     @property
     def pasta_audio(self) -> Path:

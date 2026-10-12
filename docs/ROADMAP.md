@@ -12,10 +12,10 @@
 
 ## v0.1.2: correções da auditoria (fase 1) ✅
 - [x] X1, X2, X3, X5, X6, X7, X11, X13 e X16 ([status](auditorias/STATUS.md))
+- [x] Lentidão (P17): threads = núcleos físicos, ~15% mais rápido no PC de referência
 
 ## v0.1.3: auditoria fase 2 + desempenho
 - [ ] X4, X10, X15, X8, X9 e o restante do X12
-- [ ] Padrão de threads pelo resultado do benchmark (P17)
 
 ## v0.1.4: novo layout aprovado
 - Fundo preto, barra lateral `#0A1612`, verde só no que é clicável, logotipo "da onda à linha" e ícone do `.exe`

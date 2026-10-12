@@ -37,6 +37,16 @@ Regra de aceite: cada teste foi escrito **antes** da correção e falhou no comm
 | `colisao_extensoes` (X2) | caminhos iguais | igual, **por desenho**: o script consulta `aula.mkv` sem ele existir no registro; com os dois arquivos na pasta, o teste X2 prova caminhos distintos |
 | `limite_base`, `trava_reentrante`, `link_base`, `falha_capturas`, `falha_ocr` | — | sem mudança: são X9, X4, X8 e X10 (fase 2) |
 
+### Desempenho (P17)
+
+| Threads | Velocidade (3 min de fala, beam 1, PC de referência 6C/12T) |
+|---|---|
+| 4 | **1,57x** |
+| 6 | 1,56x |
+| 12 (padrão até a v0.1.1) | 1,34x |
+
+✅ Hipótese da contra-auditoria confirmada. O padrão agora é o número de **núcleos físicos** ([ADR-015](../DECISOES.md)); teste em `tests/test_desempenho.py`.
+
 ## Fase 2 (pendente)
 
 | ID | Sev. | Status | Próximo passo |
@@ -54,5 +64,4 @@ Regra de aceite: cada teste foi escrito **antes** da correção e falhou no comm
 | ID | Status | Próximo passo |
 |---|---|---|
 | X14 | ⏳ | Dependências travadas e hashes do FFmpeg, tessdata e modelo |
-| P17 | 🔎 | Lentidão: medir 4, 6 e 12 threads com `ferramentas/medir_threads.py` no PC de referência |
 | P1, P7, P8 | ⏳ | Ver [AUDITORIA.md](../AUDITORIA.md) |

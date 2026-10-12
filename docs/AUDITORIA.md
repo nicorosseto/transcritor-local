@@ -52,7 +52,7 @@ Severidade: 🔴 alta · 🟠 média · 🟡 baixa. Status: ✅ corrigido · ⏳
 | P13 | Testes de GUI não rodam no CI | 🟡 | Job Linux com `xvfb-run` (o teste de fumaça já existe) |
 | P14 | Estimativa de OCR padrão (10 min/h) é chute conservador | 🟡 | Substituída automaticamente após o 1º vídeo com OCR |
 | P15 | Sem atualização automática | 🟡 | Verificar a última Release no GitHub ao abrir (opcional) |
-| P17 | App ~18% mais lento que o script com a mesma qualidade (1,22x vs 1,48x no vídeo de referência) | 🟠 | Hipótese: o app força 12 threads lógicas; o script usava 4. Medir com `ferramentas/medir_threads.py` (4, 6 e 12) antes de mudar o padrão |
+| P17 | ~~App ~18% mais lento que o script~~ | — | ✅ v0.1.2: causa medida (12 threads lógicas: 1,34x; 4 ou 6 threads: 1,57x). Padrão passou a ser o número de núcleos físicos (ADR-015) |
 | P18 | Correções automáticas podem trocar palavras reais (ex.: "Hulk") | 🟡 | Documentado; regra só vale para palavra inteira e o total aparece no `.md` |
 | P16 | Alucinação residual em música/ruído de fundo | 🟡 | Avaliar `hallucination_silence_threshold` + `word_timestamps` (custo) |
 
