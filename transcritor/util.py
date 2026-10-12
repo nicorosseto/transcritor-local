@@ -6,6 +6,8 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
+import uuid
 from pathlib import Path
 
 # No Windows, impede que cada chamada ao ffmpeg/tesseract abra uma janela preta de console
@@ -111,34 +113,72 @@ class ManterAcordado:
         return False
 
 
+class Cancelado(Exception):
+    """O usuário pediu para cancelar agora."""
+
+
 class PastaEmUso(RuntimeError):
     pass
 
 
 class Trava:
-    """Arquivo-trava na pasta de saída: evita duas execuções gravando o mesmo registro."""
+    """Arquivo-trava na pasta de saída: só um fluxo por vez lê ou grava o projeto (achado X4).
+
+    - Criação atômica (O_CREAT | O_EXCL): duas tentativas simultâneas não entram as duas.
+    - Não é reentrante: o mesmo processo não entra duas vezes na mesma pasta.
+    - Trava "abandonada" (processo que morreu) é retomada.
+    - Só apaga a trava se ela ainda for sua (conteúdo = PID + identificador único).
+    """
+
+    _ativas: set[str] = set()
+    _lock = threading.Lock()
+    MENSAGEM = ("Esta pasta de saída já está sendo usada (outra janela do Transcritor ou uma leitura/rodada "
+                "em andamento). Aguarde terminar, feche a outra janela ou escolha outra pasta de saída.")
 
     def __init__(self, pasta: Path):
         self.arquivo = pasta / ".em_uso.lock"
+        self._chave = os.path.normcase(str(self.arquivo.absolute()))
+        self._marca = f"{os.getpid()} {uuid.uuid4().hex}"
+
+    def _criar(self) -> bool:
+        try:
+            fd = os.open(self.arquivo, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            return False
+        with os.fdopen(fd, "w") as f:
+            f.write(self._marca)
+        return True
 
     def __enter__(self):
-        if self.arquivo.exists():
-            try:
-                pid = int(self.arquivo.read_text().strip() or 0)
-            except (ValueError, OSError):
-                pid = 0
-            if pid and pid != os.getpid() and _pid_vivo(pid):
-                raise PastaEmUso("Esta pasta de saída já está sendo usada por outra janela do "
-                                 "Transcritor. Feche a outra ou escolha outra pasta de saída.")
         self.arquivo.parent.mkdir(parents=True, exist_ok=True)
-        self.arquivo.write_text(str(os.getpid()))
+        with Trava._lock:
+            if self._chave in Trava._ativas:
+                raise PastaEmUso(self.MENSAGEM)
+            if not self._criar():
+                try:
+                    pid = int((self.arquivo.read_text().split() or ["0"])[0])
+                except (ValueError, OSError):
+                    pid = 0
+                if pid and pid != os.getpid() and _pid_vivo(pid):
+                    raise PastaEmUso(self.MENSAGEM)
+                # abandonada: processo morto, ou deste processo sem nenhum contexto ativo
+                try:
+                    self.arquivo.unlink()
+                except FileNotFoundError:
+                    pass
+                if not self._criar():
+                    raise PastaEmUso(self.MENSAGEM)
+            Trava._ativas.add(self._chave)
         return self
 
     def __exit__(self, *exc):
-        try:
-            self.arquivo.unlink()
-        except OSError:
-            pass
+        with Trava._lock:
+            Trava._ativas.discard(self._chave)
+            try:
+                if self.arquivo.read_text() == self._marca:
+                    self.arquivo.unlink()
+            except OSError:
+                pass
         return False
 
 

@@ -31,12 +31,13 @@ from ..registro import SUBSTITUIDO
 from ..util import hhmmss
 from . import textos
 from .componentes import Dialogo, Dica, piscar_barra_de_tarefas, som_aviso, som_sucesso
-from .estado import resumo_final
+from ..resultado import resumo_final
 from .verificacao import JanelaVerificacao, Situacao, verificar
 
 MARCADO, DESMARCADO = "☑", "☐"
 STATUS_ROTULO = {ST_OK: "✅ concluído", "pendente": "⏳ pendente", ST_ERRO: "⚠️ erro (tentar de novo)",
                  SUBSTITUIDO: "🔄 arquivo mudou"}
+ROTULO_TELA_FALHOU = "✅ concluído · ⚠️ tela não lida"
 ROTULO_PRESET = {v["rotulo"]: k for k, v in PRESETS.items()}
 ETAPAS = [("audio", "Áudio"), ("transcricao", "Transcrição"), ("telas", "Texto da tela"), ("salvar", "Salvar")]
 COR_ATIVA, COR_FEITA, COR_ESPERA = "#1f6aa5", "#2e7d32", "gray55"
@@ -419,7 +420,7 @@ class App(ctk.CTk):
             self._pastas_mudaram()
 
     def _ler_pasta(self):
-        if self.rodando:
+        if self.rodando or getattr(self, "_lendo", False):  # uma leitura por vez (achado X4)
             return
         videos, saida = self._pasta(self.ent_videos), self._pasta(self.ent_saida)
         if videos and not saida:
@@ -442,6 +443,7 @@ class App(ctk.CTk):
         self._escanear(cfg)
 
     def _escanear(self, cfg: Config, aceitar_nova_origem: bool = False):
+        self._lendo = True
         self.btn_ler.configure(state="disabled")
         self.lbl_resumo.configure(text="Lendo a pasta e medindo as durações...")
 
@@ -458,6 +460,7 @@ class App(ctk.CTk):
 
     def _outra_origem(self, erro: ProjetoDeOutraOrigem, cfg: Config):
         """Saída de outro curso: não mistura sem o usuário confirmar (achado X7)."""
+        self._lendo = False
         self.btn_ler.configure(state="normal")
         self.lbl_resumo.configure(text="Escolha outra pasta de saída ou confirme que a pasta de vídeos foi movida.")
         r = Dialogo(self, "Pasta de saída de outro projeto",
@@ -502,8 +505,14 @@ class App(ctk.CTk):
         for it in self.itens:
             sel = MARCADO if it.rel in self.marcados else DESMARCADO
             self.tabela.insert("", "end", iid=it.rel,
-                               values=(sel, it.rel, hhmmss(it.duracao), STATUS_ROTULO.get(it.status, it.status)))
+                               values=(sel, it.rel, hhmmss(it.duracao), self._rotulo(it)))
         self._atualizar_quantidades()
+
+    @staticmethod
+    def _rotulo(it: Item) -> str:
+        if it.status == ST_OK and it.linha.ocr == "falhou":
+            return ROTULO_TELA_FALHOU
+        return STATUS_ROTULO.get(it.status, it.status)
 
     def _clique_tabela(self, ev):
         if self.rodando:
@@ -561,6 +570,10 @@ class App(ctk.CTk):
             extra.append(f"{s['orfaos']} removidos (→ _orfaos)")
         if s.get("importados"):
             extra.append(f"{s['importados']} aproveitados de antes")
+        if s.get("ausentes"):
+            extra.append(f"{s['ausentes']} sem transcrição (serão refeitos)")
+        if s.get("registro_recuperado"):
+            extra.append("registro recuperado da cópia de emergência")
         self.lbl_resumo.configure(
             text=f"{len(self.itens)} vídeo(s) · {len(self.itens) - len(pend)} concluído(s) · "
                  f"{len(pend)} pendente(s) ({hhmmss(sum(i.duracao for i in pend))})"
@@ -735,9 +748,11 @@ class App(ctk.CTk):
         elif t == "medindo":
             self.lbl_resumo.configure(text=f"Medindo durações... {d['n']} de {d['t']}")
         elif t == "falha_leitura":
+            self._lendo = False
             self.btn_ler.configure(state="normal")
             Dialogo(self, "Erro ao ler a pasta", d["erro"], [("Entendi", None, True)], icone="❌").perguntar()
         elif t == "escaneado":
+            self._lendo = False
             self.projeto = d["projeto"]
             self.itens = self.projeto.itens
             self.marcados = {i.rel for i in self.itens if i.status != ST_OK}
@@ -800,7 +815,8 @@ class App(ctk.CTk):
             self._feitos += 1
             if t == "video_fim":
                 self._palavras += d["palavras"]
-                self.tabela.set(d["rel"], "status", STATUS_ROTULO[ST_OK])
+                self.tabela.set(d["rel"], "status", ROTULO_TELA_FALHOU if d.get("falha_telas")
+                                else STATUS_ROTULO[ST_OK])
                 self.marcados.discard(d["rel"])
                 self.tabela.set(d["rel"], "sel", DESMARCADO)
                 self._log(f"Concluído: {d['rel']} — {d['palavras']} palavras, {d['velocidade']:.1f}x, "

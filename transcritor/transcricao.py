@@ -7,15 +7,12 @@ import warnings
 from dataclasses import dataclass
 
 from .config import threads_padrao
+from .util import Cancelado  # noqa: F401  (reexportado: pipeline e testes importam daqui)
 
 # Silencia avisos inofensivos do Hugging Face no Windows (symlinks / token)
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
 warnings.filterwarnings("ignore", category=UserWarning, module="huggingface_hub")
-
-
-class Cancelado(Exception):
-    """Usuário pediu para cancelar no meio de um vídeo."""
 
 
 @dataclass

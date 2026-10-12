@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import re
 import subprocess
+import threading
+from collections import deque
 from pathlib import Path
 
-from .util import hhmmss, localizar_binario, popen, rodar
+from .util import Cancelado, hhmmss, localizar_binario, popen, rodar
 
 
 class FFmpegAusente(RuntimeError):
@@ -40,18 +42,36 @@ def duracao(arquivo: Path) -> float:
         return 0.0
 
 
-def extrair_audio(video: Path, destino: Path) -> None:
-    """Mono, 16 kHz, MP3 48 kbps: 1 h de vídeo vira ~20 MB. Reaproveita se já existir."""
+def extrair_audio(video: Path, destino: Path, cancelar=None) -> None:
+    """Mono, 16 kHz, MP3 48 kbps: 1 h de vídeo vira ~20 MB. Reaproveita se já existir.
+
+    Obedece ao cancelamento (achado X13): o FFmpeg é encerrado e nada fica pela metade."""
     if destino.exists() and destino.stat().st_size > 0:
         return
     destino.parent.mkdir(parents=True, exist_ok=True)
     tmp = destino.with_suffix(".parcial.mp3")
-    r = rodar([ffmpeg(), "-y", "-nostdin", "-loglevel", "error", "-i", str(video),
-               "-vn", "-ac", "1", "-ar", "16000", "-b:a", "48k", str(tmp)],
-              capture_output=True, text=True)
-    if r.returncode != 0 or not tmp.exists() or tmp.stat().st_size == 0:
+    proc = popen([ffmpeg(), "-y", "-nostdin", "-loglevel", "error", "-i", str(video),
+                  "-vn", "-ac", "1", "-ar", "16000", "-b:a", "48k", str(tmp)],
+                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
+                 encoding="utf-8", errors="replace")
+    erros: list[str] = []
+    leitor = threading.Thread(target=lambda: erros.extend(proc.stderr), daemon=True)
+    leitor.start()
+    while proc.poll() is None:
+        if cancelar is not None and cancelar.is_set():
+            proc.kill()
+            proc.wait()
+            leitor.join(2)
+            tmp.unlink(missing_ok=True)
+            raise Cancelado()
+        try:
+            proc.wait(timeout=0.2)
+        except subprocess.TimeoutExpired:
+            pass
+    leitor.join(2)
+    if proc.returncode != 0 or not tmp.exists() or tmp.stat().st_size == 0:
         tmp.unlink(missing_ok=True)
-        msg = (r.stderr or "").strip().splitlines()
+        msg = "".join(erros).strip().splitlines()
         raise RuntimeError("Falha ao extrair o áudio" + (f": {msg[-1]}" if msg else
                            " (o vídeo pode não ter trilha de áudio)."))
     tmp.replace(destino)  # só "vale" quando terminou: um corte no meio não deixa MP3 quebrado
@@ -114,16 +134,27 @@ def extrair_capturas(video: Path, pasta: Path, intervalo_min: float = 4.0,
                  stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                  text=True, encoding="utf-8", errors="replace")
     tempos: list[float] = []
+    ultimas: deque[str] = deque(maxlen=5)
     assert proc.stderr is not None
+    cancelado = False
     for linha in proc.stderr:
         if cancelar is not None and cancelar.is_set():
             proc.kill()
+            cancelado = True
             break
         if "showinfo" in linha:
             m = _PTS.search(linha)
             if m:
                 tempos.append(float(m.group(1)))
+        elif linha.strip():
+            ultimas.append(linha.strip())
     proc.wait()
+    if cancelado:
+        raise Cancelado()
+    if proc.returncode != 0:  # erro técnico não pode virar "nenhuma troca de tela" (achado X10)
+        for lixo in pasta.glob("tmp_*.jpg"):
+            lixo.unlink(missing_ok=True)
+        raise RuntimeError("Falha ao procurar trocas de tela" + (f": {ultimas[-1]}" if ultimas else ""))
 
     brutos = sorted(pasta.glob("tmp_*.jpg"))
     mantidos: list[tuple[float, Path]] = []

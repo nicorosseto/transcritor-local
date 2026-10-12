@@ -20,7 +20,7 @@ class Tela:
 
 def montar(*, titulo: str, origem: str, duracao: float, modelo: str, preset: str,
            paragrafos: list[Paragrafo], telas: list[Tela], destino: Path,
-           correcoes: int = 0) -> tuple[str, int]:
+           correcoes: int = 0, falha_telas: str | None = None) -> tuple[str, int]:
     """Gera o conteúdo; telas entram logo após o parágrafo que cobre o seu instante."""
     blocos: list[str] = []
     telas = sorted(telas, key=lambda t: t.inicio)
@@ -45,7 +45,10 @@ def montar(*, titulo: str, origem: str, duracao: float, modelo: str, preset: str
         f"- **Palavras:** {palavras:,}".replace(",", "."),
         f"- **Transcrito em:** {datetime.now():%d/%m/%Y}",
         f"- **Modelo:** faster-whisper {modelo} ({preset})",
-        f"- **Texto de tela (OCR):** {'sim, ' + str(len(telas)) + ' trecho(s)' if telas else 'não'}",
+        "- **Texto de tela (OCR):** " + (f"não lido por completo ({falha_telas})" if falha_telas and not telas
+                                           else f"sim, {len(telas)} trecho(s)" + (f"; com falhas ({falha_telas})"
+                                                                                 if falha_telas else "")
+                                           if telas else "não"),
         f"- **Correções automáticas:** {correcoes} (lista correcoes.json)" if correcoes else None,
         "",
         "> Transcrição automática e literal da fala. Pode conter erros em nomes próprios e termos técnicos.",

@@ -73,16 +73,23 @@ def baixar_portugues() -> Path:
     return destino
 
 
+class ErroOCR(RuntimeError):
+    """Falha técnica do Tesseract (diferente de "a imagem não tem texto"; achado X10)."""
+
+
 def ler_imagem(estado: EstadoOCR, imagem: Path) -> str:
     if not estado.disponivel or not estado.executavel:
-        return ""
+        raise ErroOCR("Tesseract indisponível")
     cmd = [estado.executavel, str(imagem), "stdout", "-l", estado.idiomas, "--psm", "3"]
     if estado.pasta_tessdata:
         cmd[1:1] = ["--tessdata-dir", str(estado.pasta_tessdata)]
     try:
         r = rodar(cmd, capture_output=True, timeout=120)
-    except Exception:
-        return ""
+    except Exception as e:
+        raise ErroOCR(f"Tesseract não pôde ser executado: {e}") from e
+    if r.returncode != 0:
+        msg = r.stderr.decode("utf-8", errors="replace").strip().splitlines()
+        raise ErroOCR("Tesseract falhou" + (f": {msg[-1]}" if msg else f" (código {r.returncode})"))
     return r.stdout.decode("utf-8", errors="replace")
 
 

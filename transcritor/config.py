@@ -38,11 +38,45 @@ PRESETS = {
 NOME_ARQUIVO_CONFIG = "transcritor_config.json"
 
 
+def _nucleos_de_desempenho(classes: list[int]) -> int | None:
+    """Recebe a "classe de eficiência" de cada núcleo físico (Windows). Em CPU híbrida (Intel 12ª
+    geração em diante), os núcleos de desempenho (P-cores) têm a classe mais alta. Retorna quantos
+    são, ou None se a CPU não for híbrida."""
+    if not classes or len(set(classes)) < 2:
+        return None
+    return classes.count(max(classes))
+
+
+def _classes_de_eficiencia_windows() -> list[int]:
+    """GetLogicalProcessorInformationEx(RelationProcessorCore): um registro por núcleo físico."""
+    import ctypes
+    from ctypes import wintypes
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    tamanho = wintypes.DWORD(0)
+    k32.GetLogicalProcessorInformationEx(0, None, ctypes.byref(tamanho))
+    if not tamanho.value:
+        return []
+    buf = ctypes.create_string_buffer(tamanho.value)
+    if not k32.GetLogicalProcessorInformationEx(0, buf, ctypes.byref(tamanho)):
+        return []
+    classes, pos, dados = [], 0, buf.raw
+    while pos + 10 <= tamanho.value:
+        relacao = int.from_bytes(dados[pos:pos + 4], "little")
+        tam = int.from_bytes(dados[pos + 4:pos + 8], "little")
+        if tam <= 0:
+            break
+        if relacao == 0:              # RelationProcessorCore
+            classes.append(dados[pos + 9])  # Flags (1 byte) + EfficiencyClass (1 byte)
+        pos += tam
+    return classes
+
+
 def threads_padrao() -> int:
     """Núcleos FÍSICOS, não threads lógicas (P17).
 
     Medido em 11/10/2026 no PC de referência (6 núcleos / 12 threads), 3 min de fala, beam 1:
     4 threads = 1,57x · 6 = 1,56x · 12 = 1,34x. Passar dos núcleos físicos deixa o Whisper ~15% mais lento.
+    Em CPU híbrida no Windows, só os núcleos de desempenho (dedução, não medido; ver ADR-015).
     """
     try:
         import psutil
@@ -51,6 +85,13 @@ def threads_padrao() -> int:
         fisicos = None
     if not fisicos:
         fisicos = max(1, (os.cpu_count() or 8) // 2)  # sem psutil: supõe 2 threads por núcleo
+    if os.name == "nt":
+        try:  # CPU híbrida: os núcleos eficientes (E-cores) atrasam todas as threads
+            p_cores = _nucleos_de_desempenho(_classes_de_eficiencia_windows())
+            if p_cores:
+                return p_cores
+        except Exception:
+            pass
     return max(1, fisicos)
 
 

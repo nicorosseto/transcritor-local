@@ -169,9 +169,15 @@ class Projeto:
 
     # ---------------------------------------------------------------- varredura
     def escanear(self, ao_medir: Callable[[int, int], None] | None = None) -> list[Item]:
+        with Trava(self.cfg.pasta_saida):  # leitura também grava (registro, órfãos, base): achado X4
+            return self._escanear(ao_medir)
+
+    def _escanear(self, ao_medir) -> list[Item]:
         videos = listar_videos(self.cfg.pasta_videos)
         self.ultima_sincronizacao = self.registro.sincronizar(
             videos, self.caminho_md, self._mover_orfao, permitir_importar=self.legado)
+        if self.registro.aviso.startswith("Recuperado"):
+            self.ultima_sincronizacao["registro_recuperado"] = 1
         self.itens = []
         for n, (rel, abs_) in enumerate(videos, 1):
             linha = self.registro.linhas[rel]
@@ -211,6 +217,7 @@ class Projeto:
             return None
         estado = ocr.verificar()
         if not estado.disponivel:
+            self._resumo["ocr_indisponivel"] = estado.mensagem
             emitir("aviso", texto=estado.mensagem + " Seguindo SEM leitura de tela.")
             return None
         if not estado.tem_portugues:
@@ -219,6 +226,7 @@ class Projeto:
                 ocr.baixar_portugues()
                 estado = ocr.verificar()
             except Exception as e:
+                self._resumo["ocr_indisponivel"] = f"não consegui baixar o português do Tesseract ({e})"
                 emitir("aviso", texto=f"Não consegui baixar o português do Tesseract ({e}). "
                                       "Seguindo SEM leitura de tela.")
                 return None
@@ -292,7 +300,7 @@ class Projeto:
                 assinatura = assinatura_da_linha(item.linha)
                 if audio.exists() and item.linha.audio_de != assinatura:
                     audio.unlink()  # áudio de uma versão anterior do vídeo (achado X1)
-                midia.extrair_audio(item.caminho, audio)
+                midia.extrair_audio(item.caminho, audio, cancelar=cancelar)
                 item.linha.audio_de = assinatura
                 emitir("etapa", codigo="transcricao", texto="Transcrevendo a fala...")
                 array = midia.carregar_audio(audio)
@@ -327,22 +335,27 @@ class Projeto:
 
                 telas: list[markdown.Tela] = []
                 seg_ocr = 0.0
+                falha_telas = resumo.get("ocr_indisponivel") if self.cfg.ocr else None
                 if estado_ocr is not None:
                     t_ocr = time.perf_counter()
-                    telas = self._ler_telas(item, estado_ocr, emitir, cancelar)
+                    telas, falha_telas = self._ler_telas(item, estado_ocr, emitir, cancelar)
                     seg_ocr = time.perf_counter() - t_ocr
+                if falha_telas:  # a fala vale; a parte da tela fica marcada como falha (achado X10)
+                    resumo["telas_falharam"] = resumo.get("telas_falharam", 0) + 1
+                    emitir("aviso", texto=f"{item.rel}: texto da tela não foi lido por completo ({falha_telas}).")
 
                 emitir("etapa", codigo="salvar", texto="Salvando a transcrição...")
                 destino = self.caminho_md(item.rel)
                 conteudo, palavras = markdown.montar(
                     titulo=Path(item.rel).stem, origem=item.rel, duracao=dur,
                     modelo=self.cfg.modelo, preset=self.cfg.preset,
-                    paragrafos=paragrafos, telas=telas, destino=destino, correcoes=trocas)
+                    paragrafos=paragrafos, telas=telas, destino=destino, correcoes=trocas,
+                    falha_telas=falha_telas)
                 markdown.salvar(conteudo, destino)
 
                 l = item.linha
                 l.status, l.preset = OK, self.cfg.preset
-                l.ocr = "sim" if estado_ocr is not None else "nao"
+                l.ocr = "falhou" if falha_telas else ("sim" if estado_ocr is not None else "nao")
                 l.duracao_s = dur or l.duracao_s
                 l.transcrito_em = datetime.now().strftime("%d/%m/%Y %H:%M")
                 l.seg_transcricao, l.seg_ocr = round(seg_trans, 1), round(seg_ocr, 1)
@@ -350,10 +363,10 @@ class Projeto:
                 l.palavras, l.capturas = palavras, len(telas)
                 l.correcoes = trocas
                 l.threads, l.dispositivo, l.motor = self.cfg.threads_efetivas, self.dispositivo, versao_motor()
-                l.observacao = ""
+                l.observacao = f"texto da tela falhou: {falha_telas}"[:300] if falha_telas else ""
                 resumo["ok"] += 1
                 emitir("video_fim", rel=item.rel, palavras=palavras, segundos=time.perf_counter() - t0,
-                       velocidade=l.velocidade, telas=len(telas), correcoes=trocas)
+                       velocidade=l.velocidade, telas=len(telas), correcoes=trocas, falha_telas=falha_telas)
                 feito_lote += dur
                 gasto_lote += seg_trans
             except Cancelado:
@@ -376,21 +389,31 @@ class Projeto:
         emitir("lote_fim", **resumo)
         return resumo
 
-    def _ler_telas(self, item: Item, estado: ocr.EstadoOCR, emitir, cancelar) -> list[markdown.Tela]:
+    def _ler_telas(self, item: Item, estado: ocr.EstadoOCR, emitir,
+                   cancelar) -> tuple[list[markdown.Tela], str | None]:
+        """Retorna (telas, falha). falha=None quando tudo foi lido; senão, o motivo (achado X10)."""
         emitir("etapa", codigo="telas", texto="Procurando trocas de tela...")
-        capturas = midia.extrair_capturas(item.caminho, self.pasta_capturas(item.rel), cancelar=cancelar)
+        try:
+            capturas = midia.extrair_capturas(item.caminho, self.pasta_capturas(item.rel), cancelar=cancelar)
+        except RuntimeError as e:
+            return [], str(e)
         telas: list[markdown.Tela] = []
-        ultimo = ""
+        ultimo, falhas, ultimo_erro = "", 0, ""
         for i, (t, img) in enumerate(capturas, 1):
             if cancelar.is_set():
                 raise Cancelado()
             emitir("progresso_telas", feito=i, total=len(capturas))
-            texto = ocr.limpar(ocr.ler_imagem(estado, img))
+            try:
+                texto = ocr.limpar(ocr.ler_imagem(estado, img))
+            except ocr.ErroOCR as e:
+                falhas, ultimo_erro = falhas + 1, str(e)
+                continue
             if not ocr.e_util(texto) or ocr.parecido(texto, ultimo):
                 continue
             telas.append(markdown.Tela(t, texto, img))
             ultimo = texto
-        return telas
+        falha = f"{falhas} de {len(capturas)} capturas não puderam ser lidas: {ultimo_erro}" if falhas else None
+        return telas, falha
 
     def consolidar(self) -> list[Path]:
         feitos = [(l.caminho, self.caminho_md(l.caminho)) for l in self.registro.ativos() if l.status == OK]

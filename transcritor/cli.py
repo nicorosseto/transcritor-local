@@ -11,7 +11,8 @@ from . import __version__
 from .config import PRESETS, Config, vocabulario_de_texto
 from .hardware import AVISO, ERRO, OK, diagnosticar
 from .pipeline import Evento, Projeto, ProjetoDeOutraOrigem
-from .util import hhmmss
+from .resultado import codigo_saida, resumo_final
+from .util import PastaEmUso, hhmmss
 
 ICONE = {OK: "✅", AVISO: "⚠️ ", ERRO: "❌", "info": "ℹ️ "}
 
@@ -57,7 +58,10 @@ def imprimir_diagnostico(cfg: Config) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(prog="transcritor", description="Transcreve vídeos para Markdown, localmente.")
+    p = argparse.ArgumentParser(
+        prog="transcritor", description="Transcreve vídeos para Markdown, localmente.",
+        epilog="Códigos de saída: 0 = concluído · 1 = falha · 2 = parcial (algum erro) · "
+               "3 = parado/cancelado · 130 = Ctrl+C")
     p.add_argument("--videos", type=Path, default=Path("videos"), help="pasta com os vídeos (padrão: ./videos)")
     p.add_argument("--saida", type=Path, default=Path("saida"), help="pasta de resultados (padrão: ./saida)")
     p.add_argument("--pasta-movida", action="store_true",
@@ -88,7 +92,11 @@ def main(argv: list[str] | None = None) -> int:
               "rode de novo com --pasta-movida.")
         return 1
     print("\nLendo a pasta de vídeos...")
-    itens = projeto.escanear(lambda n, t: print(f"\r  medindo durações {n}/{t}", end="", flush=True))
+    try:
+        itens = projeto.escanear(lambda n, t: print(f"\r  medindo durações {n}/{t}", end="", flush=True))
+    except PastaEmUso as e:
+        print(f"\n❌ {e}")
+        return 1
     print()
     s = projeto.ultima_sincronizacao
     pend = projeto.pendentes()
@@ -177,9 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         elif ev.tipo == "aviso":
             print(f"\n    ⚠️  {d['texto']}")
         elif ev.tipo == "lote_fim":
-            print(f"\nFim: {d['ok']} ok, {d['erro']} com erro. Registro: {cfg.arquivo_registro}")
-            if d.get("fatal"):
-                print(f"❌ A rodada parou por um erro: {d['fatal']}")
+            print(f"\nFim: {resumo_final(d)[1]}\nRegistro: {cfg.arquivo_registro}")
 
     cancelar = threading.Event()
     try:
@@ -189,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
         projeto.registro.salvar()
         print("\nInterrompido. O que já terminou está salvo.")
         return 130
-    return 1 if resumo.get("fatal") else 0
+    return codigo_saida(resumo)
 
 
 if __name__ == "__main__":

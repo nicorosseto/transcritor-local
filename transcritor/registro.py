@@ -73,17 +73,30 @@ def chave_padrao(rel: str) -> str:
 
 
 class Registro:
+    NOME_PENDENTE = "registro_PENDENTE_feche_o_excel.csv"
+
     def __init__(self, arquivo: Path):
         self.arquivo = arquivo
         self.linhas: dict[str, Linha] = {}
         self.aviso: str = ""
-        self._ler()
+        self.pendente = arquivo.with_name(self.NOME_PENDENTE)
+        self._ler(self._origem())
 
     # ---------------------------------------------------------------- E/S
-    def _ler(self) -> None:
-        if not self.arquivo.is_file():
+    def _origem(self) -> Path:
+        """Se uma gravação anterior caiu na cópia de emergência (Excel aberto), ela é o estado
+        mais novo: recupera dela (achado X15). A cópia some no próximo salvamento bem-sucedido."""
+        if self.pendente.is_file() and (not self.arquivo.is_file() or
+                                        self.pendente.stat().st_mtime >= self.arquivo.stat().st_mtime):
+            self.aviso = (f"Recuperado o registro de {self.pendente.name} (gravado quando o registro.csv "
+                          "estava aberto em outro programa).")
+            return self.pendente
+        return self.arquivo
+
+    def _ler(self, origem: Path) -> None:
+        if not origem.is_file():
             return
-        with open(self.arquivo, encoding="utf-8-sig", newline="") as f:
+        with open(origem, encoding="utf-8-sig", newline="") as f:
             for row in csv.DictReader(f, delimiter=";"):
                 dados = {}
                 for campo in fields(Linha):
@@ -118,10 +131,11 @@ class Registro:
             try:
                 tmp.replace(self.arquivo)
                 self.aviso = ""
+                self.pendente.unlink(missing_ok=True)  # já incorporada
                 return
             except PermissionError:
                 time.sleep(1)
-        copia = self.arquivo.with_name("registro_PENDENTE_feche_o_excel.csv")
+        copia = self.pendente
         shutil.copyfile(tmp, copia)
         tmp.unlink(missing_ok=True)
         self.aviso = (f"O registro.csv parece aberto em outro programa (Excel?). "
