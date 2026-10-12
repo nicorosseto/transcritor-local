@@ -17,6 +17,7 @@ Este desenho representa uma proposta; a interface do aplicativo não foi modific
 3. [Wireframe visual](layout-proposto.svg): organização sugerida, com conteúdo ilustrativo; não é a interface implementada.
 4. [Evidências das reproduções](evidencias.json) e [script utilizado](reproducoes.py): verificações adicionais executadas em arquivos temporários.
 5. [Dependências instaladas na auditoria](dependencias-instaladas.txt): registro histórico das versões resolvidas, não um lockfile de produção nem uma declaração de versões homologadas.
+6. [Contra-auditoria do Claude (11/10/2026)](CONTRA_AUDITORIA_CLAUDE.md): verificação independente dos 16 achados, divergências de severidade, hipótese para a lentidão (P17), plano revisado e avaliação sobre manter as auditorias quando o repositório for público.
 
 ## Para continuar com o Claude
 
