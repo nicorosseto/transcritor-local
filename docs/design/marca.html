@@ -1,0 +1,200 @@
+<title>Marca do Transcritor Local</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: folha de identidade. Marca grande em fundo preto no topo; depois construção, variações, tamanhos, cores e regras de uso em blocos de largura total. */
+:root{
+  --bg:#f3f5f4; --panel:#ffffff; --fg:#141a17; --muted:#5d6a64; --line:#d9e0dc; --accent:#1f8a55;
+  --preto:#000000; --lateral:#0a1612; --verde:#4fd18b; --verde-escuro:#2fae6a; --branco:#ffffff; --cinza:#a3a3a3;
+  --f-marca:"Sora","Segoe UI",system-ui,sans-serif;
+  --f-ui:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0c0f0e;--panel:#141917;--fg:#eef2f0;--muted:#9aa8a2;--line:#24302b;--accent:#4fd18b;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c0f0e;--panel:#141917;--fg:#eef2f0;--muted:#9aa8a2;--line:#24302b;--accent:#4fd18b;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:15px;line-height:1.55}
+.page{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:24px 64px;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h2{font-family:var(--f-marca);font-weight:600;font-size:21px}
+p{margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+.hero{background:var(--preto);color:var(--branco);border-radius:14px;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:26px;text-align:center}
+.lockup{display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center}
+.lockup svg{width:112px;height:112px;flex:none}
+.wm{font-family:var(--f-marca);font-weight:600;font-size:clamp(34px,6vw,56px);letter-spacing:-.02em;line-height:1}
+.wm .l{color:var(--verde);font-weight:400}
+.hero .sub{color:var(--cinza);max-width:56ch}
+.sec{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:center}
+@media (max-width:780px){.grid2{grid-template-columns:1fr}}
+.const{background:var(--preto);border-radius:10px;padding:16px;display:flex;justify-content:center}
+.const svg{width:100%;max-width:360px;height:auto}
+ol.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.vars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.vars{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.var{border-radius:10px;padding:22px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0;border:1px solid var(--line)}
+.var svg{width:72px;height:72px}
+.var .cap{font-size:12.5px;text-align:center}
+.v-preto{background:#000;color:#cfd6d3}
+.v-lat{background:var(--lateral);color:#cfd6d3}
+.v-claro{background:#f6f7f6;color:#3d4a44}
+.v-verde{background:var(--verde);color:#0a2416}
+.sizes{display:flex;align-items:flex-end;gap:26px;flex-wrap:wrap;background:#000;border-radius:10px;padding:22px;color:#cfd6d3}
+.sizes figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:var(--f-mono);font-size:11px}
+.lockups{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:780px){.lockups{grid-template-columns:1fr}}
+.lk{border-radius:10px;padding:22px;display:flex;align-items:center;gap:14px;min-width:0}
+.lk svg{width:52px;height:52px;flex:none}
+.lk .wm{font-size:28px}
+.lk.claro{background:#f6f7f6;color:#111}
+.lk.claro .wm .l{color:var(--verde-escuro)}
+.lk.escuro{background:var(--lateral);color:#fff}
+.cores{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+@media (max-width:860px){.cores{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cor{border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.cor .sw{height:74px}
+.cor .tx{padding:10px 12px;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.cor .tx code{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.regras{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:780px){.regras{grid-template-columns:1fr}}
+.regras ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.sim b{color:var(--accent)}
+</style>
+
+<main class="page">
+  <section class="hero" aria-label="Logotipo">
+    <span class="eyebrow" style="color:var(--verde)">Identidade visual · v1</span>
+    <div class="lockup">
+      <svg viewBox="0 0 64 64" role="img" aria-label="Símbolo do Transcritor Local"><use href="#simbolo"/></svg>
+      <div class="wm">Transcritor <span class="l">local</span></div>
+    </div>
+    <p class="sub">A fala vira texto dentro do próprio símbolo: duas barras de som em verde, e a terceira dobra e se torna a linha do meio de um parágrafo branco.</p>
+  </section>
+
+  <section class="sec">
+    <span class="eyebrow">Conceito e construção</span>
+    <div class="grid2">
+      <div class="const">
+        <svg viewBox="-8 -8 80 80" role="img" aria-label="Grade de construção do símbolo">
+          <g stroke="#2a3a33" stroke-width=".25">
+            <path d="M0 0H64M0 8H64M0 16H64M0 24H64M0 32H64M0 40H64M0 48H64M0 56H64M0 64H64M0 0V64M8 0V64M16 0V64M24 0V64M32 0V64M40 0V64M48 0V64M56 0V64M64 0V64"/>
+          </g>
+          <use href="#simbolo" x="0" y="0" width="64" height="64"/>
+          <g fill="none" stroke="#e2a54a" stroke-width=".4" stroke-dasharray="1.2 1">
+            <path d="M6 32H58"/><path d="M29 14V50"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="2.6" fill="#e2a54a">
+            <text x="-7" y="31">eixo</text><text x="30.5" y="12.5">dobra</text>
+          </g>
+        </svg>
+      </div>
+      <div class="col" style="display:flex;flex-direction:column;gap:12px">
+        <h2>Da onda à linha</h2>
+        <ol class="steps">
+          <li><b>Duas barras verdes</b> de alturas diferentes, centradas no eixo do meio: é o áudio.</li>
+          <li><b>A terceira barra dobra 90°</b> no eixo e segue na horizontal. O traço muda de verde para branco na curva: é o momento da transcrição.</li>
+          <li><b>Duas linhas brancas</b> acima e abaixo completam um parágrafo de três linhas: é o texto.</li>
+          <li><b>Moldura arredondada escura</b>, como o ícone de um app de Windows, com raio de 15 em 64.</li>
+        </ol>
+        <p class="muted">Tudo em traços de mesma espessura e pontas arredondadas, sobre uma grade de 64. Cores seguem a regra do app: verde no que age, branco no que se lê.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <span class="eyebrow">Variações</span>
+    <div class="vars">
+      <div class="var v-preto"><svg viewBox="0 0 64 64"><use href="#simbolo"/></svg><span class="cap">Principal · fundo preto do app</span></div>
+      <div class="var v-lat"><svg viewBox="0 0 64 64"><use href="#simbolo"/></svg><span class="cap">Sobre a barra lateral</span></div>
+      <div class="var v-claro"><svg viewBox="0 0 64 64"><use href="#simbolo-claro"/></svg><span class="cap">Fundo claro (README, documentos)</span></div>
+      <div class="var v-verde"><svg viewBox="0 0 64 64"><use href="#simbolo-mono"/></svg><span class="cap">Uma cor só (impressão, carimbo)</span></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <span class="eyebrow">Tamanhos reais</span>
+    <div class="sizes">
+      <figure><svg width="16" height="16" viewBox="0 0 64 64"><use href="#simbolo-pequeno"/></svg><figcaption>16 px · aba e bandeja</figcaption></figure>
+      <figure><svg width="24" height="24" viewBox="0 0 64 64"><use href="#simbolo-pequeno"/></svg><figcaption>24 px · barra de tarefas</figcaption></figure>
+      <figure><svg width="32" height="32" viewBox="0 0 64 64"><use href="#simbolo"/></svg><figcaption>32 px · barra lateral</figcaption></figure>
+      <figure><svg width="48" height="48" viewBox="0 0 64 64"><use href="#simbolo"/></svg><figcaption>48 px · atalho</figcaption></figure>
+      <figure><svg width="96" height="96" viewBox="0 0 64 64"><use href="#simbolo"/></svg><figcaption>96 px · abertura</figcaption></figure>
+    </div>
+    <p class="muted">Abaixo de 32 px, a versão simplificada tira a linha de baixo e engrossa os traços, para continuar legível no ícone da barra de tarefas.</p>
+  </section>
+
+  <section class="sec">
+    <span class="eyebrow">Assinaturas horizontais</span>
+    <div class="lockups">
+      <div class="lk escuro"><svg viewBox="0 0 64 64"><use href="#simbolo"/></svg><span class="wm">Transcritor <span class="l">local</span></span></div>
+      <div class="lk claro"><svg viewBox="0 0 64 64"><use href="#simbolo-claro"/></svg><span class="wm">Transcritor <span class="l">local</span></span></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <span class="eyebrow">Cores</span>
+    <div class="cores">
+      <div class="cor"><div class="sw" style="background:#000000"></div><div class="tx"><b>Preto</b><code>#000000</code><span class="muted">Miolo do app</span></div></div>
+      <div class="cor"><div class="sw" style="background:#0a1612"></div><div class="tx"><b>Barra lateral</b><code>#0A1612</code><span class="muted">Preto com um fio de verde</span></div></div>
+      <div class="cor"><div class="sw" style="background:#4fd18b"></div><div class="tx"><b>Verde</b><code>#4FD18B</code><span class="muted">Tudo que se clica ou seleciona</span></div></div>
+      <div class="cor"><div class="sw" style="background:#ffffff;border-bottom:1px solid var(--line)"></div><div class="tx"><b>Branco</b><code>#FFFFFF</code><span class="muted">Texto principal</span></div></div>
+      <div class="cor"><div class="sw" style="background:#a3a3a3"></div><div class="tx"><b>Cinza</b><code>#A3A3A3</code><span class="muted">Texto secundário</span></div></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <span class="eyebrow">Uso</span>
+    <div class="regras">
+      <div class="sim"><b>Fazer</b><ul><li>Manter a moldura escura atrás do símbolo, mesmo em fundo claro.</li><li>Usar a versão simplificada abaixo de 32 px.</li><li>Deixar um respiro em volta de pelo menos 1/4 da largura do símbolo.</li></ul></div>
+      <div><b>Evitar</b><ul><li>Trocar o verde por outra cor ou aplicar degradês fora da dobra.</li><li>Girar, esticar ou separar as barras das linhas.</li><li>Colocar o símbolo sobre fotos ou fundos com muita textura.</li></ul></div>
+    </div>
+  </section>
+</main>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="dobra" gradientUnits="userSpaceOnUse" x1="29" y1="0" x2="47" y2="0">
+      <stop offset="0" stop-color="#4fd18b"/><stop offset=".45" stop-color="#4fd18b"/><stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="dobra-claro" gradientUnits="userSpaceOnUse" x1="29" y1="0" x2="47" y2="0">
+      <stop offset="0" stop-color="#4fd18b"/><stop offset=".45" stop-color="#4fd18b"/><stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <symbol id="simbolo" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="15" fill="#0a1612"/>
+      <rect x=".75" y=".75" width="62.5" height="62.5" rx="14.25" fill="none" stroke="#1d3a2e" stroke-width="1.5"/>
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.6">
+        <path d="M13 27V37" stroke="#4fd18b"/>
+        <path d="M21 18V46" stroke="#4fd18b"/>
+        <path d="M29 41V36Q29 32 33 32H47" stroke="url(#dobra)"/>
+        <path d="M37 21H51" stroke="#ffffff"/>
+        <path d="M37 43H49" stroke="#ffffff" opacity=".9"/>
+      </g>
+    </symbol>
+    <symbol id="simbolo-claro" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="15" fill="#0a1612"/>
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.6">
+        <path d="M13 27V37" stroke="#4fd18b"/>
+        <path d="M21 18V46" stroke="#4fd18b"/>
+        <path d="M29 41V36Q29 32 33 32H47" stroke="url(#dobra-claro)"/>
+        <path d="M37 21H51" stroke="#ffffff"/>
+        <path d="M37 43H49" stroke="#ffffff" opacity=".9"/>
+      </g>
+    </symbol>
+    <symbol id="simbolo-mono" viewBox="0 0 64 64">
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="5" stroke="#0a2416">
+        <path d="M13 27V37"/><path d="M21 18V46"/><path d="M29 41V36Q29 32 33 32H47"/><path d="M37 21H51"/><path d="M37 43H49"/>
+      </g>
+    </symbol>
+    <symbol id="simbolo-pequeno" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="14" fill="#0a1612"/>
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7.5">
+        <path d="M15 24V40" stroke="#4fd18b"/>
+        <path d="M27 40V36Q27 30 33 30H49" stroke="url(#dobra)"/>
+        <path d="M39 18H49" stroke="#ffffff"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>

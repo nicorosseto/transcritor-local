@@ -197,3 +197,23 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 - **Parcial** cobre vídeos com erro **e** vídeos cuja fala foi transcrita, mas a leitura da tela falhou. Nesse segundo caso, o vídeo fica concluído (refazer custaria a transcrição inteira), com `ocr = falhou` no registro e o motivo no `.md`.
 - "Não havia texto na tela" e "o Tesseract falhou" são coisas diferentes: a segunda vira `ErroOCR`, nunca texto vazio.
 - Códigos da CLI: 0 sucesso/vazio · 1 falha · 2 parcial · 3 interrompido · 130 Ctrl+C.
+
+---
+
+## ADR-017: Layout com barra lateral, preto e verde só no clicável
+
+**Data:** 11/10/2026 · **Status:** aceita · **Origem:** revisão de interface do Codex (UX-01 a UX-11) e escolha do responsável entre três propostas ([referência](design/layout-aprovado.html))
+
+**Decisão.**
+- **Estrutura:** barra lateral com o projeto e três páginas (Vídeos, Resultados, Preparação do PC). A tela de trabalho continua sendo uma só: tabela, opções ao lado e uma **barra de ação** embaixo.
+- **Barra de ação:** escolher a quantidade é obrigatório (ADR-007), agora com **cartões** que mostram o tempo estimado de cada opção (1, 3, 5, Todos) ao lado do botão "Transcrever N". Durante a rodada, a mesma barra vira o progresso (etapas, barra única e término previsto); no fim, mostra o resultado, com "Ver resultados" e "Nova rodada".
+- **Cores** (`gui/tema.py`): fundo preto `#000`, textos brancos, barra lateral `#0A1612`, e **verde `#4FD18B` só no que é clicável ou selecionado**. Botões secundários são escuros com borda; o botão principal só fica verde quando dá para clicar.
+- **Marca:** logotipo "da onda à linha" desenhado em código (`gui/marca.py`), usado na janela e no ícone do `.exe` (`packaging/icone.ico`).
+- **Preparação do PC** deixou de ser uma janela por cima e virou página. O app abre nela sozinho quando falta algo obrigatório, e o item pisca na barra lateral.
+- **Resultados:** página que lê o `registro.csv` (palavras, velocidade, texto da tela, data) e mostra o registro de atividades, antes escondido num painel recolhível.
+
+**Fica de fora (v0.3):** vários projetos na barra lateral, tema claro, busca e filtro na tabela.
+
+**Limitações conhecidas.**
+- A tabela é um `ttk.Treeview`: não dá para colorir só a "pílula" de status, então a linha inteira muda de cor (verde rodando, vermelho erro, laranja arquivo mudou).
+- Acessibilidade por leitor de tela segue limitada pelo Tkinter (contra-auditoria, seção 5).

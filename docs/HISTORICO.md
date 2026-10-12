@@ -82,3 +82,17 @@ Status completo por ID: [auditorias/STATUS.md](auditorias/STATUS.md).
 | Um vídeo enorme estourava o limite de palavras da base (X9) | Dividido entre parágrafos |
 
 Com isso, 15 dos 16 achados da auditoria independente estão corrigidos; falta só o X14 (reprodutibilidade do build), previsto para antes de publicar.
+
+## v0.1.4 (11/10/2026): novo layout
+
+O responsável escolheu, entre três propostas, a navegação com barra lateral (proposta C), o esforço da proposta B e as cores da A, com fundo todo preto e verde só no que é clicável. Também aprovou o logotipo "da onda à linha" (ADR-017).
+
+| Antes | Agora |
+|---|---|
+| Uma tela longa com cabeçalho, opções e um painel de log | Barra lateral + páginas Vídeos, Resultados e Preparação do PC |
+| Quantidade num menu suspenso e estimativa num bloco de texto | Cartões 1 / 3 / 5 / Todos com o tempo de cada um, ao lado de "Transcrever N" |
+| "Verificar PC" em janela por cima | Página própria, aberta sozinha quando falta algo obrigatório |
+| Tema claro/escuro do sistema, azul | Preto, lateral `#0A1612`, verde `#4FD18B` só no clicável |
+| Ícone padrão do Python | Logotipo na janela e no `.exe` |
+
+As telas foram conferidas em 1366x768 com o modelo simulado (`ferramentas/capturar_telas.py`). **Ainda não foram vistas no Windows real.**

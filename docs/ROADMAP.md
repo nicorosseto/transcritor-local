@@ -18,8 +18,9 @@
 - [x] X4, X10, X15, X8, X9, X12 e o restante do X13
 - [x] CPU híbrida: só núcleos de desempenho (dedução; validar quando houver um PC desses)
 
-## v0.1.4: novo layout aprovado
-- Fundo preto, barra lateral `#0A1612`, verde só no que é clicável, logotipo "da onda à linha" e ícone do `.exe`
+## v0.1.4: novo layout aprovado ✅
+- [x] Fundo preto, barra lateral `#0A1612`, verde só no que é clicável, logotipo "da onda à linha" e ícone do `.exe` (ADR-017)
+- [ ] Conferir no Windows real (P1): escalas 125% e 150%, fluxo completo por teclado
 
 ## v0.2: IA visual local (segunda fase)
 - Coluna "IA visual" na tabela: escolher **por vídeo**

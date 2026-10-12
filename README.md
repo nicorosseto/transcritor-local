@@ -4,9 +4,13 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 
 ![Tela do Transcritor Local](docs/img/app.png)
 
-<details><summary>Tela "Verificar PC e preparar" (primeira abertura)</summary>
+<details><summary>Outras telas: Vídeos, Resultados e Preparação do PC</summary>
 
-![Verificar PC e preparar](docs/img/verificar_pc.png)
+![Vídeos](docs/img/videos.png)
+
+![Resultados](docs/img/resultados.png)
+
+![Preparação do PC](docs/img/verificar_pc.png)
 
 </details>
 
@@ -63,7 +67,7 @@ Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/
 
 1. Baixe o `.zip` mais recente em **Releases** (versões estáveis) ou, para a versão de teste, em **Actions → Build Windows (.exe) → execução mais recente → Artifacts → TranscritorLocal-windows** (role até o fim da página)
 2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`). É um zip só; dentro há um único programa e o arquivo `COMO_ABRIR.txt`
-3. Abra `TranscritorLocal.exe`. Na primeira vez, a tela **Verificar PC e preparar** baixa o modelo de transcrição (~1,6 GB, uma única vez)
+3. Abra `TranscritorLocal.exe`. Na primeira vez, a página **Preparação do PC** baixa o modelo de transcrição (~1,6 GB, uma única vez)
 
 Python e FFmpeg já vêm embutidos. Na primeira abertura, o Windows pode exibir *"O Windows protegeu o computador"*, porque o app ainda não tem assinatura digital: clique em **Mais informações → Executar assim mesmo**.
 
@@ -133,6 +137,7 @@ Exemplo de trecho gerado (conteúdo fictício):
 | [Auditoria](docs/AUDITORIA.md) | Lacunas encontradas, corrigidas e pendentes |
 | [Auditoria independente — Codex (08/10/2026)](docs/auditorias/2026-10-08/README.md) | Achados técnicos, evidências, revisão de interface e proposta de layout |
 | [Status das auditorias](docs/auditorias/STATUS.md) | O que foi corrigido, em qual teste, e o que falta |
+| [Retomada](docs/RETOMADA.md) | Onde o projeto parou e qual é o próximo passo |
 | [Roadmap](docs/ROADMAP.md) | Próximas versões |
 | [Licenças de terceiros](docs/LICENCAS_TERCEIROS.md) | FFmpeg, Whisper, Tesseract e bibliotecas |
 

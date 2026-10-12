@@ -20,7 +20,7 @@ O Tesseract é **opcional** nos dois caminhos: só é necessário para ler o tex
 3. Abra **`TranscritorLocal.exe`**.
 4. Se aparecer "O Windows protegeu o computador": **Mais informações → Executar assim mesmo**. Isso ocorre porque o app não tem assinatura digital paga, não porque é perigoso. O código é aberto e está neste repositório.
 
-5. Na primeira vez, aparece a tela **Verificar PC e preparar**. Clique em **Baixar agora** no item "Modelo de transcrição" (~1,6 GB, uma única vez). Você não precisa instalar Python nem FFmpeg.
+5. Na primeira vez, o app abre na página **Preparação do PC**. Clique em **Baixar agora** no item "Modelo de transcrição" (~1,6 GB, uma única vez). Você não precisa instalar Python nem FFmpeg.
 
 > O modo terminal existe só para quem roda pelo código-fonte (`python transcrever.py`).
 
@@ -71,17 +71,23 @@ python transcrever.py            # terminal (usa as pastas .\videos e .\saida)
 winget install --id UB-Mannheim.TesseractOCR -e
 ```
 
-O pacote de **português** é baixado automaticamente pelo app na primeira vez (~2 MB, na sua pasta de usuário, sem precisar de administrador). Para conferir, use o botão **🖥 Verificar PC**.
+O pacote de **português** é baixado automaticamente pelo app na primeira vez (~2 MB, na sua pasta de usuário, sem precisar de administrador). Para conferir, abra a página **Preparação do PC** na barra lateral.
 
 ## 5. Usando o app
 
+![Página Vídeos](img/videos.png)
+
+A barra lateral tem três páginas: **Vídeos** (onde se trabalha), **Resultados** (o que já foi transcrito e o registro de atividades) e **Preparação do PC** (o que falta instalar ou baixar). Se faltar algo obrigatório, o app abre direto na Preparação.
+
 | Passo | Onde | O que fazer |
 |---|---|---|
-| ① | Pasta dos vídeos | **Procurar** → escolha a pasta. Subpastas são respeitadas; pastas que começam com `_` são ignoradas |
-| ② | Pasta de saída | É sugerida automaticamente (`<pasta>_transcricoes`). Não pode ficar **dentro** da pasta de vídeos |
-| ③ | Tabela | Clique na caixinha para marcar/desmarcar. Os pendentes já vêm marcados |
-| ④ | Opções | Qualidade, texto da tela, vocabulário e **quantos vídeos nesta rodada** (obrigatório) |
-| ▶ | Iniciar | Confirme a estimativa. Acompanhe o progresso e a previsão de término |
+| 1 | **Origem** | **Escolher** → a pasta dos vídeos. Subpastas são respeitadas; pastas que começam com `_` são ignoradas. A lista aparece sozinha (ou use **Ler pasta**) |
+| 2 | **Saída** | É sugerida automaticamente (`<pasta>_transcricoes`). Não pode ficar **dentro** da pasta de vídeos. **Abrir** mostra a pasta |
+| 3 | Tabela | Clique na **caixinha** (1ª coluna) para marcar ou desmarcar; clique no nome para ver os detalhes ao lado. Os pendentes já vêm marcados. **Pendentes / Todos / Nenhum** marcam em bloco |
+| 4 | Opções da rodada | Qualidade, ler texto da tela e, em "Vocabulário e correções", as dicas de termos |
+| 5 | Barra de baixo | Escolha **quantos vídeos nesta rodada** (obrigatório): cada cartão mostra o tempo estimado. Depois, **Transcrever N** |
+
+Durante a rodada, a barra de baixo mostra as etapas, o progresso e o término previsto, e a barra lateral repete o andamento. As pastas ficam travadas até o fim.
 
 **Dicas de qualidade:**
 - **Equilibrado** é o padrão recomendado. **Preciso** é ~1,5–2x mais lento. **Rápido** usa um modelo menor e erra mais termos técnicos.
@@ -118,7 +124,7 @@ O pacote de **português** é baixado automaticamente pelo app na primeira vez (
 | "Pasta de saída já está sendo usada" | Duas janelas na mesma saída | Feche a outra janela |
 | Muito lento | CPU antiga ou poucos núcleos | Use **Rápido**; rode à noite |
 | Vídeo com status "erro" | Arquivo corrompido ou sem áudio | Abra no player para conferir; ele é tentado de novo na próxima rodada |
-| Vídeo "✅ concluído · ⚠️ tela não lida" | O Tesseract ou o FFmpeg falhou ao ler a tela; a fala está salva | Veja o motivo no `.md` (linha "Texto de tela") e no `registro.csv`. Rode **Verificar PC** |
+| Vídeo "✓ Concluído · ⚠ tela não lida" | O Tesseract ou o FFmpeg falhou ao ler a tela; a fala está salva | Veja o motivo no `.md` (linha "Texto de tela") e no `registro.csv`. Abra **Preparação do PC** |
 | `.em_uso.lock` / "pasta já está sendo usada" | Outra janela, ou uma leitura em andamento | Aguarde ou feche a outra janela. Uma trava esquecida por um app que fechou à força é retomada sozinha |
 | Caminho muito longo | Limite de 260 caracteres do Windows | Use nomes de pasta mais curtos ou ative "caminhos longos" no Windows |
 | "Pasta de saída de outro projeto" | A saída escolhida já guarda transcrições de **outra** pasta de vídeos | Vídeos diferentes: escolha outra saída. Só moveu ou renomeou a pasta de vídeos: "A pasta foi movida, continuar" (no terminal, `--pasta-movida`) |
@@ -150,4 +156,4 @@ Só para placas **NVIDIA**. Placas AMD e Intel não são usadas pelo motor atual
 python -m pip install nvidia-cublas-cu12 "nvidia-cudnn-cu12==9.*"
 ```
 
-Se o **Verificar PC** mostrar "NVIDIA com CUDA detectada", está pronto. Se a GPU falhar, o app volta para a CPU sozinho.
+Se a página **Preparação do PC** mostrar "NVIDIA com CUDA detectada", está pronto. Se a GPU falhar, o app volta para a CPU sozinho.
