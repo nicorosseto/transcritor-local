@@ -117,11 +117,13 @@ Ressalvas:
 |---|---|---|
 | Publicar com defeitos de integridade conhecidos e não corrigidos | Média | Publicar **depois da fase 1**, com tabela de status por ID (corrigido em / teste / pendente) |
 | Não são vulnerabilidades exploráveis | — | O app é local, sem servidor nem porta aberta; os achados afetam a integridade dos dados do próprio usuário, não terceiros. Expô-los não cria vetor de ataque |
-| **E-mail pessoal nos commits** | Média | Os commits foram feitos com e-mail pessoal. Ao tornar o repositório público, ele fica visível no histórico. Usar o e-mail `noreply` do GitHub nos próximos commits e decidir se o histórico existente deve ser reescrito **antes** de publicar (reescrever depois não remove cópias já feitas) |
-| Nome de curso pago citado na documentação ("vídeo de referência" em `HISTORICO.md` e `AUDITORIA.md`) | Baixa | Trocar por "vídeo de referência (36 min)". O conteúdo transcrito nunca foi versionado (`.gitignore`), mas **editar o arquivo não apaga o histórico**: vale a mesma decisão do item anterior |
+| **E-mail pessoal nos commits** | Resolvido | Em 11/10/2026, com autorização do responsável, o histórico foi reescrito: todos os commits passaram a usar o e-mail `noreply` do GitHub, e os próximos já saem assim |
+| Nome de curso pago citado na documentação | Resolvido | Na mesma reescrita, o nome foi trocado por "vídeo de referência" em todos os arquivos e em todas as versões do histórico |
 | Detalhes do PC de referência (CPU, RAM, GPU) | Baixa | Inofensivos e úteis como benchmark; manter |
 | `dependencias-instaladas.txt` e notas do ambiente do Codex | Baixa | Inofensivos; manter como registro histórico, já rotulados como tal |
 | Licenças (FFmpeg GPL embutido, P8) | Média | Resolver P8 antes da primeira **Release** pública; o código-fonte em si não embute o FFmpeg |
+
+> **Observação:** o GitHub pode manter por um tempo cópias em cache dos commits antigos, acessíveis só a quem tiver o identificador exato. Como o repositório é privado e não houve forks, o risco é baixo. Para remoção definitiva antes de publicar, é possível pedir ao suporte do GitHub a limpeza dessas referências.
 
 ### Formato sugerido na publicação
 
