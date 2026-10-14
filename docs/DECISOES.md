@@ -250,3 +250,5 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 **Decisão.** O botão é **Transcrever N**, com N igual ao número de marcados e o tempo estimado embaixo. A proteção contra rodada acidental é a confirmação, que lista até 5 vídeos, a quantidade e o tempo, centralizada sobre a janela. Os atalhos Pendentes, Todos e Nenhum ficam.
 
 **Consequências.** (+) Um gesto a menos e nenhuma ambiguidade sobre quais vídeos rodam. (−) Quem deixa tudo marcado e clica rápido vê a confirmação como única barreira; por isso ela lista os vídeos.
+
+**Adendo (v0.1.9, N13).** O cabeçalho "Como ler este arquivo" ganhou a instrução de avisar quando o conteúdo não puder ser lido, em vez de inventar. É uma mitigação: reduz o risco, não o elimina. O app não tem como saber o que a IA realmente abriu.

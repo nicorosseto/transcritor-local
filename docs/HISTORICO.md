@@ -146,3 +146,11 @@ A 4ª rodada (v0.1.7, dois vídeos na mesma saída, com um Cancelar no meio) mos
 | N10 | Tabela repintada ao fim de uma rodada cancelada (ficava "Transcrevendo" e "Na fila") |
 | N11 | A estimativa só aprende com vídeos de 3 min ou mais e pondera pela duração |
 | N12 | Confirmação centralizada nos dois eixos, maior, com borda verde |
+
+## v0.1.9 (14/10/2026): contra resumos inventados
+
+Na 4ª rodada o ChatGPT, recebendo o zip com as imagens, descreveu o apresentador e os gráficos corretamente e avisou os limites. O Gemini, com a mesma entrada, **inventou** o conteúdo das duas aulas (passos de Power Query e DAX que o vídeo não tem, marcadores de tempo inexistentes) e não avisou nada ([registro](testes/2026-10-14-windows-p1-rodada4.md)).
+
+| ID | O que mudou |
+|---|---|
+| N13 | Cabeçalho do `.md`: "Se você não conseguir ler o conteúdo abaixo, diga isso em vez de inventar". Dica do botão, log e guia: algumas IAs não abrem `.zip`; anexe o `.md` e as imagens soltos |

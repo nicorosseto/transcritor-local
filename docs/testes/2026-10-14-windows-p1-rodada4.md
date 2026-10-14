@@ -20,6 +20,15 @@
 - **N12:** confirmação deslocada.
 - Pedido: botão único no lugar dos cartões de quantidade (ADR-019).
 
+## Leitura por IA (v0.1.7, zip com imagens)
+
+| IA | Resultado |
+|---|---|
+| ChatGPT | Resumo e passos corretos; descreveu o que viu nas capturas (apresentador, gráficos, rótulos) e avisou o limite da análise; notou que "HeyGen" no nome não era o assunto |
+| Gemini | **Inventou**: passos de Power Query/DAX e um "painel do agente" que não existem nos vídeos, marcadores `[00:15 - Problema]` e um botão "Copiar/Exportar", sem nenhum aviso. Provável causa: não abriu o `.zip` (a confirmar com o `.md` solto) |
+
+Mitigação na v0.1.9 (N13).
+
 ## Ainda não testado
 
 Parar após este vídeo, fechar a janela no meio, escalas 125%/150%, ícone na barra de tarefas.

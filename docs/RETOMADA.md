@@ -2,7 +2,7 @@
 
 Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize ao fim de cada sessão.
 
-**Última atualização:** 14/10/2026 · **Versão:** 0.1.8 · **Branch:** `main`
+**Última atualização:** 14/10/2026 · **Versão:** 0.1.9 · **Branch:** `main`
 
 ## 1. Estado atual
 
@@ -27,9 +27,9 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 **3ª rodada (v0.1.6):** OCR leu 91 trechos; ChatGPT e Gemini entenderam o vídeo só pelo `.md` ([registro](testes/2026-10-14-windows-p1-rodada3.md)).
 
-**4ª rodada (v0.1.7):** N9 funcionou (80 trechos), Cancelar e refazer ok, previsão 37 min contra 28 reais ([registro](testes/2026-10-14-windows-p1-rodada4.md)). A v0.1.8 trouxe botão único, confirmação centralizada, N10, N11, N12.
+**4ª rodada (v0.1.7):** N9 funcionou (80 trechos), Cancelar e refazer ok, previsão 37 min contra 28 reais ([registro](testes/2026-10-14-windows-p1-rodada4.md)). A v0.1.8 trouxe botão único, confirmação centralizada, N10, N11, N12; a v0.1.9 (N13) responde ao Gemini que inventou um resumo: cabeçalho "não invente" e aviso sobre `.zip`.
 
-**Próximo passo: 5ª rodada no Windows com a v0.1.8**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.8. Conferir:
+**Próximo passo: 5ª rodada no Windows com a v0.1.9, mais o teste do Gemini com o `.md` solto**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.9. Conferir:
 
 | O que | Esperado |
 |---|---|

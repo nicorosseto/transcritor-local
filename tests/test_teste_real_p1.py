@@ -284,6 +284,7 @@ def test_md_explica_como_ler_o_arquivo(tmp_path):
     assert "[hh:mm:ss]" in cab and "OCR" in cab
     assert "não há descrição" in cab.lower()
     assert "notebooklm" not in md.lower()
+    assert "em vez de inventar" in cab  # N13: IA que não lê o arquivo deve avisar, não inventar
 
 
 # --------------------------------------------------------------------------- pacote para IA

@@ -503,7 +503,8 @@ class App(ctk.CTk):
         self.btn_pacote.pack(side="right", padx=(0, 8))
         Dica(self.btn_pacote,
              "Cria, para cada vídeo concluído, uma pasta e um .zip com o .md e só as capturas que ele cita. "
-             "É o que você anexa numa conversa com qualquer IA.")
+             "É o que você anexa numa conversa com qualquer IA. Se a sua IA não abrir .zip, anexe o .md "
+             "e as imagens da pasta soltos.")
         self.lbl_res_resumo = ctk.CTkLabel(pg, text="", anchor="w", text_color=tema.CINZA, justify="left")
         self.lbl_res_resumo.grid(row=1, column=0, sticky="ew", pady=(6, 10))
         cartao = ctk.CTkFrame(pg, border_width=1, border_color=tema.BORDA, corner_radius=10)
@@ -1195,7 +1196,8 @@ class App(ctk.CTk):
             Dialogo(self, "Pacote para IA", "Ainda não há vídeo concluído para empacotar.",
                     [("Entendi", None, True)], icone="ℹ️", som=False).perguntar()
             return
-        self._log(f"Pacote para IA: {len(pacotes)} pasta(s) e .zip em pacote_para_ia.")
+        self._log(f"Pacote para IA: {len(pacotes)} pasta(s) e .zip em pacote_para_ia. "
+                  "Se a sua IA não abrir .zip, anexe o .md e as imagens da pasta soltos.")
         self._abrir_saida("pacote_para_ia")
 
     def _abrir_saida(self, sub: str = ""):

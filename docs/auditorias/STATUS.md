@@ -75,7 +75,7 @@ Mesma regra: testes em [`tests/test_auditoria_fase2.py`](../../tests/test_audito
 
 Todos os 16 achados da auditoria de 08/10/2026 estão corrigidos, exceto X14 (pré-publicação).
 
-## Teste real no Windows (v0.1.5 a v0.1.8, 14/10/2026)
+## Teste real no Windows (v0.1.5 a v0.1.9, 14/10/2026)
 
 Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests/test_teste_real_p1.py`](../../tests/test_teste_real_p1.py), escritos antes e falhando no commit `6ec55eb`. Registro: [testes/2026-10-14-windows-p1.md](../testes/2026-10-14-windows-p1.md).
 
@@ -87,6 +87,7 @@ Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests
 | N4 | 🟡 | ✅ (v0.1.8) | Previsão inicial conservadora por desenho; o aprendizado foi corrigido no N11 |
 | N5, N6 | ⚪ | ✅ | Textos da interface |
 | N7 | 🟠 | ✅ | Links de captura com espaço (achado no caminho) |
+| N13 | 🟡 | ✅ (v0.1.9) | Uma IA (Gemini, recebendo zips) inventou o resumo de duas aulas sem ler o conteúdo. O cabeçalho do `.md` agora manda dizer "não consegui ler" em vez de inventar, e o app e o guia avisam que algumas IAs não abrem `.zip`. Mitigação, não garantia |
 | N12 | ⚪ | ✅ (v0.1.8) | Confirmação aparecia deslocada e para cima: o `CTkToplevel` nasce com 200x200 e a centralização media isso. Agora usa o tamanho real, centraliza nos dois eixos e ganhou borda verde |
 | N11 | 🟡 | ✅ (v0.1.8) | Estimativa aprendia com um vídeo de 42 s (1,2x) como se valesse tanto quanto um de 36 min (1,7x). Agora ignora vídeos com menos de 3 min e pondera pela duração (e o OCR por hora também). Fecha o N4 |
 | N10 | 🟡 | ✅ (v0.1.8) | Depois de **Cancelar** (ou Parar), a tabela seguia mostrando "Transcrevendo" e "Na fila" em vídeos que não terminaram. Agora é repintada ao fim da rodada. Reproduzido por `ferramentas/fumaca/cancelar_rodada.py` |

@@ -22,6 +22,8 @@ COMO_LER = [
     "> - Não há descrição de imagens, pessoas, cores ou gráficos: só o que foi dito e o texto "
     "que apareceu na tela.",
     "> - A fala é uma transcrição automática e literal; pode errar nomes próprios e termos técnicos.",
+    "> - Se você não conseguir ler o conteúdo abaixo, diga isso em vez de inventar. "
+    "Não descreva nada que não esteja escrito neste arquivo.",
 ]
 
 _FALA = re.compile(r"^\*\*\[\d\d:\d\d:\d\d\]\*\* (.*)$", re.MULTILINE)

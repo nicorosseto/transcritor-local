@@ -73,7 +73,8 @@ ONDE ESTÁ O RESULTADO
    transcricoes_md\\   -> um .md por vídeo (mesma estrutura de pastas)
    base_consolidada\\  -> um arquivo por subpasta, para ferramentas que indexam muitas fontes
    pacote_para_ia\\    -> (botão "Pacote para IA", em Resultados) pasta e .zip por vídeo: o .md
-                          mais só as imagens que ele cita, para anexar numa conversa com qualquer IA
+                          mais só as imagens que ele cita, para anexar numa conversa com qualquer IA.
+                          Algumas IAs não abrem .zip: nesse caso anexe o .md e as imagens soltos
    registro.csv       -> histórico (abre no Excel/Power BI)
    correcoes.json     -> sua lista de correções
    capturas\\          -> imagens das telas (se a leitura de tela estiver ligada)
