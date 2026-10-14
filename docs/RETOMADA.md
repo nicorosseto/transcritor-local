@@ -23,7 +23,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 **v0.1.5** corrigiu o que ela achou (N1, N2, N3, N5, N6, N7; o N4 é a previsão conservadora, conferir na 2ª rodada) e acrescentou o formato para IA. Detalhes no [STATUS.md](auditorias/STATUS.md).
 
-**Próximo passo: 2ª rodada no Windows com a v0.1.5.** Conferir:
+**Próximo passo: 2ª rodada no Windows com a v0.1.5.** Antes, gerar o `.exe`: o build do commit `86ca18a` falhou por um defeito da fixture de testes (já corrigido em `e6ad5f1`, que só mexeu em `tests/` e por isso não disparou outro build). Em GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. Conferir:
 
 | O que | Esperado |
 |---|---|
