@@ -53,6 +53,8 @@ Roteiro original do teste (1ª rodada):
 8. Conferir a aparência com escala do Windows em 125% e 150% e o ícone na barra de tarefas.
 9. Mandar prints de qualquer coisa estranha. **Não colar dados sigilosos** (anonimizar nomes de arquivos de trabalho).
 
+**Se o Chrome bloquear o download ("arquivo perigoso"):** o `.exe` não tem assinatura digital (P7), e o PyInstaller costuma cair em falso positivo. Opções, nesta ordem: (1) `chrome://downloads` → **Manter arquivo perigoso**; (2) baixar com o Edge; (3) baixar o artefato **TranscritorLocal-windows-protegido** (zip com senha `transcritor`, abre no WinRAR ou 7-Zip). O build imprime o SHA-256 do `.exe` no resumo da execução e grava `SHA256.txt` na pasta, para conferir com `Get-FileHash`.
+
 ## 3. Depois do teste
 
 | Ordem | Item | Referência |

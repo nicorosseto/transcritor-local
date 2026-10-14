@@ -64,6 +64,28 @@ jobs:
             throw "Autoteste do executável falhou (código $($p.ExitCode))"
           }
 
+      - name: Impressão digital (SHA-256) do executável
+        shell: pwsh
+        run: |
+          $h = (Get-FileHash dist/TranscritorLocal/TranscritorLocal.exe -Algorithm SHA256).Hash.ToLower()
+          "$h  TranscritorLocal.exe" | Set-Content dist/TranscritorLocal/SHA256.txt -Encoding ascii
+          "SHA-256 de TranscritorLocal.exe: $h"
+          "### SHA-256 de TranscritorLocal.exe`n`n``$h``" | Add-Content $env:GITHUB_STEP_SUMMARY
+
+      # Cópia com senha ("transcritor"): o Chrome não consegue abrir o conteúdo e deixa de bloquear o .exe
+      # como "perigoso". A senha não protege nada; só evita a inspeção automática do navegador.
+      - name: Zip com senha para navegadores que bloqueiam o .exe
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force protegido | Out-Null
+          7z a -tzip -ptranscritor -mem=AES256 protegido/TranscritorLocal-windows-protegido.zip ./dist/TranscritorLocal/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TranscritorLocal-windows-protegido
+          path: protegido/
+          if-no-files-found: error
+
       # Artefato de teste: o GitHub já compacta a pasta (um zip só, sem zip dentro de zip)
       - uses: actions/upload-artifact@v4
         with:
