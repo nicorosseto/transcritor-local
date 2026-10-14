@@ -7,7 +7,7 @@
 - [x] OCR opcional com capturas
 - [x] Verificação de hardware e estimativas que aprendem
 - [x] Build automatizado do `.exe` no GitHub Actions
-- [ ] Validação em Windows real (pendência P1)
+- [~] Validação em Windows real (pendência P1): rodada completa feita em 14/10/2026 (1,68x, 27 min); achados N1 a N6 em [testes/2026-10-14-windows-p1.md](testes/2026-10-14-windows-p1.md); faltam Parar/Cancelar/fechar, escalas 125%/150% e a 2ª rodada
 - [ ] Medição do vocabulário e do beam 1 com o modelo real (P2)
 
 ## v0.1.2: correções da auditoria (fase 1) ✅

@@ -2,7 +2,7 @@
 
 Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize ao fim de cada sessão.
 
-**Última atualização:** 11/10/2026 · **Versão:** 0.1.4 · **Branch:** `main`
+**Última atualização:** 14/10/2026 · **Versão:** 0.1.4 · **Branch:** `main`
 
 ## 1. Estado atual
 
@@ -15,9 +15,23 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 | Build do `.exe` | Automático a cada push na `main` (GitHub Actions → "Build Windows (.exe)" → artefato `TranscritorLocal-windows`) |
 | Repositório | Privado. Publicar só depois do teste no Windows e do X14 (contra-auditoria, seção 7) |
 
-## 2. Próximo passo: teste do responsável no Windows (P1)
+## 2. Teste do responsável no Windows (P1): primeira rodada feita em 14/10/2026
 
-O responsável decidiu testar o `.exe` só com tudo concluído. **É o próximo passo.** Roteiro sugerido:
+**Resultado:** a rodada completa funcionou (1 vídeo de 36 min, Equilibrado, com OCR): **1,68x**, 6 threads, 27 min no total, base consolidada com todos os links válidos. Registro completo em [testes/2026-10-14-windows-p1.md](testes/2026-10-14-windows-p1.md).
+
+Achados novos (nenhum quebra a rodada), em ordem de prioridade:
+
+| ID | Sev. | Resumo |
+|---|---|---|
+| N1 | 🟠 | OCR quase ilegível em vídeo 640x360: ampliar a captura (2x a 3x) antes do Tesseract e filtrar palavras de baixa confiança |
+| N2 | 🟡 | "Palavras" conta fala + texto de tela (12.197 contra ~7.100 de fala): separar `palavras` e `palavras_tela` |
+| N3 | 🟡 | 448 de 548 capturas ficam sem uso em disco: apagar as não usadas depois do OCR |
+| N4 | 🟡 | Previsão inicial 37% acima do real: conferir se converge na 2ª rodada |
+| N5, N6 | ⚪ | Texto "0 pendente(s), menos de 1 min" e rótulo "Tesseract pronto" antes do download do português |
+
+**Próximo passo:** o responsável aprova o plano de correção de N1 a N3 e N5/N6 (teste que falha antes, correção depois). Antes de fechar o N1, medir o ganho em mais de 1 quadro e com o pacote `por`. Ainda faltam do roteiro: Parar, Cancelar, fechar a janela no meio, escalas 125%/150%, ícone na barra de tarefas e a estimativa da 2ª rodada.
+
+Roteiro original do teste:
 
 1. Baixar o artefato do último build verde e extrair (um zip, um `TranscritorLocal.exe`).
 2. Abrir. Se faltar o modelo, o app abre em **Preparação do PC**: baixar o modelo.
@@ -33,7 +47,7 @@ O responsável decidiu testar o `.exe` só com tudo concluído. **É o próximo 
 
 | Ordem | Item | Referência |
 |---|---|---|
-| 1 | Corrigir o que o teste no Windows revelar | P1 |
+| 1 | Corrigir N1 a N6 (teste de 14/10/2026) e fechar o resto do roteiro do P1 | [testes/2026-10-14-windows-p1.md](testes/2026-10-14-windows-p1.md) |
 | 2 | X14: travar dependências e conferir hashes (FFmpeg, tessdata, modelo) | STATUS.md |
 | 3 | P7 (assinatura do `.exe` / SmartScreen) e P8 (licença do FFmpeg) | AUDITORIA.md |
 | 4 | Tornar o repositório público | contra-auditoria, seção 7 |
