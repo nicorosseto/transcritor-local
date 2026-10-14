@@ -543,12 +543,11 @@ class App(ctk.CTk):
             self.lbl_res_resumo.configure(text="Leia uma pasta de vídeos para ver os resultados.")
             return
         feitos = [l for l in self.projeto.registro.ativos() if l.status == ST_OK]
-        tela = {"sim": "lido", "nao": "—", "falhou": "⚠ não lido"}
         for l in feitos:
             self.res_tabela.insert("", "end", values=(
                 l.caminho.replace("/", " / "), f"{l.palavras:,}".replace(",", "."),
                 f"{l.velocidade:.1f}x".replace(".", ",") if l.velocidade else "—",
-                tela.get(l.ocr, l.ocr), l.transcrito_em or "—"), tags=("falhou",) if l.ocr == "falhou" else ())
+                textos.rotulo_tela(l.ocr, l.capturas), l.transcrito_em or "—"), tags=("falhou",) if l.ocr == "falhou" else ())
         palavras = sum(l.palavras for l in feitos)
         horas = sum(l.duracao_s for l in feitos)
         self.lbl_res_resumo.configure(
@@ -1159,7 +1158,9 @@ class App(ctk.CTk):
                 self.marcados.discard(d["rel"])
                 self.tabela.set(d["rel"], "sel", DESMARCADO)
                 self._log(f"Concluído: {d['rel']} — {d['palavras']} palavras, {d['velocidade']:.1f}x, "
-                          f"{d['telas']} trecho(s) de tela, {d.get('correcoes', 0)} correção(ões).")
+                          f"{d['telas']} trecho(s) de tela"
+                          + (f" (de {d['capturas_lidas']} capturas lidas)" if d.get("capturas_lidas") else "")
+                          + f", {d.get('correcoes', 0)} correção(ões).")
             else:
                 self._erros += 1
                 self.tabela.set(d["rel"], "status", STATUS_ROTULO[ST_ERRO])

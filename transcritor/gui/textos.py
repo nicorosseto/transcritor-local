@@ -17,6 +17,13 @@ def resumo_da_leitura(concluidos: int, pendentes: int, segundos_pendentes: float
     return f"{concluidos} concluído(s) · {pendentes} pendente(s), {tempo_humano(segundos_pendentes)} de vídeo"
 
 
+def rotulo_tela(ocr: str, trechos: int) -> str:
+    """Coluna "Texto da tela" de Resultados: "lido" só quando algum texto foi aproveitado (achado N8)."""
+    if ocr == "sim":
+        return f"lido ({trechos})" if trechos else "nada encontrado"
+    return {"nao": "—", "falhou": "⚠ não lido"}.get(ocr, ocr)
+
+
 def rotulo_tesseract(disponivel: bool, tem_portugues: bool) -> str:
     """Achado N6: não dizer "pronto" sem avisar que o pacote de português ainda será baixado."""
     if not disponivel:

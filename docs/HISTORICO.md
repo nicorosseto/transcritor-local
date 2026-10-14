@@ -114,3 +114,14 @@ Primeira rodada completa no Windows (1 vídeo de 36 min, Equilibrado, com OCR): 
 
 **Custo:** o OCR ficou ~1,8x mais lento por captura em vídeo estreito. **Ainda não foi visto no Windows real**: precisa de nova rodada.
 
+## v0.1.6 (14/10/2026): o OCR da v0.1.5 não lia nada
+
+A 2ª rodada no Windows (mesmo vídeo, pasta de saída nova, OCR ligado) mostrou a fala **100% idêntica** à da 1ª, `palavras` correto (~7.100) e a coluna `palavras_tela`, mas **0 trechos de tela** ([registro](testes/2026-10-14-windows-p1-rodada2.md)).
+
+| ID | Causa | Correção |
+|---|---|---|
+| N8 | A v0.1.5 pedia ao Tesseract a configuração `tsv`, que ele procura em `<pasta de idiomas>/configs/`. A pasta do app (criada por `baixar_portugues`) só tem `por` e `eng`; o Tesseract avisava no erro, devolvia texto comum e o filtro descartava tudo sem avisar | `-c tessedit_create_tsv=1` (não depende de arquivo); saída que não começa com `level` vira `ErroOCR`; cabeçalho, log e Resultados dizem "nenhum texto aproveitável em N capturas" em vez de "sim, 0 trecho(s)" |
+
+**Lição:** os testes da v0.1.5 usavam a pasta de idiomas do sistema (com `configs/`); o app usa a sua própria. Agora há teste com uma pasta de idiomas sem `configs/`, igual à do app, e o OCR nunca confunde "formato errado" com "imagem sem texto". Em 50 capturas reais, a versão corrigida achou 14 trechos úteis.
+
+**Observações da rodada:** 30 min 10 s (fala 23 min 24 s, OCR 6 min 26 s); velocidade 1,57x contra 1,68x (causa não identificada: carga do PC ou ctranslate2 4.8.3 no lugar da 4.8.2, ver X14). Previsão de ~37 min repetiu, como esperado em pasta de saída nova (N4 segue por conferir).

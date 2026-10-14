@@ -178,7 +178,8 @@ def main(argv: list[str] | None = None) -> int:
             print(linha.ljust(120), end="", flush=True)
         elif ev.tipo == "video_fim":
             print(f"\n    ✅ {d['palavras']} palavras em {hhmmss(d['segundos'])} "
-                  f"(velocidade {d['velocidade']:.1f}x, {d['telas']} trecho(s) de tela, "
+                  f"(velocidade {d['velocidade']:.1f}x, {d['telas']} trecho(s) de tela"
+                  + (f" de {d['capturas_lidas']} capturas" if d.get("capturas_lidas") else "") + ", "
                   f"{d.get('correcoes', 0)} correção(ões))")
         elif ev.tipo == "video_erro":
             print(f"\n    ❌ FALHOU: {d['erro']}")

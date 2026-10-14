@@ -334,11 +334,12 @@ class Projeto:
                     trocas += n_trocas
 
                 telas: list[markdown.Tela] = []
+                capturas_lidas = 0
                 seg_ocr = 0.0
                 falha_telas = resumo.get("ocr_indisponivel") if self.cfg.ocr else None
                 if estado_ocr is not None:
                     t_ocr = time.perf_counter()
-                    telas, falha_telas = self._ler_telas(item, estado_ocr, emitir, cancelar)
+                    telas, falha_telas, capturas_lidas = self._ler_telas(item, estado_ocr, emitir, cancelar)
                     seg_ocr = time.perf_counter() - t_ocr
                 if falha_telas:  # a fala vale; a parte da tela fica marcada como falha (achado X10)
                     resumo["telas_falharam"] = resumo.get("telas_falharam", 0) + 1
@@ -350,7 +351,7 @@ class Projeto:
                     titulo=Path(item.rel).stem, origem=item.rel, duracao=dur,
                     modelo=self.cfg.modelo, preset=self.cfg.preset,
                     paragrafos=paragrafos, telas=telas, destino=destino, correcoes=trocas,
-                    falha_telas=falha_telas)
+                    falha_telas=falha_telas, capturas_lidas=capturas_lidas)
                 markdown.salvar(conteudo, destino)
 
                 l = item.linha
@@ -368,7 +369,8 @@ class Projeto:
                 resumo["ok"] += 1
                 emitir("video_fim", rel=item.rel, palavras=palavras, palavras_tela=l.palavras_tela,
                        segundos=time.perf_counter() - t0,
-                       velocidade=l.velocidade, telas=len(telas), correcoes=trocas, falha_telas=falha_telas)
+                       velocidade=l.velocidade, telas=len(telas), capturas_lidas=capturas_lidas,
+                       correcoes=trocas, falha_telas=falha_telas)
                 feito_lote += dur
                 gasto_lote += seg_trans
             except Cancelado:
@@ -392,13 +394,13 @@ class Projeto:
         return resumo
 
     def _ler_telas(self, item: Item, estado: ocr.EstadoOCR, emitir,
-                   cancelar) -> tuple[list[markdown.Tela], str | None]:
-        """Retorna (telas, falha). falha=None quando tudo foi lido; senão, o motivo (achado X10)."""
+                   cancelar) -> tuple[list[markdown.Tela], str | None, int]:
+        """Retorna (telas, falha, capturas_lidas). falha=None quando tudo foi lido; senão, o motivo (X10)."""
         emitir("etapa", codigo="telas", texto="Procurando trocas de tela...")
         try:
             capturas = midia.extrair_capturas(item.caminho, self.pasta_capturas(item.rel), cancelar=cancelar)
         except RuntimeError as e:
-            return [], str(e)
+            return [], str(e), 0
         telas: list[markdown.Tela] = []
         ultimo, falhas, ultimo_erro = "", 0, ""
         for i, (t, img) in enumerate(capturas, 1):
@@ -416,7 +418,7 @@ class Projeto:
             telas.append(markdown.Tela(t, texto, img))
             ultimo = texto
         falha = f"{falhas} de {len(capturas)} capturas não puderam ser lidas: {ultimo_erro}" if falhas else None
-        return telas, falha
+        return telas, falha, len(capturas)
 
     def consolidar(self) -> list[Path]:
         feitos = [(l.caminho, self.caminho_md(l.caminho)) for l in self.registro.ativos() if l.status == OK]

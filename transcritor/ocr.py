@@ -124,7 +124,10 @@ def ler_imagem(estado: EstadoOCR, imagem: Path) -> str:
     except Exception as e:
         raise ErroOCR(f"Não consegui preparar a captura para o OCR: {e}") from e
     try:
-        cmd = [estado.executavel, str(entrada), "stdout", "-l", estado.idiomas, "--psm", "3", "tsv"]
+        # Não usar a configuração "tsv": ela é procurada em <tessdata>/configs/, que a pasta de idiomas do
+        # app não tem; o Tesseract avisava só no erro e devolvia texto comum (achado N8).
+        cmd = [estado.executavel, str(entrada), "stdout", "-l", estado.idiomas, "--psm", "3",
+               "-c", "tessedit_create_tsv=1"]
         if estado.pasta_tessdata:
             cmd[1:1] = ["--tessdata-dir", str(estado.pasta_tessdata)]
         try:
@@ -134,7 +137,10 @@ def ler_imagem(estado: EstadoOCR, imagem: Path) -> str:
         if r.returncode != 0:
             msg = r.stderr.decode("utf-8", errors="replace").strip().splitlines()
             raise ErroOCR("Tesseract falhou" + (f": {msg[-1]}" if msg else f" (código {r.returncode})"))
-        return texto_do_tsv(r.stdout.decode("utf-8", errors="replace"))
+        saida = r.stdout.decode("utf-8", errors="replace").lstrip("\ufeff")
+        if not saida.startswith("level\t"):  # nunca confundir "formato errado" com "sem texto na imagem"
+            raise ErroOCR("A leitura do Tesseract veio em formato inesperado (não é TSV)")
+        return texto_do_tsv(saida)
     finally:
         if temporaria:
             entrada.unlink(missing_ok=True)

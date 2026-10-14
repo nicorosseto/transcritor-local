@@ -50,7 +50,8 @@ class Tela:
 
 def montar(*, titulo: str, origem: str, duracao: float, modelo: str, preset: str,
            paragrafos: list[Paragrafo], telas: list[Tela], destino: Path,
-           correcoes: int = 0, falha_telas: str | None = None) -> tuple[str, int]:
+           correcoes: int = 0, falha_telas: str | None = None,
+           capturas_lidas: int = 0) -> tuple[str, int]:
     """Gera o conteúdo; telas entram logo após o parágrafo que cobre o seu instante."""
     blocos: list[str] = []
     telas = sorted(telas, key=lambda t: t.inicio)
@@ -76,10 +77,7 @@ def montar(*, titulo: str, origem: str, duracao: float, modelo: str, preset: str
         f"- **Palavras de texto de tela:** {palavras_da_tela(telas)}" if telas else None,
         f"- **Transcrito em:** {datetime.now():%d/%m/%Y}",
         f"- **Modelo:** faster-whisper {modelo} ({preset})",
-        "- **Texto de tela (OCR):** " + (f"não lido por completo ({falha_telas})" if falha_telas and not telas
-                                           else f"sim, {len(telas)} trecho(s)" + (f"; com falhas ({falha_telas})"
-                                                                                 if falha_telas else "")
-                                           if telas else "não"),
+        "- **Texto de tela (OCR):** " + _linha_ocr(telas, falha_telas, capturas_lidas),
         f"- **Correções automáticas:** {correcoes} (lista correcoes.json)" if correcoes else None,
         "",
         *COMO_LER,
@@ -89,6 +87,16 @@ def montar(*, titulo: str, origem: str, duracao: float, modelo: str, preset: str
         "",
     ]
     return "\n".join(l for l in cab if l is not None) + corpo + "\n", palavras
+
+
+def _linha_ocr(telas: list[Tela], falha: str | None, capturas_lidas: int) -> str:
+    if telas:
+        return f"sim, {len(telas)} trecho(s)" + (f"; com falhas ({falha})" if falha else "")
+    if falha:
+        return f"não lido por completo ({falha})"
+    if capturas_lidas:
+        return f"lido, nenhum texto aproveitável em {capturas_lidas} capturas"
+    return "não"
 
 
 def _bloco_tela(t: Tela, destino_md: Path) -> str:

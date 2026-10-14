@@ -97,6 +97,66 @@ def test_n1_so_amplia_captura_estreita(tmp_path):
     assert caminho == larga and not temporario
 
 
+# --------------------------------------------------------------------------- N8
+def _pasta_de_idiomas_do_app(destino: Path) -> Path:
+    """Imita a pasta que o app cria ao baixar o português: só .traineddata, SEM a subpasta configs/."""
+    import subprocess
+    saida = subprocess.run(["tesseract", "--list-langs"], capture_output=True, text=True)
+    origem = Path(re.search(r'in "(.*?)"', saida.stdout + saida.stderr).group(1))
+    destino.mkdir()
+    shutil.copy(origem / "eng.traineddata", destino / "eng.traineddata")
+    return destino
+
+
+@requer_tesseract
+def test_n8_ocr_funciona_com_a_pasta_de_idiomas_do_app(tmp_path):
+    """Na v0.1.5 o modo 'tsv' era procurado em <pasta>/configs/tsv; sem ele o Tesseract devolvia texto
+    comum, o filtro lia como vazio e TODAS as capturas eram descartadas em silêncio."""
+    img, esperadas = _captura_pequena(tmp_path / "cap_000000.jpg")
+    estado = ocr.EstadoOCR(True, shutil.which("tesseract"), True, _pasta_de_idiomas_do_app(tmp_path / "idiomas"),
+                           "", idiomas="eng")
+    lidas = set(re.findall(r"[a-z]{3,}", ocr.ler_imagem(estado, img).lower()))
+    assert len(esperadas & lidas) >= 3, sorted(lidas)
+
+
+def test_n8_saida_que_nao_e_tsv_vira_erro_explicito_e_nao_texto_vazio(tmp_path, monkeypatch):
+    import subprocess
+    from PIL import Image
+    img = tmp_path / "cap.jpg"
+    Image.new("RGB", (640, 360), "white").save(img)
+    monkeypatch.setattr(ocr, "rodar", lambda cmd, **k: subprocess.CompletedProcess(
+        cmd, 0, stdout=b"texto comum, nao tsv\n", stderr=b"read_params_file: Can't open tsv"))
+    estado = ocr.EstadoOCR(True, "x", True, None, "", idiomas="eng")
+    with pytest.raises(ocr.ErroOCR, match="formato"):
+        ocr.ler_imagem(estado, img)
+
+
+def test_n8_cabecalho_diz_quando_o_ocr_rodou_e_nao_achou_nada(tmp_path):
+    kw = dict(titulo="t", origem="t.mp4", duracao=60, modelo="m", preset="p",
+              paragrafos=[Paragrafo(0, "Fala.")], destino=tmp_path / "t.md")
+    md, _ = markdown.montar(telas=[], capturas_lidas=548, **kw)
+    assert "nenhum texto aproveitável em 548 capturas" in md
+    md, _ = markdown.montar(telas=[], **kw)
+    assert "- **Texto de tela (OCR):** não\n" in md
+
+
+@requer_ffmpeg
+def test_n8_rodada_informa_quantas_capturas_foram_lidas(tmp_path, modelo_falso, monkeypatch):
+    videos, saida = tmp_path / "v", tmp_path / "s"
+    criar_video(videos / "a.mp4", [("Slide um\nIntroducao", 5), ("Slide dois\nMedidas", 5)],
+                cores=[(255, 255, 255), (200, 230, 255)])
+    chamadas = []
+    monkeypatch.setattr(ocr, "verificar", lambda: ocr.EstadoOCR(True, "x", True, None, "", idiomas="eng"))
+    monkeypatch.setattr(ocr, "ler_imagem", lambda estado, img: chamadas.append(img) or "")
+    eventos = []
+    proj = Projeto(Config(videos, saida, ocr=True))
+    proj.executar(proj.escanear(), eventos.append)
+    (fim,) = [e.dados for e in eventos if e.tipo == "video_fim"]
+    assert fim["capturas_lidas"] == len(chamadas) > 0
+    md = proj.caminho_md("a.mp4").read_text(encoding="utf-8")
+    assert f"nenhum texto aproveitável em {len(chamadas)} capturas" in md
+
+
 # --------------------------------------------------------------------------- N2 e N3
 def _ocr_falso(monkeypatch, respostas: list[str]):
     """OCR simulado: devolve uma resposta por captura, na ordem."""
@@ -196,6 +256,13 @@ def test_n5_resumo_sem_pendentes_nao_fala_em_minutos():
 def test_n5_resumo_com_pendentes_mostra_o_tempo():
     from transcritor.gui.textos import resumo_da_leitura
     assert resumo_da_leitura(2, 3, 5400) == "2 concluído(s) · 3 pendente(s), 1 h 30 min de vídeo"
+
+
+def test_n8_coluna_texto_da_tela_nao_diz_lido_quando_nao_achou_nada():
+    from transcritor.gui.textos import rotulo_tela
+    assert rotulo_tela("sim", 100) == "lido (100)"
+    assert rotulo_tela("sim", 0) == "nada encontrado"
+    assert rotulo_tela("nao", 0) == "—" and rotulo_tela("falhou", 0) == "⚠ não lido"
 
 
 def test_n6_rotulo_do_tesseract_avisa_do_download_do_portugues():

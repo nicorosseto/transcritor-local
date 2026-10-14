@@ -235,3 +235,4 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 
 **Limitações conhecidas.** A IA reconstrói o que foi dito e o texto que apareceu; gráficos, pessoas e layout dependem da v0.2 (IA visual). Chat comum tem janela de contexto pequena: muitos vídeos exigem ferramenta que indexa fontes.
 
+**Adendo (v0.1.6, N8).** O Tesseract é chamado com `-c tessedit_create_tsv=1`, nunca com a configuração `tsv`, porque a pasta de idiomas do app não tem `configs/`. Se a saída não for TSV, o OCR falha de forma explícita (`ErroOCR`); "imagem sem texto" e "formato errado" são casos diferentes e aparecem diferentes no `.md`, no log e em Resultados.
