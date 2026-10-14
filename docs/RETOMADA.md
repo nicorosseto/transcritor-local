@@ -39,7 +39,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 | Previsão da rodada | Perto do tempo real (agora usa a velocidade medida no 1º vídeo) |
 | Resultados → **Pacote para IA** | Pasta `pacote_para_ia` com `.md` e `imagens\` (e `.zip`); links abrem |
 | Um `.md` anexado a uma IA qualquer | A IA explica o vídeo e entende o cabeçalho "Como ler este arquivo" |
-| Ainda do roteiro | Parar, Cancelar, fechar a janela no meio, escalas 125%/150%, ícone na barra de tarefas |
+| Ainda do roteiro | Confirmar o fim do **Sair mesmo assim**, N11 numa 2ª rodada na mesma pasta e escalas 125%/150%. Parar, Cancelar, diálogo de saída e ícone na barra de tarefas já foram vistos ([rodada 5](testes/2026-10-14-windows-p1-rodada5.md)) |
 
 Roteiro original do teste (1ª rodada):
 
