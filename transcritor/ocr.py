@@ -8,7 +8,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-from .util import localizar_binario, pasta_dados_usuario, rodar
+from .util import localizar_binario, nome_temporario, pasta_dados_usuario, rodar
 
 URL_PORTUGUES = "https://github.com/tesseract-ocr/tessdata_fast/raw/main/por.traineddata"
 _CAMINHOS_WINDOWS = [Path(r"C:\Program Files\Tesseract-OCR"), Path(r"C:\Program Files (x86)\Tesseract-OCR")]
@@ -65,7 +65,7 @@ def baixar_portugues() -> Path:
         arq = destino / f"{idioma}.traineddata"
         if arq.is_file() and arq.stat().st_size > 100_000:
             continue
-        tmp = arq.with_suffix(".parcial")
+        tmp = nome_temporario(arq, ".parcial")
         url = URL_PORTUGUES.replace("por.", f"{idioma}.")
         with urllib.request.urlopen(url, timeout=120) as resp, open(tmp, "wb") as f:
             f.write(resp.read())

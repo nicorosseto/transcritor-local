@@ -22,7 +22,7 @@ from .config import EXTENSOES_VIDEO, Config
 from .estimativa import Estimativa, estimar
 from .registro import ERRO, OK, Linha, Registro, assinatura_da_linha, chave_padrao
 from .transcricao import Cancelado, carregar_modelo, dispositivo_disponivel, transcrever
-from .util import ManterAcordado, PastaEmUso, Trava
+from .util import ManterAcordado, PastaEmUso, Trava, gravar_texto_atomico
 
 
 @dataclass
@@ -131,9 +131,7 @@ class Projeto:
                 dados.setdefault("origens_anteriores", []).append(registrada)
             dados["pasta_videos"] = atual
             dados.setdefault("criado_em", datetime.now().strftime("%d/%m/%Y %H:%M"))
-            tmp = arq.with_suffix(".tmp")
-            tmp.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
-            os.replace(tmp, arq)
+            gravar_texto_atomico(arq, json.dumps(dados, ensure_ascii=False, indent=2))
         return legado
 
     def preparar_rodada(self, da_tela: Config) -> Config:
@@ -401,13 +399,32 @@ class Projeto:
                 emitir("video_erro", rel=item.rel, erro=str(e))
             finally:
                 video_restante -= item.duracao
-                self.registro.salvar()
-                if self.registro.aviso:
-                    emitir("aviso", texto=self.registro.aviso)
+                self._salvar_registro(emitir, resumo)
 
+        if resumo.get("registro_nao_salvo"):
+            self._salvar_registro(emitir, resumo, ultima=True)
         self.consolidar()
         emitir("lote_fim", **resumo)
         return resumo
+
+    def _salvar_registro(self, emitir, resumo: dict, ultima: bool = False) -> None:
+        """Falha ao gravar o registro.csv não derruba a rodada (achado N20): o .md já está salvo e o
+        registro é regravado inteiro no fim do próximo vídeo. Só a última tentativa vira problema."""
+        try:
+            self.registro.salvar()
+            resumo.pop("registro_nao_salvo", None)
+        except OSError as e:
+            resumo["registro_nao_salvo"] = str(e)
+            if ultima:
+                emitir("aviso", texto=f"Não consegui salvar o registro.csv ({e}). As transcrições estão "
+                                      "salvas, mas na próxima abertura esses vídeos podem aparecer como "
+                                      "pendentes. Feche programas que usem a pasta de saída e rode de novo.")
+            else:
+                emitir("aviso", texto=f"Não consegui salvar o registro.csv agora ({e}). "
+                                      "Sigo em frente e tento de novo no fim do próximo vídeo.")
+            return
+        if self.registro.aviso:
+            emitir("aviso", texto=self.registro.aviso)
 
     def _ler_telas(self, item: Item, estado: ocr.EstadoOCR, emitir, cancelar,
                    previsao=None) -> tuple[list[markdown.Tela], str | None, int]:

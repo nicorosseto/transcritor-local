@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import uuid
 from pathlib import Path
 
@@ -88,6 +89,45 @@ def garantir_saidas_padrao() -> None:
         sys.stdout = log
     if sys.stderr is None:
         sys.stderr = log
+
+
+def nome_temporario(destino: Path, sufixo: str = ".tmp") -> Path:
+    """Nome temporário ÚNICO ao lado do destino (achado N20).
+
+    Nunca reaproveitar o mesmo nome (ex.: registro.tmp): no Windows Sandbox, e em PCs com
+    alguns filtros de arquivo (sincronização, segurança), criar de novo um arquivo com o nome de
+    um que acabou de ser renomeado falha com "No such file or directory"."""
+    return destino.with_name(f"{destino.name}.{uuid.uuid4().hex[:8]}{sufixo}")
+
+
+def gravar_atomico(destino: Path, escrever, tentativas: int = 5, espera: float = 1.0) -> None:
+    """Grava via arquivo temporário único e troca de uma vez (um corte no meio não deixa o arquivo
+    pela metade). escrever(caminho) grava o conteúdo nesse caminho.
+
+    Qualquer erro de disco (arquivo travado pelo Excel, antivírus examinando, filtro do sistema)
+    ganha novas tentativas com um nome novo. Se todas falharem, levanta o último erro."""
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    ultimo: OSError | None = None
+    for n in range(tentativas):
+        tmp = nome_temporario(destino)
+        try:
+            escrever(tmp)
+            os.replace(tmp, destino)
+            return
+        except OSError as e:
+            ultimo = e
+            try:
+                tmp.unlink(missing_ok=True)
+            except OSError:
+                pass
+            if n < tentativas - 1:
+                time.sleep(espera)
+    assert ultimo is not None
+    raise ultimo
+
+
+def gravar_texto_atomico(destino: Path, texto: str, encoding: str = "utf-8") -> None:
+    gravar_atomico(destino, lambda p: p.write_text(texto, encoding=encoding))
 
 
 class ManterAcordado:

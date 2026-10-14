@@ -178,3 +178,14 @@ O responsável perguntou por que testar escalas de 125% e 150%. A simulação mo
 | ID | O que mudou |
 |---|---|
 | N16 | `App._ajustar_ao_monitor` limita o tamanho inicial e o mínimo à área útil do monitor, já descontando a escala |
+
+## v0.1.13 (14/10/2026): teste em máquina limpa
+
+Antes de publicar, o app rodou num Windows Sandbox (Windows vazio, 4 GB de RAM, sem `winget` nem antivírus). Download do modelo, instalação manual do Tesseract e OCR funcionaram. Quatro defeitos que nunca apareceriam no PC de desenvolvimento ([registro](testes/2026-10-14-sandbox-maquina-limpa.md)):
+
+| ID | O que mudou |
+|---|---|
+| N17 | Em tela pequena, botões da lista e colunas Duração/Status ficam à vista |
+| N18 | Trocar a qualidade confere de novo o modelo; antes baixava o modelo da qualidade anterior (1,6 GB à toa) |
+| N19 | Escolher a saída relê a pasta, em vez de apagar a lista |
+| N20 | O Sandbox não deixa recriar um arquivo com o nome de um recém-renomeado (`registro.tmp`), e isso derrubava a rodada. Confirmado com `New-Item` no PowerShell, fora do app. Temporários passaram a ter nome único, gravações tentam de novo e falha ao salvar o registro não para mais a rodada |

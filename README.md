@@ -14,7 +14,7 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 
 </details>
 
-> **Status:** v0.1 (beta). 79 testes automatizados passam em Windows e Linux (Python 3.11 e 3.13), o `.exe` é gerado e testado no GitHub Actions e o app passou por 5 rodadas de teste real num PC com Windows (vídeo de 36 min: fala a ~1,7x, texto de tela por OCR, cancelar e retomar). O `.exe` ainda **não é assinado**: o Chrome e o Windows SmartScreen podem avisar; confira o SHA-256 em `SHA256.txt`. Veja o [Roadmap](docs/ROADMAP.md) e os [registros dos testes](docs/testes/).
+> **Status:** v0.1 (beta). 87 testes automatizados passam em Windows e Linux (Python 3.11 e 3.13), o `.exe` é gerado e testado no GitHub Actions e o app passou por 5 rodadas de teste real num PC com Windows e por um teste em máquina limpa (Windows Sandbox) (vídeo de 36 min: fala a ~1,7x, texto de tela por OCR, cancelar e retomar). O `.exe` ainda **não é assinado**: o Chrome e o Windows SmartScreen podem avisar; confira o SHA-256 em `SHA256.txt`. Veja o [Roadmap](docs/ROADMAP.md) e os [registros dos testes](docs/testes/).
 
 ---
 

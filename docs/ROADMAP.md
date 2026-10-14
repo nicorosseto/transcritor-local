@@ -35,6 +35,10 @@
 - [x] N14 (v0.1.10): feedback imediato ao cancelar e botões travados
 - [x] N15 (v0.1.11): previsão e % da rodada contam o texto de tela
 - [x] N16 (v0.1.12): janela que cabe na tela com escala 125%/150%
+- [x] N17 a N20 (v0.1.13): achados do teste em máquina limpa ([registro](testes/2026-10-14-sandbox-maquina-limpa.md))
+- [ ] Repetir o teste em máquina limpa com a v0.1.13 (último passo antes de publicar)
+- [ ] Embutir o Tesseract e o português no zip, como o FFmpeg (o usuário não instala nada para ler a tela)
+- [ ] Não criar a pasta de saída sugerida antes de o usuário confirmar a saída
 - [ ] Conferir no Windows real (v0.1.12): botão único, confirmação centralizada e previsão depois do 1º vídeo longo
 Pedidos pelo responsável em 14/10/2026, a fazer **depois** da 4ª rodada no Windows:
 - [x] **Barra de ação sem os cartões de quantidade (1, 3, 5, Todos).** A seleção é a tabela: botão único **Transcrever N** (N = marcados), com o tempo estimado ao lado. Substitui a regra de escolha obrigatória do ADR-007, que ficou redundante com as caixas de seleção; a proteção contra rodada acidental passa a ser só a confirmação (que já mostra quantidade e tempo). Manter os atalhos Pendentes / Todos / Nenhum

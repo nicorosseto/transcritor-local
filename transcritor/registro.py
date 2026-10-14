@@ -14,14 +14,13 @@ O CSV usa ';' e vírgula decimal para abrir direto no Excel/Power BI em portugu�
 from __future__ import annotations
 
 import csv
-import shutil
-import time
+import io
 from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from pathlib import Path
 
 from .markdown import palavras_de_fala
-from .util import ler_numero_br, numero_br
+from .util import gravar_atomico, ler_numero_br, numero_br
 
 PENDENTE, OK, ERRO, ORFAO, SUBSTITUIDO = "pendente", "ok", "erro", "orfao", "substituido"
 
@@ -77,6 +76,7 @@ def chave_padrao(rel: str) -> str:
 
 class Registro:
     NOME_PENDENTE = "registro_PENDENTE_feche_o_excel.csv"
+    TENTATIVAS = 5
 
     def __init__(self, arquivo: Path):
         self.arquivo = arquivo
@@ -116,33 +116,35 @@ class Registro:
                         linha.saida = chave_padrao(linha.caminho)
                     self.linhas[linha.caminho] = linha
 
+    def _texto_csv(self) -> str:
+        buf = io.StringIO(newline="")
+        w = csv.DictWriter(buf, fieldnames=[c.name for c in fields(Linha)], delimiter=";")
+        w.writeheader()
+        for linha in sorted(self.linhas.values(), key=lambda l: l.caminho.lower()):
+            d = asdict(linha)
+            for k in _NUMERICOS:
+                d[k] = numero_br(d[k])
+            w.writerow(d)
+        return buf.getvalue()
+
     def salvar(self) -> None:
-        """Grava de forma atômica. Se o Excel estiver com o arquivo aberto (Windows trava),
-        tenta de novo e, em último caso, grava uma cópia ao lado para não perder nada."""
-        self.arquivo.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.arquivo.with_suffix(".tmp")
-        nomes = [c.name for c in fields(Linha)]
-        with open(tmp, "w", encoding="utf-8-sig", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=nomes, delimiter=";")
-            w.writeheader()
-            for linha in sorted(self.linhas.values(), key=lambda l: l.caminho.lower()):
-                d = asdict(linha)
-                for k in _NUMERICOS:
-                    d[k] = numero_br(d[k])
-                w.writerow(d)
-        for _ in range(5):
-            try:
-                tmp.replace(self.arquivo)
-                self.aviso = ""
-                self.pendente.unlink(missing_ok=True)  # já incorporada
-                return
-            except PermissionError:
-                time.sleep(1)
-        copia = self.pendente
-        shutil.copyfile(tmp, copia)
-        tmp.unlink(missing_ok=True)
-        self.aviso = (f"O registro.csv parece aberto em outro programa (Excel?). "
-                      f"Os dados foram salvos em {copia.name}; feche o arquivo e rode de novo.")
+        """Grava de forma atômica, com temporário de nome único e novas tentativas (achado N20).
+        Se o Excel estiver com o arquivo aberto (Windows trava), grava uma cópia ao lado para não
+        perder nada (achado X15). Outros erros de disco sobem para quem chamou decidir."""
+        texto = self._texto_csv()
+
+        def escrever(caminho: Path) -> None:
+            with open(caminho, "w", encoding="utf-8-sig", newline="") as f:
+                f.write(texto)
+        try:
+            gravar_atomico(self.arquivo, escrever, tentativas=self.TENTATIVAS)
+        except PermissionError:
+            gravar_atomico(self.pendente, escrever, tentativas=2)
+            self.aviso = (f"O registro.csv parece aberto em outro programa (Excel?). "
+                          f"Os dados foram salvos em {self.pendente.name}; feche o arquivo e rode de novo.")
+            return
+        self.aviso = ""
+        self.pendente.unlink(missing_ok=True)  # já incorporada
 
     # ---------------------------------------------------------------- sincronização
     def _chave_livre(self, rel: str) -> str:

@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .transcricao import Paragrafo
-from .util import hhmmss
+from .util import gravar_texto_atomico, hhmmss
 
 
 COMO_LER = [
@@ -111,7 +111,4 @@ def _bloco_tela(t: Tela, destino_md: Path) -> str:
 
 
 def salvar(conteudo: str, destino: Path) -> None:
-    destino.parent.mkdir(parents=True, exist_ok=True)
-    tmp = destino.with_suffix(".tmp")
-    tmp.write_text(conteudo, encoding="utf-8")
-    tmp.replace(destino)
+    gravar_texto_atomico(destino, conteudo)

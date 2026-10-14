@@ -25,6 +25,9 @@ def resumo_final(d: dict) -> tuple[str, str]:
     if erro > 0:
         return "parcial", (f"{plural(ok, 'concluído', 'concluídos')} e {plural(erro, 'com erro', 'com erro')}. "
                            "Veja os erros na tabela; eles podem ser refeitos.")
+    if d.get("registro_nao_salvo"):
+        return "parcial", (f"{plural(ok, 'vídeo transcrito', 'vídeos transcritos')}, mas o registro.csv não "
+                           "pôde ser salvo. As transcrições estão na pasta de saída.")
     if d.get("ocr_indisponivel") or d.get("telas_falharam"):
         motivo = d.get("ocr_indisponivel") or (
             f"falhou em {plural(int(d['telas_falharam']), 'vídeo', 'vídeos')}")

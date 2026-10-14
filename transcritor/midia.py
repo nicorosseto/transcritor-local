@@ -8,7 +8,7 @@ import threading
 from collections import deque
 from pathlib import Path
 
-from .util import Cancelado, hhmmss, localizar_binario, popen, rodar
+from .util import Cancelado, hhmmss, localizar_binario, nome_temporario, popen, rodar
 
 
 class FFmpegAusente(RuntimeError):
@@ -49,7 +49,7 @@ def extrair_audio(video: Path, destino: Path, cancelar=None) -> None:
     if destino.exists() and destino.stat().st_size > 0:
         return
     destino.parent.mkdir(parents=True, exist_ok=True)
-    tmp = destino.with_suffix(".parcial.mp3")
+    tmp = nome_temporario(destino, ".parcial.mp3")  # nome único (achado N20)
     proc = popen([ffmpeg(), "-y", "-nostdin", "-loglevel", "error", "-i", str(video),
                   "-vn", "-ac", "1", "-ar", "16000", "-b:a", "48k", str(tmp)],
                  stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,

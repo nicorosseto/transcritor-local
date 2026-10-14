@@ -78,6 +78,11 @@ class PainelVerificacao(ctk.CTkFrame):
         self.corpo = ctk.CTkScrollableFrame(self, fg_color="transparent")
         self.corpo.grid(row=2, column=0, columnspan=2, sticky="nsew")
 
+    def verificando(self) -> None:
+        """Enquanto a verificação roda de novo, não deixa à mostra um cartão que já não vale (N18)."""
+        self._limpar()
+        self.lbl_sub.configure(text="Verificando o PC para a qualidade escolhida...", text_color=CINZA)
+
     def mostrar(self, situacao: Situacao, preset: str, pasta_saida: Path | None) -> None:
         self.preset, self.pasta_saida = preset, pasta_saida
         self._desenhar(situacao)
@@ -120,7 +125,7 @@ class PainelVerificacao(ctk.CTkFrame):
                              f"Obrigatório. É o \"cérebro\" que transforma fala em texto. Precisa ser baixado "
                              f"uma vez (~{str(round(tam, 1)).replace('.', ',')} GB); depois funciona sem "
                              f"internet. Leva de 5 a 30 min, conforme a sua conexão.", LARANJA)
-            self._acao_baixar(c, s.modelo)
+            self._acao_baixar(c, s.modelo, tam)
         if s.tesseract_ok:
             self._cartao("✅", "Tesseract (lê texto que aparece na tela)", "Instalado.", VERDE)
         else:
@@ -160,10 +165,12 @@ class PainelVerificacao(ctk.CTkFrame):
         return c
 
     # ------------------------------------------------------------------ ações
-    def _acao_baixar(self, cartao, modelo):
+    def _acao_baixar(self, cartao, modelo, tamanho_gb: float):
         linha = ctk.CTkFrame(cartao, fg_color="transparent")
         linha.pack(fill="x", padx=(46, 10), pady=(0, 10))
-        btn = ctk.CTkButton(linha, text="Baixar agora", width=140, font=ctk.CTkFont(weight="bold"))
+        tam = str(round(tamanho_gb, 1)).replace(".", ",")
+        btn = ctk.CTkButton(linha, text=f"Baixar {modelo} (~{tam} GB)", width=200,
+                            font=ctk.CTkFont(weight="bold"))
         btn.pack(side="left")
         barra = ctk.CTkProgressBar(linha, width=300)
         rotulo = ctk.CTkLabel(linha, text="")

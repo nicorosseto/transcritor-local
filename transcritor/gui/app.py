@@ -308,23 +308,30 @@ class App(ctk.CTk):
         tab.grid_columnconfigure(0, weight=1)
         cab = ctk.CTkFrame(tab, fg_color="transparent")
         cab.grid(row=0, column=0, columnspan=2, sticky="ew", padx=12, pady=(10, 4))
-        self.lbl_contagem = ctk.CTkLabel(cab, text="Nenhum vídeo listado", text_color=tema.CINZA)
-        self.lbl_contagem.pack(side="left")
+        # grid (e não pack): em janela estreita quem encolhe é o texto, nunca os botões (achado N17)
+        cab.grid_columnconfigure(0, weight=1)
+        self.lbl_contagem = ctk.CTkLabel(cab, text="Nenhum vídeo listado", text_color=tema.CINZA, anchor="w")
+        self.lbl_contagem.grid(row=0, column=0, sticky="ew")
         self.btns_marcar = []
-        for txt, fn, dica in (("Nenhum", self._desmarcar_todos, "Desmarca todos"),
-                              ("Todos", self._marcar_todos, "Marca todos, inclusive os concluídos"),
-                              ("Pendentes", self._marcar_pendentes, "Marca só o que falta transcrever")):
+        for col, (txt, fn, dica) in enumerate((
+                ("Pendentes", self._marcar_pendentes, "Marca só o que falta transcrever"),
+                ("Todos", self._marcar_todos, "Marca todos, inclusive os concluídos"),
+                ("Nenhum", self._desmarcar_todos, "Desmarca todos")), start=1):
             b = ctk.CTkButton(cab, text=txt, width=86, height=28, command=fn, **tema.secundario())
-            b.pack(side="right", padx=(6, 0))
+            b.grid(row=0, column=col, padx=(6, 0))
             Dica(b, dica)
             self.btns_marcar.append(b)
         self.tabela = ttk.Treeview(tab, columns=("sel", "video", "dur", "status"), show="headings",
                                    selectmode="browse", style="Escuro.Treeview")
-        for col, txt, larg, anc, est in (("sel", MARCADO, 40, "center", False), ("video", "Vídeo", 360, "w", True),
-                                         ("dur", "Duração", 84, "center", False),
-                                         ("status", "Status", 210, "w", False)):
+        # larguras que cabem numa tela pequena; o nome do vídeo estica e ocupa o que sobrar (N17)
+        for col, txt, larg, anc, est in (("sel", MARCADO, 34, "center", False), ("video", "Vídeo", 200, "w", True),
+                                         ("dur", "Duração", 72, "center", False),
+                                         ("status", "Status", 130, "w", False)):
             self.tabela.heading(col, text=txt, anchor=anc)
-            self.tabela.column(col, width=larg, minwidth=larg if not est else 180, anchor=anc, stretch=est)
+            self.tabela.column(col, width=larg, minwidth=larg if not est else 110, anchor=anc, stretch=est)
+        # o Treeview não encolhe a coluna elástica sozinho: ajusta para Duração e Status ficarem à vista
+        self.tabela.bind("<Configure>", lambda e: self.tabela.column(
+            "video", width=max(110, e.width - sum(self.tabela.column(c, "width") for c in ("sel", "dur", "status")) - 4)))
         self.tabela.tag_configure("rodando", foreground=tema.VERDE)
         self.tabela.tag_configure("erro", foreground=tema.VERMELHO)
         self.tabela.tag_configure("mudou", foreground=tema.LARANJA)
@@ -607,6 +614,8 @@ class App(ctk.CTk):
         threading.Thread(target=tarefa, daemon=True).start()
 
     def _aplicar_situacao(self, s: Situacao, abrir: bool):
+        if s.modelo != PRESETS[self._preset()]["modelo"]:
+            return  # verificação de uma qualidade que já foi trocada; a nova está a caminho (N18)
         self.situacao = s
         n = s.total_pendencias
         if s.obrigatorios:
@@ -699,6 +708,8 @@ class App(ctk.CTk):
         if p:
             self._definir(self.ent_saida, p)
             self._pastas_mudaram()
+            if self._pasta(self.ent_videos) and self.projeto is None:
+                self._ler_pasta()  # relê sozinho com a saída nova, sem pedir outro clique (achado N19)
 
     def _ler_pasta(self):
         if self.rodando or getattr(self, "_lendo", False):  # uma leitura por vez (achado X4)
@@ -867,6 +878,15 @@ class App(ctk.CTk):
     # ================================================================== estimativa
     def _opcoes_mudaram(self):
         self.lbl_preset.configure(text=PRESETS[self._preset()]["descricao"])
+        s = self.situacao
+        if s is not None and s.modelo != PRESETS[self._preset()]["modelo"]:
+            # outra qualidade usa outro modelo: confere de novo o que falta baixar (achado N18)
+            self.situacao = None
+            self._selo("preparacao", 0)
+            self._atualizar_lateral()
+            if getattr(self, "pagina", "") == "preparacao":
+                self.painel_verif.verificando()
+            self._rodar_verificacao()
         self._atualizar_estimativa()
 
     def _atualizar_estimativa(self):
@@ -1099,6 +1119,10 @@ class App(ctk.CTk):
             self._preencher_tabela()
             self._atualizar_correcoes()
             self._log(f"Pasta lida: {len(self.itens)} vídeo(s).")
+            self._pastas_mudaram()
+            if self.projeto is None:  # a saída mudou enquanto lia: lê de novo com as pastas atuais (N19)
+                self._ler_pasta()
+                return
             if not self.itens:
                 self.lbl_resumo.configure(text="Nenhum vídeo encontrado nessa pasta (nem nas subpastas).")
         elif t == "lote_inicio":
@@ -1217,7 +1241,8 @@ class App(ctk.CTk):
         self.lbl_info_nome.configure(text={"sucesso": "Concluída", "parcial": "Concluída com avisos",
                                            "interrompido": "Interrompida", "vazio": "Nada feito",
                                            "falha": "Falhou"}[nivel])
-        self.lbl_info_det.configure(text=f"{d.get('ok', 0)} concluído(s) · {erro} com erro · "
+        problema = "parou por um erro" if d.get("fatal") else f"{erro} com erro"
+        self.lbl_info_det.configure(text=f"{d.get('ok', 0)} concluído(s) · {problema} · "
                                          f"{tempo_humano(dur.total_seconds())}")
         som_sucesso(self) if nivel == "sucesso" else som_aviso(self)
         piscar_barra_de_tarefas(self)

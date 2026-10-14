@@ -7,6 +7,8 @@ import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from .util import gravar_texto_atomico
+
 EXTENSOES_VIDEO = {".mp4", ".mkv", ".mov", ".avi", ".webm", ".m4v", ".wmv", ".flv", ".mpg", ".mpeg"}
 
 # Predefinições em linguagem simples. Velocidades padrão são CONSERVADORAS (CPU);
@@ -171,8 +173,8 @@ class Config:
         dados = asdict(self)
         dados["pasta_videos"] = str(self.pasta_videos)
         dados["pasta_saida"] = str(self.pasta_saida)
-        (self.pasta_saida / NOME_ARQUIVO_CONFIG).write_text(
-            json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
+        gravar_texto_atomico(self.pasta_saida / NOME_ARQUIVO_CONFIG,
+                             json.dumps(dados, ensure_ascii=False, indent=2))
 
     @classmethod
     def carregar(cls, pasta_saida: Path, pasta_videos: Path | None = None) -> "Config":

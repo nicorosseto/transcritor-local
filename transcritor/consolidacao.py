@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import uuid
 from collections import defaultdict
 from pathlib import Path
 from urllib.parse import unquote
@@ -30,8 +31,9 @@ def consolidar(itens: list[tuple[str, Path]], pasta_base: Path, max_palavras: in
     Se algo falhar no meio, a base anterior fica intacta.
     """
     pasta_base.mkdir(parents=True, exist_ok=True)
-    tmp = pasta_base.parent / f".{pasta_base.name}.tmp"
-    shutil.rmtree(tmp, ignore_errors=True)
+    for sobra in pasta_base.parent.glob(f".{pasta_base.name}*.tmp"):  # de uma execução interrompida
+        shutil.rmtree(sobra, ignore_errors=True)
+    tmp = pasta_base.parent / f".{pasta_base.name}.{uuid.uuid4().hex[:8]}.tmp"  # nome único (achado N20)
     tmp.mkdir()
     try:
         nomes = _montar(itens, tmp, max_palavras, pasta_final=pasta_base)
