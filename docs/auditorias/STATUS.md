@@ -87,6 +87,7 @@ Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests
 | N4 | 🟡 | ⏳ | Previsão inicial conservadora por desenho; conferir na 2ª rodada |
 | N5, N6 | ⚪ | ✅ | Textos da interface |
 | N7 | 🟠 | ✅ | Links de captura com espaço (achado no caminho) |
+| N10 | 🟡 | ✅ (v0.1.8) | Depois de **Cancelar** (ou Parar), a tabela seguia mostrando "Transcrevendo" e "Na fila" em vídeos que não terminaram. Agora é repintada ao fim da rodada. Reproduzido por `ferramentas/fumaca/cancelar_rodada.py` |
 | N9 | 🟡 | ✅ (v0.1.7) | Ruído no texto de tela: 31% das linhas lidas eram lixo ("Es Ou ou mu ou"). `ocr.limpar` descarta linhas ilegíveis e blocos dominados por ruído; confiança segue 50 (60 perdia 3% de linhas boas) |
 | N8 | 🔴 | ✅ (v0.1.6) | OCR da v0.1.5 descartava **todo** o texto de tela com a pasta de idiomas do app (sem `configs/tsv`). Agora usa `-c tessedit_create_tsv=1` e falha de forma explícita se a saída não for TSV |
 

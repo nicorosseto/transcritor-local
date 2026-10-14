@@ -16,3 +16,5 @@ Capturas de tela de todos os estados, em 1366x768 (precisa do ImageMagick, coman
 ```
 mkdir -p /tmp/telas && xvfb-run -a -s "-screen 0 1366x768x24" python3.12 ferramentas/capturar_telas.py /tmp/telas
 ```
+
+`cancelar_rodada.py`: cancela no meio da rodada (modelo simulado e lento) e confere que a tabela volta a "Pendente" (N10).

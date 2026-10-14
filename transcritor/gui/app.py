@@ -1193,6 +1193,7 @@ class App(ctk.CTk):
         if erro or nivel == "falha":
             self._log("Detalhes dos erros: veja as linhas acima e a coluna observacao do registro.csv.")
         self._rodar_verificacao()  # o modelo pode ter sido baixado nesta rodada
+        self._preencher_tabela()  # vídeos que não terminaram voltam a "Pendente" (achado N10)
         self._atualizar_resumo()
         self._atualizar_quantidades()
         self._atualizar_resultados()
