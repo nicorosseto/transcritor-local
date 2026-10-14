@@ -70,6 +70,7 @@ class App(ctk.CTk):
         self.itens: list[Item] = []
         self.marcados: set[str] = set()
         self.rodando = False
+        self._cancelando = False
         self.parar = threading.Event()
         self.cancelar = threading.Event()
         self.situacao: Situacao | None = None
@@ -945,7 +946,11 @@ class App(ctk.CTk):
         self._com_ocr = cfg.ocr
         self._feitos, self._erros, self._palavras, self._total_rodada = 0, 0, 0, len(rodada)
         self._inicio = datetime.now()
+        self._cancelando = False
+        self.pb.stop()
+        self.pb.configure(mode="determinate", progress_color=tema.VERDE)
         self.pb.set(0)
+        self.btn_cancelar.configure(text="Cancelar")
         self.lbl_tempo.configure(text="Calculando o tempo restante...")
         self.lbl_status.configure(text="Preparando a rodada...", text_color=tema.BRANCO)
         self._indice = 0
@@ -976,8 +981,22 @@ class App(ctk.CTk):
                                              "Os vídeos já concluídos estão salvos.",
                     [("Cancelar agora", "sim", True), ("Continuar rodando", None, False)]).perguntar()
         if r == "sim":
-            self.cancelar.set()
-            self._log("Cancelando...")
+            self._aplicar_cancelamento()
+
+    def _aplicar_cancelamento(self):
+        """Mostra na hora que está cancelando e trava os botões até a rodada terminar (achado N14)."""
+        self.cancelar.set()
+        self._cancelando = True
+        self.btn_cancelar.configure(state="disabled", text="Cancelando...")
+        self.btn_parar.configure(state="disabled")
+        self.lbl_status.configure(text="⏳  Cancelando... aguarde, estou encerrando com segurança.",
+                                  text_color=tema.LARANJA)
+        self.lbl_tempo.configure(text="Não feche a janela. O vídeo em andamento será refeito na próxima rodada; "
+                                      "os já concluídos estão salvos.")
+        self._lateral_rodada(self.pb.get(), "cancelando...")
+        self.pb.configure(mode="indeterminate", progress_color=tema.LARANJA)
+        self.pb.start()
+        self._log("Cancelando...")
 
     def _modo_rodando(self, sim: bool):
         self.rodando = sim
@@ -1031,6 +1050,8 @@ class App(ctk.CTk):
 
     def _tratar(self, ev: Evento):
         d, t = ev.dados, ev.tipo
+        if self._cancelando and t in ("progresso", "progresso_telas", "etapa"):
+            return  # a tela já diz "Cancelando"; eventos atrasados não podem sobrescrever
         if t == "chamar":
             d["fn"]()
         elif t == "outra_origem":
@@ -1140,6 +1161,10 @@ class App(ctk.CTk):
             self._fim_da_rodada(d)
 
     def _fim_da_rodada(self, d):
+        self._cancelando = False
+        self.pb.stop()
+        self.pb.configure(mode="determinate", progress_color=tema.VERDE)
+        self.btn_cancelar.configure(text="Cancelar")
         self._modo_rodando(False)
         self._etapa(None, {"audio", "transcricao", "telas", "salvar"} if d.get("ok") else set())
         dur = datetime.now() - getattr(self, "_inicio", datetime.now())

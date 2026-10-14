@@ -35,8 +35,15 @@ app._ler_pasta(); bombear(5, lambda: app.projeto)
 app._iniciar()
 bombear(30, lambda: app.tabela.set("a.mp4", "status") == A.ROTULO_PROCESSANDO)
 bombear(1.5)
-app.cancelar.set()
+app._aplicar_cancelamento()  # sem bombear: confere o estado logo depois do clique
+# feedback imediato e botões travados enquanto cancela (N14)
+assert "Cancelando" in app.lbl_status.cget("text"), app.lbl_status.cget("text")
+assert app.btn_cancelar.cget("state") == "disabled" and app.btn_parar.cget("state") == "disabled"
+assert app.pb.cget("mode") == "indeterminate"
 bombear(30, lambda: not app.rodando)
+bombear(0.3)
+assert "cancelada" in app.lbl_status.cget("text").lower() or "interromp" in app.lbl_status.cget("text").lower(), app.lbl_status.cget("text")
+assert app.pb.cget("mode") == "determinate" and app.btn_cancelar.cget("text") == "Cancelar"
 estados = {rel: app.tabela.set(rel, "status") for rel in ("a.mp4", "b.mp4")}
 print(estados)
 assert estados == {"a.mp4": A.STATUS_ROTULO["pendente"], "b.mp4": A.STATUS_ROTULO["pendente"]}, estados

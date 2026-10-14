@@ -154,3 +154,11 @@ Na 4ª rodada o ChatGPT, recebendo o zip com as imagens, descreveu o apresentado
 | ID | O que mudou |
 |---|---|
 | N13 | Cabeçalho do `.md`: "Se você não conseguir ler o conteúdo abaixo, diga isso em vez de inventar". Dica do botão, log e guia: algumas IAs não abrem `.zip`; anexe o `.md` e as imagens soltos |
+
+## v0.1.10 (14/10/2026): feedback ao cancelar
+
+Na 5ª rodada o **Parar após este vídeo** funcionou. No **Cancelar**, a tela ficava igual até a rodada acabar, com os botões ainda clicáveis (N14).
+
+| ID | O que mudou |
+|---|---|
+| N14 | "Cancelando..." na hora (barra de status, barra lateral e texto de apoio), barra indeterminada em laranja, Cancelar e Parar travados; ao terminar, volta ao normal e mostra "Rodada cancelada". Coberto por `ferramentas/fumaca/cancelar_rodada.py` |
