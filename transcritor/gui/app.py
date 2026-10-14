@@ -45,13 +45,7 @@ COR_ATIVA, COR_FEITA, COR_ESPERA = tema.VERDE, tema.VERDE_ESCURO, tema.CINZA_ESC
 VERDE, LARANJA, VERMELHO = tema.VERDE, tema.LARANJA, tema.VERMELHO
 
 
-def tempo_humano(seg: float) -> str:
-    """Sem falsa precisão: minutos para tempos longos (diretriz da Microsoft)."""
-    seg = max(0, int(seg))
-    if seg < 60:
-        return "menos de 1 min"
-    h, m = divmod(round(seg / 60), 60)
-    return f"{h} h {m:02d} min" if h else f"{m} min"
+tempo_humano = textos.tempo_humano
 
 
 def nome_do_projeto(pasta: Path) -> str:
@@ -509,6 +503,12 @@ class App(ctk.CTk):
                       command=lambda: self._abrir_saida("base_consolidada"), **tema.secundario()).pack(side="right")
         ctk.CTkButton(topo, text="Abrir pasta de saída", width=160, height=34, command=self._abrir_saida,
                       **tema.secundario()).pack(side="right", padx=(0, 8))
+        self.btn_pacote = ctk.CTkButton(topo, text="Pacote para IA", width=130, height=34,
+                                        command=self._gerar_pacote, **tema.secundario())
+        self.btn_pacote.pack(side="right", padx=(0, 8))
+        Dica(self.btn_pacote,
+             "Cria, para cada vídeo concluído, uma pasta e um .zip com o .md e só as capturas que ele cita. "
+             "É o que você anexa numa conversa com qualquer IA.")
         self.lbl_res_resumo = ctk.CTkLabel(pg, text="", anchor="w", text_color=tema.CINZA, justify="left")
         self.lbl_res_resumo.grid(row=1, column=0, sticky="ew", pady=(6, 10))
         cartao = ctk.CTkFrame(pg, border_width=1, border_color=tema.BORDA, corner_radius=10)
@@ -552,9 +552,10 @@ class App(ctk.CTk):
         palavras = sum(l.palavras for l in feitos)
         horas = sum(l.duracao_s for l in feitos)
         self.lbl_res_resumo.configure(
-            text=(f"{len(feitos)} vídeo(s) concluído(s) · {palavras:,} palavras · ".replace(",", ".")
-                  + f"{tempo_humano(horas)} de vídeo transcrito. Os arquivos .md ficam em "
-                    "transcricoes_md; a base para a IA, em base_consolidada.") if feitos else
+            text=(f"{len(feitos)} vídeo(s) concluído(s) · {palavras:,} palavras de fala · ".replace(",", ".")
+                  + f"{tempo_humano(horas)} de vídeo transcrito.\n"
+                    "Arquivos .md em transcricoes_md · base para a IA em base_consolidada · "
+                    "para anexar numa conversa, use \"Pacote para IA\".") if feitos else
                  "Nenhum vídeo concluído ainda.")
 
     # ================================================================== utilidades
@@ -604,8 +605,8 @@ class App(ctk.CTk):
             self._selo("preparacao", n)
         else:
             self._selo("preparacao", 0)
-        self.lbl_ocr.configure(text="+15–35% de tempo · " + (
-            "Tesseract pronto." if s.tesseract_ok else "precisa do Tesseract (não instalado)."))
+        self.lbl_ocr.configure(text="+15–35% de tempo · "
+                               + textos.rotulo_tesseract(s.tesseract_ok, s.tesseract_portugues))
         self._atualizar_lateral()
         if getattr(self, "pagina", "") == "preparacao":
             self.painel_verif.mostrar(s, self._preset(), self._pasta(self.ent_saida))
@@ -873,8 +874,7 @@ class App(ctk.CTk):
         if s.get("registro_recuperado"):
             extra.append("registro recuperado da cópia de emergência")
         self.lbl_resumo.configure(
-            text=f"{len(self.itens) - len(pend)} concluído(s) · {len(pend)} pendente(s), "
-                 f"{tempo_humano(sum(i.duracao for i in pend))} de vídeo"
+            text=textos.resumo_da_leitura(len(self.itens) - len(pend), len(pend), sum(i.duracao for i in pend))
                  + (f" · {', '.join(extra)}" if extra else ""))
         self._atualizar_lateral()
 
@@ -1215,6 +1215,22 @@ class App(ctk.CTk):
         caixa.configure(state="disabled")
         from .componentes import trazer_para_frente
         trazer_para_frente(janela, self)
+
+    def _gerar_pacote(self):
+        if self.projeto is None or self.rodando:
+            return
+        try:
+            pacotes = self.projeto.gerar_pacotes()
+        except Exception as e:
+            Dialogo(self, "Pacote para IA", f"Não consegui criar o pacote: {e}", [("Entendi", None, True)],
+                    icone="⚠️", som=False).perguntar()
+            return
+        if not pacotes:
+            Dialogo(self, "Pacote para IA", "Ainda não há vídeo concluído para empacotar.",
+                    [("Entendi", None, True)], icone="ℹ️", som=False).perguntar()
+            return
+        self._log(f"Pacote para IA: {len(pacotes)} pasta(s) e .zip em pacote_para_ia.")
+        self._abrir_saida("pacote_para_ia")
 
     def _abrir_saida(self, sub: str = ""):
         p = self._pasta(self.ent_saida)

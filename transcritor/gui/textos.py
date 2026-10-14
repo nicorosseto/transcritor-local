@@ -1,5 +1,30 @@
 """Textos da interface, separados do código para facilitar revisão e tradução."""
 
+
+def tempo_humano(seg: float) -> str:
+    """Sem falsa precisão: minutos para tempos longos (diretriz da Microsoft)."""
+    seg = max(0, int(seg))
+    if seg < 60:
+        return "menos de 1 min"
+    h, m = divmod(round(seg / 60), 60)
+    return f"{h} h {m:02d} min" if h else f"{m} min"
+
+
+def resumo_da_leitura(concluidos: int, pendentes: int, segundos_pendentes: float) -> str:
+    """Linha de resumo da página Vídeos (achado N5: sem pendentes não se fala em minutos)."""
+    if not pendentes:
+        return f"{concluidos} concluído(s) · nenhum pendente"
+    return f"{concluidos} concluído(s) · {pendentes} pendente(s), {tempo_humano(segundos_pendentes)} de vídeo"
+
+
+def rotulo_tesseract(disponivel: bool, tem_portugues: bool) -> str:
+    """Achado N6: não dizer "pronto" sem avisar que o pacote de português ainda será baixado."""
+    if not disponivel:
+        return "precisa do Tesseract (não instalado)."
+    if not tem_portugues:
+        return "Tesseract pronto; o pacote de português (~2 MB) será baixado na 1ª rodada, com internet."
+    return "Tesseract pronto."
+
 COMO_USAR = """COMO USAR — em 5 passos
 
 0) PRIMEIRA VEZ
@@ -38,7 +63,9 @@ COMO_USAR = """COMO USAR — em 5 passos
 
 ONDE ESTÁ O RESULTADO
    transcricoes_md\\   -> um .md por vídeo (mesma estrutura de pastas)
-   base_consolidada\\  -> um arquivo por subpasta, pronto para NotebookLM/Claude
+   base_consolidada\\  -> um arquivo por subpasta, para ferramentas que indexam muitas fontes
+   pacote_para_ia\\    -> (botão "Pacote para IA", em Resultados) pasta e .zip por vídeo: o .md
+                          mais só as imagens que ele cita, para anexar numa conversa com qualquer IA
    registro.csv       -> histórico (abre no Excel/Power BI)
    correcoes.json     -> sua lista de correções
    capturas\\          -> imagens das telas (se a leitura de tela estiver ligada)

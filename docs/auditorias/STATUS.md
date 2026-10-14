@@ -75,6 +75,19 @@ Mesma regra: testes em [`tests/test_auditoria_fase2.py`](../../tests/test_audito
 
 Todos os 16 achados da auditoria de 08/10/2026 estão corrigidos, exceto X14 (pré-publicação).
 
+## Teste real no Windows (v0.1.5, 14/10/2026)
+
+Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests/test_teste_real_p1.py`](../../tests/test_teste_real_p1.py), escritos antes e falhando no commit `6ec55eb`. Registro: [testes/2026-10-14-windows-p1.md](../testes/2026-10-14-windows-p1.md).
+
+| ID | Sev. | Status | O que mudou |
+|---|---|---|---|
+| N1 | 🟠 | ✅ (limiar provisório) | OCR amplia capturas estreitas e filtra por confiança. Calibrar o limiar com mais vídeos |
+| N2 | 🟡 | ✅ | `palavras` = fala; `palavras_tela` à parte |
+| N3 | 🟡 | ✅ | Capturas sem uso apagadas |
+| N4 | 🟡 | ⏳ | Previsão inicial conservadora por desenho; conferir na 2ª rodada |
+| N5, N6 | ⚪ | ✅ | Textos da interface |
+| N7 | 🟠 | ✅ | Links de captura com espaço (achado no caminho) |
+
 ## Pré-publicação
 
 | ID | Status | Próximo passo |

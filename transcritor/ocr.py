@@ -77,20 +77,67 @@ class ErroOCR(RuntimeError):
     """Falha técnica do Tesseract (diferente de "a imagem não tem texto"; achado X10)."""
 
 
+LARGURA_MINIMA = 1280      # capturas mais estreitas são ampliadas 2x antes do OCR (achado N1)
+CONFIANCA_MINIMA = 50.0    # abaixo disso o Tesseract mesmo duvida; descartadas (achado N1; valor provisório)
+
+
+def preparar_imagem(imagem: Path) -> tuple[Path, bool]:
+    """Devolve (imagem_para_o_ocr, é_temporária).
+
+    O Tesseract lê mal texto pequeno: num vídeo 640x360 ele acertou 6% das palavras de um quadro;
+    ampliando 2x (tons de cinza, Lanczos) passou a acertar 56%. Capturas largas seguem como estão.
+    """
+    from PIL import Image
+    with Image.open(imagem) as img:
+        if img.width >= LARGURA_MINIMA:
+            return imagem, False
+        ampliada = img.convert("L").resize((img.width * 2, img.height * 2), Image.Resampling.LANCZOS)
+    temporaria = imagem.with_name(f"_ocr_{imagem.stem}.png")
+    ampliada.save(temporaria)
+    return temporaria, True
+
+
+def texto_do_tsv(tsv: str, confianca_minima: float = CONFIANCA_MINIMA) -> str:
+    """Monta o texto a partir da saída `tsv` do Tesseract, mantendo só palavras confiáveis.
+
+    Cada linha do resultado é uma linha da imagem; linhas sem nenhuma palavra confiável somem."""
+    linhas: dict[tuple[str, str, str], list[str]] = {}
+    for bruta in tsv.splitlines()[1:]:
+        c = bruta.split("\t", 11)
+        if len(c) < 12 or c[0] != "5":  # nível 5 = palavra
+            continue
+        texto = c[11].strip()
+        try:
+            confianca = float(c[10])
+        except ValueError:
+            continue
+        if texto and confianca >= confianca_minima:
+            linhas.setdefault((c[2], c[3], c[4]), []).append(texto)
+    return "\n".join(" ".join(palavras) for palavras in linhas.values())
+
+
 def ler_imagem(estado: EstadoOCR, imagem: Path) -> str:
     if not estado.disponivel or not estado.executavel:
         raise ErroOCR("Tesseract indisponível")
-    cmd = [estado.executavel, str(imagem), "stdout", "-l", estado.idiomas, "--psm", "3"]
-    if estado.pasta_tessdata:
-        cmd[1:1] = ["--tessdata-dir", str(estado.pasta_tessdata)]
     try:
-        r = rodar(cmd, capture_output=True, timeout=120)
+        entrada, temporaria = preparar_imagem(imagem)
     except Exception as e:
-        raise ErroOCR(f"Tesseract não pôde ser executado: {e}") from e
-    if r.returncode != 0:
-        msg = r.stderr.decode("utf-8", errors="replace").strip().splitlines()
-        raise ErroOCR("Tesseract falhou" + (f": {msg[-1]}" if msg else f" (código {r.returncode})"))
-    return r.stdout.decode("utf-8", errors="replace")
+        raise ErroOCR(f"Não consegui preparar a captura para o OCR: {e}") from e
+    try:
+        cmd = [estado.executavel, str(entrada), "stdout", "-l", estado.idiomas, "--psm", "3", "tsv"]
+        if estado.pasta_tessdata:
+            cmd[1:1] = ["--tessdata-dir", str(estado.pasta_tessdata)]
+        try:
+            r = rodar(cmd, capture_output=True, timeout=120)
+        except Exception as e:
+            raise ErroOCR(f"Tesseract não pôde ser executado: {e}") from e
+        if r.returncode != 0:
+            msg = r.stderr.decode("utf-8", errors="replace").strip().splitlines()
+            raise ErroOCR("Tesseract falhou" + (f": {msg[-1]}" if msg else f" (código {r.returncode})"))
+        return texto_do_tsv(r.stdout.decode("utf-8", errors="replace"))
+    finally:
+        if temporaria:
+            entrada.unlink(missing_ok=True)
 
 
 # ----------------------------------------------------------------------------- limpeza

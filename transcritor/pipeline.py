@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Callable
 
-from . import consolidacao, correcoes, markdown, midia, ocr, preparacao
+from . import consolidacao, correcoes, markdown, midia, ocr, pacote, preparacao
 from .config import EXTENSOES_VIDEO, Config
 from .estimativa import Estimativa, estimar
 from .registro import ERRO, OK, Linha, Registro, assinatura_da_linha, chave_padrao
@@ -361,11 +361,13 @@ class Projeto:
                 l.seg_transcricao, l.seg_ocr = round(seg_trans, 1), round(seg_ocr, 1)
                 l.velocidade = round(dur / seg_trans, 2) if seg_trans > 0 else 0.0
                 l.palavras, l.capturas = palavras, len(telas)
+                l.palavras_tela = markdown.palavras_da_tela(telas)
                 l.correcoes = trocas
                 l.threads, l.dispositivo, l.motor = self.cfg.threads_efetivas, self.dispositivo, versao_motor()
                 l.observacao = f"texto da tela falhou: {falha_telas}"[:300] if falha_telas else ""
                 resumo["ok"] += 1
-                emitir("video_fim", rel=item.rel, palavras=palavras, segundos=time.perf_counter() - t0,
+                emitir("video_fim", rel=item.rel, palavras=palavras, palavras_tela=l.palavras_tela,
+                       segundos=time.perf_counter() - t0,
                        velocidade=l.velocidade, telas=len(telas), correcoes=trocas, falha_telas=falha_telas)
                 feito_lote += dur
                 gasto_lote += seg_trans
@@ -409,6 +411,7 @@ class Projeto:
                 falhas, ultimo_erro = falhas + 1, str(e)
                 continue
             if not ocr.e_util(texto) or ocr.parecido(texto, ultimo):
+                img.unlink(missing_ok=True)  # captura sem uso: não fica ocupando disco (achado N3)
                 continue
             telas.append(markdown.Tela(t, texto, img))
             ultimo = texto
@@ -418,3 +421,9 @@ class Projeto:
     def consolidar(self) -> list[Path]:
         feitos = [(l.caminho, self.caminho_md(l.caminho)) for l in self.registro.ativos() if l.status == OK]
         return consolidacao.consolidar(feitos, self.cfg.pasta_base, self.cfg.max_palavras_por_base)
+
+    def gerar_pacotes(self) -> list[Path]:
+        """Uma pasta (e um .zip) por vídeo concluído, prontos para anexar numa conversa com IA."""
+        feitos = [l for l in self.registro.ativos() if l.status == OK and self.caminho_md(l.caminho).is_file()]
+        return [pacote.montar(self.caminho_md(l.caminho), self.cfg.pasta_pacote, l.saida or chave_padrao(l.caminho))
+                for l in feitos]

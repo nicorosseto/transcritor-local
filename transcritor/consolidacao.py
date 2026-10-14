@@ -7,6 +7,9 @@ import re
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from urllib.parse import unquote
+
+from .markdown import link_seguro
 
 RAIZ = "geral"
 
@@ -46,7 +49,7 @@ def consolidar(itens: list[tuple[str, Path]], pasta_base: Path, max_palavras: in
     return gerados
 
 
-_LINK = re.compile(r"(\]\()([^)\s]+)(\))")
+_LINK = re.compile(r"(\[captura\]\()([^)\n]+)(\))")  # só os links de captura que o app escreve
 
 
 def _corrigir_links(texto: str, md: Path, destino_dir: Path) -> str:
@@ -55,9 +58,9 @@ def _corrigir_links(texto: str, md: Path, destino_dir: Path) -> str:
         alvo = m.group(2)
         if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:|^#|^/", alvo):  # http:, file:, âncora, absoluto
             return m.group(0)
-        absoluto = os.path.normpath(os.path.join(md.parent, alvo))
+        absoluto = os.path.normpath(os.path.join(md.parent, unquote(alvo)))
         novo = os.path.relpath(absoluto, destino_dir).replace("\\", "/")
-        return f"{m.group(1)}{novo}{m.group(3)}"
+        return f"{m.group(1)}{link_seguro(novo)}{m.group(3)}"
     return _LINK.sub(trocar, texto)
 
 

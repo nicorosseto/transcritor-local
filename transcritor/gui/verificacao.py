@@ -26,6 +26,7 @@ class Situacao:
     modelo_baixado: bool = True
     modelo: str = ""
     tesseract_ok: bool = True
+    tesseract_portugues: bool = True
     diagnostico: object = None
     obrigatorios: list[str] = field(default_factory=list)
     opcionais: list[str] = field(default_factory=list)
@@ -47,6 +48,7 @@ def verificar(preset: str, pasta_saida: Path | None) -> Situacao:
         s.modelo_baixado = False
     est = ocr.verificar()
     s.tesseract_ok = est.disponivel
+    s.tesseract_portugues = est.tem_portugues
     s.diagnostico = diagnosticar(pasta_saida)
     if not s.ffmpeg_ok:
         s.obrigatorios.append("FFmpeg")

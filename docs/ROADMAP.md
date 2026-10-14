@@ -22,6 +22,11 @@
 - [x] Fundo preto, barra lateral `#0A1612`, verde só no que é clicável, logotipo "da onda à linha" e ícone do `.exe` (ADR-017)
 - [ ] Conferir no Windows real (P1): escalas 125% e 150%, fluxo completo por teclado
 
+## v0.1.5: teste real e formato para IA ✅
+- [x] N1 a N3, N5 a N7 e o cabeçalho "Como ler este arquivo" ([ADR-018](DECISOES.md))
+- [x] Botão **Pacote para IA** (pasta + `.zip` com o `.md` e só as capturas citadas)
+- [ ] Conferir no Windows real: OCR mais lento e mais legível; calibrar o limiar de confiança (P3)
+
 ## v0.2: IA visual local (segunda fase)
 - Coluna "IA visual" na tabela: escolher **por vídeo**
 - Aplicação sobre as capturas já salvas (sem refazer a transcrição)

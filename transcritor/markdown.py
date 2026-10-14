@@ -3,12 +3,42 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
 from .transcricao import Paragrafo
 from .util import hhmmss
+
+
+COMO_LER = [
+    "> **Como ler este arquivo (para pessoas e para qualquer IA):**",
+    "> - `**[hh:mm:ss]**` abre um parágrafo de fala e marca onde ele começa no vídeo "
+    "(uma marca a cada ~1 min).",
+    "> - Blocos `🖼️ **Na tela [hh:mm:ss]**` são o texto lido da imagem do vídeo por OCR "
+    "(slides, telas, legendas). Podem ter erros e linhas incompletas. Quando a fala disser "
+    "\"aqui\", \"isto\" ou \"esse gráfico\", o bloco \"Na tela\" mais próximo costuma ser o que estava visível.",
+    "> - Não há descrição de imagens, pessoas, cores ou gráficos: só o que foi dito e o texto "
+    "que apareceu na tela.",
+    "> - A fala é uma transcrição automática e literal; pode errar nomes próprios e termos técnicos.",
+]
+
+_FALA = re.compile(r"^\*\*\[\d\d:\d\d:\d\d\]\*\* (.*)$", re.MULTILINE)
+
+
+def palavras_de_fala(texto_md: str) -> int:
+    """Conta só as palavras faladas de um .md já pronto (ignora cabeçalho e blocos 'Na tela')."""
+    return sum(len(m.group(1).split()) for m in _FALA.finditer(texto_md))
+
+
+def palavras_da_tela(telas: "list[Tela]") -> int:
+    return sum(len(t.texto.split()) for t in telas)
+
+
+def link_seguro(caminho: str) -> str:
+    """Espaços e parênteses quebram links Markdown (achado N7): vão codificados."""
+    return caminho.replace("%", "%25").replace(" ", "%20").replace("(", "%28").replace(")", "%29")
 
 
 @dataclass
@@ -36,13 +66,14 @@ def montar(*, titulo: str, origem: str, duracao: float, modelo: str, preset: str
         i += 1
 
     corpo = "\n\n".join(blocos)
-    palavras = len(corpo.split())
+    palavras = sum(len(p.texto.split()) for p in paragrafos)  # só a fala (achado N2)
     cab = [
         f"# {titulo}",
         "",
         f"- **Arquivo de origem:** {origem}",
         f"- **Duração:** {hhmmss(duracao)}",
-        f"- **Palavras:** {palavras:,}".replace(",", "."),
+        f"- **Palavras de fala:** {palavras}",
+        f"- **Palavras de texto de tela:** {palavras_da_tela(telas)}" if telas else None,
         f"- **Transcrito em:** {datetime.now():%d/%m/%Y}",
         f"- **Modelo:** faster-whisper {modelo} ({preset})",
         "- **Texto de tela (OCR):** " + (f"não lido por completo ({falha_telas})" if falha_telas and not telas
@@ -51,7 +82,7 @@ def montar(*, titulo: str, origem: str, duracao: float, modelo: str, preset: str
                                            if telas else "não"),
         f"- **Correções automáticas:** {correcoes} (lista correcoes.json)" if correcoes else None,
         "",
-        "> Transcrição automática e literal da fala. Pode conter erros em nomes próprios e termos técnicos.",
+        *COMO_LER,
         "",
         "---",
         "",
@@ -64,7 +95,7 @@ def _bloco_tela(t: Tela, destino_md: Path) -> str:
     linhas = [f"> 🖼️ **Na tela [{hhmmss(t.inicio)}]**"]
     if t.imagem is not None:
         rel = os.path.relpath(t.imagem, destino_md.parent).replace("\\", "/")
-        linhas[0] += f" · [captura]({rel})"
+        linhas[0] += f" · [captura]({link_seguro(rel)})"
     linhas += [f"> {l}" for l in t.texto.splitlines()]
     return "\n".join(linhas)
 

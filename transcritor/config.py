@@ -138,6 +138,10 @@ class Config:
         return self.pasta_saida / "base_consolidada"
 
     @property
+    def pasta_pacote(self) -> Path:
+        return self.pasta_saida / "pacote_para_ia"
+
+    @property
     def pasta_orfaos(self) -> Path:
         return self.pasta_saida / "_orfaos"
 

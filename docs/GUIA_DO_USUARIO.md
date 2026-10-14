@@ -102,10 +102,18 @@ Durante a rodada, a barra de baixo mostra as etapas, o progresso e o término pr
 
 ## 6. Levando para a IA
 
-| Destino | O que subir |
+Qualquer IA entende o `.md`: ele é texto puro e traz, no topo, o cabeçalho **"Como ler este arquivo"** (o que são os `[hh:mm:ss]`, o que são os blocos "Na tela" e o que **não** existe). Não precisa mandar a pasta inteira: o `.mp3`, o `registro.csv` e a configuração não ajudam a IA.
+
+| Situação | O que subir |
 |---|---|
-| **NotebookLM** | Os arquivos de `transcricoes_md\` (um por fonte), para as respostas citarem o vídeo exato. Ou os de `base_consolidada\`, se passar de 50 vídeos |
-| **Claude (Projetos)** | Os `.md` como conhecimento do projeto |
+| **1 vídeo, numa conversa** | O `.md` de `transcricoes_md\`. É o arquivo principal |
+| **Quer que a IA veja os slides** | Clique em **Pacote para IA** (página Resultados) e anexe o `.md` da pasta gerada junto com as imagens de `imagens\`, ou o `.zip` quando a ferramenta aceitar |
+| **Poucos vídeos** | Os `.md` individuais |
+| **Muitos vídeos, ferramenta que indexa fontes** (NotebookLM, Projetos do Claude, GPTs personalizados) | Os arquivos de `base_consolidada\` (já divididos por tamanho). No NotebookLM, os `.md` individuais deixam as respostas citarem o vídeo exato |
+
+Num chat comum, o limite é a janela de contexto da IA: um vídeo de 36 minutos tem ~7 mil palavras de fala. Muitos vídeos juntos não cabem; use uma ferramenta que indexa fontes ou mande só os do assunto.
+
+A IA reconstrói **o que foi dito e o texto que apareceu na tela**. Gráficos, pessoas e layout só serão descritos na v0.2 (IA visual).
 
 ⚠️ **Material de trabalho ou sigiloso:** revise e anonimize os `.md` (nomes, matrículas, números de processo) **antes** de subir para qualquer IA na nuvem.
 

@@ -96,3 +96,21 @@ O responsável escolheu, entre três propostas, a navegação com barra lateral 
 | Ícone padrão do Python | Logotipo na janela e no `.exe` |
 
 As telas foram conferidas em 1366x768 com o modelo simulado (`ferramentas/capturar_telas.py`). **Ainda não foram vistas no Windows real.**
+
+## v0.1.5 (14/10/2026): correções do primeiro teste real e formato para IA
+
+Primeira rodada completa no Windows (1 vídeo de 36 min, Equilibrado, com OCR): **1,68x**, 27 min, base consolidada correta. O teste achou sete problemas, todos corrigidos com teste que falhava antes ([registro](testes/2026-10-14-windows-p1.md), [ADR-018](DECISOES.md)).
+
+| ID | O que mudou |
+|---|---|
+| N1 | OCR amplia capturas estreitas 2x e descarta palavras de baixa confiança. Em 2 quadros com texto conhecido, a precisão foi de 48% e 4% para 79% e 73%; a cobertura, de 39% e 2% para 55% e 47% |
+| N2 | `palavras` conta só a fala; nova coluna `palavras_tela` no `registro.csv` |
+| N3 | Capturas que o OCR não aproveita são apagadas na hora (eram 82% do espaço) |
+| N5, N6 | Resumo "nenhum pendente" e aviso de que o português do Tesseract será baixado |
+| N7 | Links de captura em pastas com espaço quebravam na base consolidada; agora vão codificados e a base entende os `.md` antigos |
+| — | Cabeçalho "Como ler este arquivo" e botão **Pacote para IA** |
+
+**Lição:** o N7 só apareceu porque o pacote para IA exigiu links certos. O teste real achou o que os 51 testes automáticos não achavam (vídeo de baixa resolução e pastas com espaço no nome).
+
+**Custo:** o OCR ficou ~1,8x mais lento por captura em vídeo estreito. **Ainda não foi visto no Windows real**: precisa de nova rodada.
+

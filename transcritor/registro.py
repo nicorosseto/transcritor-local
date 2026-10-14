@@ -21,6 +21,7 @@ from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from pathlib import Path
 
+from .markdown import palavras_de_fala
 from .util import ler_numero_br, numero_br
 
 PENDENTE, OK, ERRO, ORFAO, SUBSTITUIDO = "pendente", "ok", "erro", "orfao", "substituido"
@@ -39,7 +40,8 @@ class Linha:
     seg_transcricao: float = 0.0
     seg_ocr: float = 0.0
     velocidade: float = 0.0      # minutos de vídeo por minuto real (só a transcrição)
-    palavras: int = 0
+    palavras: int = 0            # só a fala (achado N2)
+    palavras_tela: int = 0       # texto lido da tela (OCR)
     capturas: int = 0
     saida: str = ""              # chave de saída fixa (sem extensão), ex.: "Mod 1/aula"
     audio_de: str = ""           # assinatura do vídeo quando o .mp3 foi extraído (achado X1)
@@ -55,7 +57,7 @@ class Linha:
 
 
 _NUMERICOS = {"duracao_s", "seg_transcricao", "seg_ocr", "velocidade"}
-_INTEIROS = {"tamanho_bytes", "palavras", "capturas", "correcoes", "threads"}
+_INTEIROS = {"tamanho_bytes", "palavras", "palavras_tela", "capturas", "correcoes", "threads"}
 
 
 def _assinatura(arquivo: Path) -> tuple[int, str]:
@@ -177,7 +179,8 @@ class Registro:
                     # .md feito por versão antiga (sem registro): adota, não refaz
                     linha.status = OK
                     linha.observacao = "importado de execução anterior"
-                    linha.palavras = len(md.read_text(encoding="utf-8", errors="ignore").split())
+                    linha.palavras = (palavras_de_fala(texto := md.read_text(encoding="utf-8", errors="ignore"))
+                                      or len(texto.split()))
                     contagem["importados"] += 1
                 else:
                     contagem["novos"] += 1

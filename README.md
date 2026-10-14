@@ -1,6 +1,6 @@
 # Transcritor Local
 
-Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arquivos Markdown pesquisáveis**, prontos para alimentar IAs como **NotebookLM** e **Claude**. Tudo roda **no seu PC**: nenhum vídeo, áudio ou texto é enviado para a internet.
+Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arquivos Markdown pesquisáveis**, prontos para qualquer IA ler (Claude, ChatGPT, Gemini, NotebookLM e outras). Tudo roda **no seu PC**: nenhum vídeo, áudio ou texto é enviado para a internet.
 
 ![Tela do Transcritor Local](docs/img/app.png)
 
@@ -35,7 +35,9 @@ Vídeos de 500 MB a 1 GB não cabem no upload de nenhuma IA, e "conversores de M
 - 🎙️ **Transcrição literal** com timestamps a cada ~1 min, em português (ou outro idioma)
 - 🖼️ **Texto da tela (opcional):** detecta trocas de slide/tela e lê o texto via OCR, inserindo-o no ponto certo do `.md`
 - 📁 **Subpastas espelhadas:** `videos/Módulo 01/aula.mp4` → `transcricoes_md/Módulo 01/aula.md`
-- 📚 **Base consolidada por módulo**, respeitando o limite de 500 mil palavras por fonte do NotebookLM
+- 📚 **Base consolidada por módulo**, em arquivos de até 400 mil palavras (configurável; cabe nas fontes do NotebookLM, de 500 mil)
+- 📦 **Pacote para IA:** um clique gera, para cada vídeo, uma pasta e um `.zip` com o `.md` e só as capturas que ele cita, para anexar numa conversa
+- 🧭 **Cabeçalho "Como ler este arquivo"** em todo `.md`, para qualquer IA interpretar certo o que é fala, o que é texto de tela e o que não existe (descrição de imagens)
 - 🧾 **`registro.csv`** (abre no Excel/Power BI): detecta vídeo novo, **substituído**, **excluído** e com **erro**
 - ⏱️ **Estimativa de tempo** que aprende a velocidade real do seu PC
 - 🖥️ **Verificação de hardware:** diz o que ajuda, o que atrapalha e qual qualidade usar
@@ -56,7 +58,7 @@ flowchart LR
     W --> M[📝 .md por vídeo]
     O --> M
     M --> B[📚 Base consolidada<br/>por subpasta]
-    B --> IA[NotebookLM / Claude]
+    B --> IA[Qualquer IA:<br/>Claude, ChatGPT, Gemini, NotebookLM]
 ```
 
 Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/DECISOES.md).
@@ -90,7 +92,8 @@ Passo a passo para iniciantes, incluindo solução de erros comuns: **[Guia do u
 ```
 <pasta de saída>/
 ├── transcricoes_md/      um .md por vídeo, mesma estrutura de pastas
-├── base_consolidada/     base_<subpasta>.md, pronta para NotebookLM/Claude
+├── base_consolidada/     base_<subpasta>.md, para ferramentas que indexam muitas fontes
+├── pacote_para_ia/       (botão "Pacote para IA") uma pasta e um .zip por vídeo: .md + imagens citadas
 ├── capturas/             imagens das trocas de tela (se o OCR estiver ligado)
 ├── audio_mp3/            áudio leve de cada vídeo (reaproveitável)
 ├── _orfaos/              transcrições de vídeos que foram removidos da pasta
@@ -102,7 +105,7 @@ Exemplo de trecho gerado (conteúdo fictício):
 ```markdown
 **[00:12:05]** Agora a gente vai criar a medida de total de vendas usando SUM...
 
-> 🖼️ **Na tela [00:12:08]** · [captura](../../capturas/Modulo 01/aula03/cap_001208.jpg)
+> 🖼️ **Na tela [00:12:08]** · [captura](../../capturas/Modulo%2001/aula03/cap_001208.jpg)
 > Total Vendas = SUM(Vendas[Valor])
 ```
 

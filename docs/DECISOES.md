@@ -217,3 +217,21 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 **Limitações conhecidas.**
 - A tabela é um `ttk.Treeview`: não dá para colorir só a "pílula" de status, então a linha inteira muda de cor (verde rodando, vermelho erro, laranja arquivo mudou).
 - Acessibilidade por leitor de tela segue limitada pelo Tkinter (contra-auditoria, seção 5).
+
+---
+
+## ADR-018: O `.md` é feito para qualquer IA, não só para uma
+
+**Data:** 14/10/2026 · **Status:** aceita · **Origem:** teste real no Windows ([registro](testes/2026-10-14-windows-p1.md)) e pergunta do responsável sobre quem lê os arquivos
+
+**Decisão.**
+- **Cabeçalho "Como ler este arquivo"** em todo `.md` (`markdown.COMO_LER`): explica `[hh:mm:ss]`, os blocos "Na tela" (OCR, com erros possíveis) e o que **não** existe (descrição de imagens). Substitui o aviso antigo de "transcrição automática".
+- **Palavras** passam a contar só a fala (`palavras`); o texto de tela vai em `palavras_tela`. O limite por arquivo da base consolidada continua contando tudo, porque é o texto inteiro que ocupa a janela da IA.
+- **Pacote para IA** (`pacote.py`, botão em Resultados): uma pasta e um `.zip` por vídeo com o `.md` e **só** as capturas que ele cita, com os links reescritos para `imagens/`. O áudio, o registro e as capturas descartadas ficam de fora.
+- **Links de captura** são escritos com espaços e parênteses codificados (`%20`), porque o espaço cru quebra o link em Markdown e quebrava a base consolidada de pastas como "Módulo 01" (N7). A base entende também os `.md` antigos.
+- **OCR:** capturas com menos de 1280 px de largura são ampliadas 2x antes do Tesseract, e palavras com confiança abaixo de 50 são descartadas (`ocr.preparar_imagem`, `ocr.texto_do_tsv`). Capturas sem uso são apagadas na hora (N3).
+
+**Consequências.** (+) Qualquer IA interpreta o arquivo sem instruções externas; o texto de tela fica legível em vídeos de baixa resolução. (−) O OCR de capturas estreitas leva ~1,8x mais tempo por imagem (+3 min por vídeo de 36 min neste PC). O limiar de confiança é **provisório** (medido em 2 quadros): revisar com mais vídeos (P3).
+
+**Limitações conhecidas.** A IA reconstrói o que foi dito e o texto que apareceu; gráficos, pessoas e layout dependem da v0.2 (IA visual). Chat comum tem janela de contexto pequena: muitos vídeos exigem ferramenta que indexa fontes.
+
