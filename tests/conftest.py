@@ -36,7 +36,7 @@ def criar_video(destino: Path, telas: list[tuple[str, float]], cores=None) -> Pa
         _frame(texto, png, cor)
         lista.append(f"file '{png.as_posix()}'\nduration {seg}")
     lista.append(f"file '{(tmp / f'f{len(telas) - 1}.png').as_posix()}'")
-    (tmp / "lista.txt").write_text("\n".join(lista))
+    (tmp / "lista.txt").write_text("\n".join(lista), encoding="utf-8")  # ffmpeg lê a lista em UTF-8
     total = sum(s for _, s in telas)
     subprocess.run(["ffmpeg", "-nostdin", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
                     "-i", str(tmp / "lista.txt"), "-f", "lavfi", "-i", f"sine=frequency=300:duration={total}",
