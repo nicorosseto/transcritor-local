@@ -24,7 +24,7 @@
 
 | IA | Resultado |
 |---|---|
-| ChatGPT | Resumo e passos corretos; descreveu o que viu nas capturas (apresentador, gráficos, rótulos) e avisou o limite da análise; notou que "HeyGen" no nome não era o assunto |
+| ChatGPT | Resumo e passos corretos; descreveu o que viu nas capturas (apresentador, gráficos, rótulos) e avisou o limite da análise; notou que o nome do arquivo não correspondia ao assunto do vídeo |
 | Gemini | **Inventou**: passos de Power Query/DAX e um "painel do agente" que não existem nos vídeos, marcadores `[00:15 - Problema]` e um botão "Copiar/Exportar", sem nenhum aviso. Provável causa: não abriu o `.zip` (a confirmar com o `.md` solto) |
 
 Mitigação na v0.1.9 (N13).

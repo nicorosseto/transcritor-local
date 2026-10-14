@@ -253,12 +253,13 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 
 **Adendo (v0.1.9, N13).** O cabeçalho "Como ler este arquivo" ganhou a instrução de avisar quando o conteúdo não puder ser lido, em vez de inventar. É uma mitigação: reduz o risco, não o elimina. O app não tem como saber o que a IA realmente abriu.
 
+
 ---
 
-## ADR-020: SHA-256 no build e cópia com senha enquanto o `.exe` não é assinado
+## ADR-020: SHA-256 no build enquanto o `.exe` não é assinado
 
-**Data:** 14/10/2026 · **Status:** aceita (provisória até o P7) · **Origem:** o Chrome passou a marcar o artefato como "perigoso" no teste real
+**Data:** 14/10/2026 · **Status:** aceita (provisória até o P7) · **Origem:** o Chrome marcou o artefato como "perigoso" no teste real
 
-**Decisão.** O build grava `SHA256.txt` ao lado do `.exe` e mostra o hash no resumo da execução. Também publica um segundo artefato, `TranscritorLocal-windows-protegido`, com a senha pública `transcritor`: o navegador não consegue inspecionar o conteúdo e deixa de bloquear.
+**Decisão.** O build grava `SHA256.txt` ao lado do `.exe` e mostra o hash no resumo da execução, para conferir a integridade com `Get-FileHash`. Foi testado e removido um segundo artefato com zip protegido por senha: o responsável baixou o normal sem ele, e um `.exe` em zip com senha é justamente o padrão de distribuição de malware, o que prejudicaria a credibilidade de um repositório público.
 
-**Consequências.** (+) O responsável consegue baixar e conferir a integridade. (−) A senha não protege nada, e a assinatura de código (P7) continua sendo a solução de verdade; para o repositório público, assinar antes de divulgar. O truque da senha não é testável fora do Windows: conferir no primeiro uso.
+**Consequências.** (+) Quem baixar consegue conferir o arquivo. (−) O aviso do Chrome/SmartScreen continua até a assinatura de código (P7); o README explica como abrir.

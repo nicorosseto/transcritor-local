@@ -19,4 +19,4 @@ O Transcritor Local é MIT. Ele **usa** (e, no `.zip` para Windows, **distribui*
 | [psutil](https://github.com/giampaolo/psutil) | Hardware | BSD-3-Clause | Sim |
 | Python + Tk/Tcl | Runtime | PSF / BSD-style | Sim |
 
-> ⚠️ Pendência P8 da [Auditoria](AUDITORIA.md): conferir as obrigações exatas da build GPL do FFmpeg antes de tornar o repositório público.
+> **FFmpeg (P8):** o build grava `licencas/FFmpeg-CODIGO-FONTE.txt` na pasta distribuída, com a versão exata e o endereço do código-fonte correspondente, além do texto da licença. Isso cobre a oferta de fonte da GPL para um programa chamado como processo separado; não é parecer jurídico. Quem quiser eliminar a questão pode usar o FFmpeg instalado no próprio PC.

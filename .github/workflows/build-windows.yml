@@ -54,6 +54,21 @@ jobs:
           Copy-Item LICENSE dist/TranscritorLocal/licencas/TranscritorLocal-LICENSE.txt
           Copy-Item docs/LICENCAS_TERCEIROS.md dist/TranscritorLocal/licencas/
           Copy-Item packaging/COMO_ABRIR.txt dist/TranscritorLocal/
+          $v = (& "$($pasta.FullName)/bin/ffmpeg.exe" -version | Select-Object -First 1)
+          $num = if ($v -match 'ffmpeg version (\d+(\.\d+)+)') { $Matches[1] } else { "" }
+          $fonte = if ($num) { "https://ffmpeg.org/releases/ffmpeg-$num.tar.xz" } else { "https://ffmpeg.org/download.html#releases" }
+          $linhas = @(
+            "Codigo-fonte do FFmpeg distribuido nesta pasta (bin/ffmpeg.exe e bin/ffprobe.exe)",
+            "Versao: $v",
+            "Build: https://www.gyan.dev/ffmpeg/builds/ (release essentials, licenca GPL v3)",
+            "Codigo-fonte desta versao: $fonte",
+            "Licenca: licencas/FFmpeg-LICENSE.txt",
+            "",
+            "O Transcritor Local (MIT) chama esses programas como processos separados.",
+            "Quem recebeu esta pasta pode obter o codigo-fonte correspondente no endereco acima;",
+            "se ele sair do ar, peca uma copia abrindo uma issue no repositorio do projeto."
+          )
+          $linhas | Set-Content dist/TranscritorLocal/licencas/FFmpeg-CODIGO-FONTE.txt -Encoding utf8
 
       - name: Teste de fumaça do executável
         shell: pwsh
@@ -71,20 +86,6 @@ jobs:
           "$h  TranscritorLocal.exe" | Set-Content dist/TranscritorLocal/SHA256.txt -Encoding ascii
           "SHA-256 de TranscritorLocal.exe: $h"
           "### SHA-256 de TranscritorLocal.exe`n`n``$h``" | Add-Content $env:GITHUB_STEP_SUMMARY
-
-      # Cópia com senha ("transcritor"): o Chrome não consegue abrir o conteúdo e deixa de bloquear o .exe
-      # como "perigoso". A senha não protege nada; só evita a inspeção automática do navegador.
-      - name: Zip com senha para navegadores que bloqueiam o .exe
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force protegido | Out-Null
-          7z a -tzip -ptranscritor -mem=AES256 protegido/TranscritorLocal-windows-protegido.zip ./dist/TranscritorLocal/*
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: TranscritorLocal-windows-protegido
-          path: protegido/
-          if-no-files-found: error
 
       # Artefato de teste: o GitHub já compacta a pasta (um zip só, sem zip dentro de zip)
       - uses: actions/upload-artifact@v4
