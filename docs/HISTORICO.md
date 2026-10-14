@@ -170,3 +170,11 @@ Na 5ª rodada o responsável viu "Rodada 83% · faltam ~menos de 1 min · térmi
 | ID | O que mudou |
 |---|---|
 | N15 | A previsão da rodada passou a somar a fala restante **e** o OCR (de todos os vídeos), usa o ritmo de OCR medido nesta rodada (depois de 3 min de vídeo lidos) e é recalculada a cada captura; o % e o término agora andam também nessa fase. Funções puras testadas em `estimativa.falta_da_rodada` e `ocr_restante_do_video` |
+
+## v0.1.12 (14/10/2026): janela que cabe na tela
+
+O responsável perguntou por que testar escalas de 125% e 150%. A simulação mostrou o motivo: o tamanho da janela é multiplicado pela escala e passava da tela em notebooks comuns (150% em 1920x1080, 125% em 1366x768), cortando a barra de ação (N16).
+
+| ID | O que mudou |
+|---|---|
+| N16 | `App._ajustar_ao_monitor` limita o tamanho inicial e o mínimo à área útil do monitor, já descontando a escala |

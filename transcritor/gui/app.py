@@ -61,8 +61,7 @@ class App(ctk.CTk):
         tema.aplicar_tema()
         super().__init__()
         self.title(f"Transcritor Local {__version__}")
-        self.geometry("1240x780")
-        self.minsize(1100, 680)  # cabe em telas de 1366x768
+        self._ajustar_ao_monitor()
         marca.aplicar_icone(self)
 
         self.fila: queue.Queue = queue.Queue()
@@ -224,6 +223,21 @@ class App(ctk.CTk):
             disp = getattr(s.diagnostico, "dispositivo", "cpu").upper()
             self.lbl_lat_titulo.configure(text=f"✓ PC pronto · {disp}", text_color=tema.CINZA)
             self.lbl_lat_det.configure(text="Tesseract não instalado (opcional)" if s.opcionais else "")
+
+    def _ajustar_ao_monitor(self):
+        """Tamanho inicial que cabe na tela com a escala do Windows (100%, 125%, 150%...). Achado N16.
+
+        O tamanho do CustomTkinter é multiplicado pela escala: 1240x780 a 150% vira 1860x1170 pixels e
+        passava da altura de uma tela Full HD, deixando a barra "Transcrever" fora da tela."""
+        try:
+            escala = float(self._get_window_scaling()) or 1.0
+        except Exception:
+            escala = 1.0
+        largura_max = int((self.winfo_screenwidth() - 40) / escala)
+        altura_max = int((self.winfo_screenheight() - 120) / escala)  # barra de tarefas e título
+        largura, altura = min(1240, largura_max), min(780, altura_max)
+        self.geometry(f"{largura}x{altura}")
+        self.minsize(min(1100, largura), min(680, altura))
 
     def _lateral_rodada(self, pct: float, detalhe: str, fim: str = ""):
         self.lbl_lat_titulo.configure(text="Rodada em andamento", text_color=tema.VERDE)

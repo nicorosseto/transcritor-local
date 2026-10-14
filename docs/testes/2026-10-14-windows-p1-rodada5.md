@@ -14,6 +14,14 @@
 | Ícone na barra de tarefas | Aparece o logotipo do app (print) |
 | **N15** | "Rodada 83%" e término vencido parados durante o texto de tela: corrigido na v0.1.11 |
 
+## Fechar a janela no meio (v0.1.11, conferido pelo `registro.csv` enviado)
+
+Janela fechada com **Sair mesmo assim** durante o 1º vídeo e reaberta nas mesmas pastas: os dois vídeos voltaram **Pendente**, sem `transcricoes_md`, sem capturas e **sem arquivo `.parcial`** em `audio_mp3`; só ficou o MP3 já completo do vídeo curto, que o app descarta e refaz por não ter a assinatura registrada. Comportamento correto.
+
+## Relatado pelo responsável, sem log
+
+N11 numa 2ª rodada na mesma pasta com um vídeo: "deu certo". Falta o log com a linha "Previsão da rodada" para anexar ao registro. Gemini com o `.md` solto: dispensado pelo responsável; o efeito do cabeçalho "não invente" **não foi verificado** (só o ChatGPT foi visto lendo corretamente).
+
 ## Ainda não testado
 
-Confirmar o fim do **Sair mesmo assim** (processos encerrados, vídeo refeito na reabertura), N11 numa 2ª rodada na mesma pasta, escalas 125%/150%, Gemini com o `.md` solto.
+Escalas 125%/150% em monitor real (simuladas: N16).

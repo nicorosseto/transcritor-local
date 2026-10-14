@@ -34,7 +34,8 @@
 - [x] N13 (v0.1.9): cabeçalho "diga que não leu em vez de inventar" e aviso sobre `.zip`
 - [x] N14 (v0.1.10): feedback imediato ao cancelar e botões travados
 - [x] N15 (v0.1.11): previsão e % da rodada contam o texto de tela
-- [ ] Conferir no Windows real (5ª rodada, v0.1.11): botão único, confirmação centralizada e previsão depois do 1º vídeo longo
+- [x] N16 (v0.1.12): janela que cabe na tela com escala 125%/150%
+- [ ] Conferir no Windows real (v0.1.12): botão único, confirmação centralizada e previsão depois do 1º vídeo longo
 Pedidos pelo responsável em 14/10/2026, a fazer **depois** da 4ª rodada no Windows:
 - [x] **Barra de ação sem os cartões de quantidade (1, 3, 5, Todos).** A seleção é a tabela: botão único **Transcrever N** (N = marcados), com o tempo estimado ao lado. Substitui a regra de escolha obrigatória do ADR-007, que ficou redundante com as caixas de seleção; a proteção contra rodada acidental passa a ser só a confirmação (que já mostra quantidade e tempo). Manter os atalhos Pendentes / Todos / Nenhum
 - [x] **Janela de confirmação centralizada sobre o app**, maior, com mais contraste (borda verde) e foco no botão **Começar**. Pop-up nativo do Windows descartado por ora: abre claro sobre um app preto e não segue o tema

@@ -18,3 +18,5 @@ mkdir -p /tmp/telas && xvfb-run -a -s "-screen 0 1366x768x24" python3.12 ferrame
 ```
 
 `cancelar_rodada.py`: cancela no meio da rodada (modelo simulado e lento) e confere que a tabela volta a "Pendente" (N10).
+
+`escala_do_windows.py`: simula escala 1.0/1.25/1.5 e confere que a janela e o botão Transcrever cabem na tela (N16). Passe a escala como argumento e o tamanho da tela no `xvfb-run -s`.

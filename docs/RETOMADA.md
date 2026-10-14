@@ -2,7 +2,7 @@
 
 Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize ao fim de cada sessão.
 
-**Última atualização:** 14/10/2026 · **Versão:** 0.1.11 · **Branch:** `main`
+**Última atualização:** 14/10/2026 · **Versão:** 0.1.12 · **Branch:** `main`
 
 ## 1. Estado atual
 
@@ -29,7 +29,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 **4ª rodada (v0.1.7):** N9 funcionou (80 trechos), Cancelar e refazer ok, previsão 37 min contra 28 reais ([registro](testes/2026-10-14-windows-p1-rodada4.md)). A v0.1.8 trouxe botão único, confirmação centralizada, N10, N11, N12; a v0.1.9 (N13) responde ao Gemini que inventou um resumo: cabeçalho "não invente" e aviso sobre `.zip`.
 
-**Próximo passo: 5ª rodada (em andamento) com a v0.1.11 ([Parar após este vídeo] já validado; Cancelar sem feedback virou N14), mais o teste do Gemini com o `.md` solto**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.11. Conferir:
+**Próximo passo: 5ª rodada (em andamento) com a v0.1.12 ([Parar após este vídeo] já validado; Cancelar sem feedback virou N14), mais o teste do Gemini com o `.md` solto**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.12. Conferir:
 
 | O que | Esperado |
 |---|---|
@@ -39,7 +39,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 | Previsão da rodada | Perto do tempo real (agora usa a velocidade medida no 1º vídeo) |
 | Resultados → **Pacote para IA** | Pasta `pacote_para_ia` com `.md` e `imagens\` (e `.zip`); links abrem |
 | Um `.md` anexado a uma IA qualquer | A IA explica o vídeo e entende o cabeçalho "Como ler este arquivo" |
-| Ainda do roteiro | Confirmar o fim do **Sair mesmo assim**, N11 numa 2ª rodada na mesma pasta e escalas 125%/150%. Parar, Cancelar, diálogo de saída e ícone na barra de tarefas já foram vistos ([rodada 5](testes/2026-10-14-windows-p1-rodada5.md)) |
+| Ainda do roteiro | Escalas 125%/150% em monitor real (N16 corrigiu o que a simulação mostrou) e o log do N11 (relatado como ok). Parar, Cancelar, Sair mesmo assim (conferido no registro) e ícone na barra de tarefas já foram vistos ([rodada 5](testes/2026-10-14-windows-p1-rodada5.md)) |
 
 Roteiro original do teste (1ª rodada):
 
