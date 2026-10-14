@@ -125,3 +125,13 @@ A 2ª rodada no Windows (mesmo vídeo, pasta de saída nova, OCR ligado) mostrou
 **Lição:** os testes da v0.1.5 usavam a pasta de idiomas do sistema (com `configs/`); o app usa a sua própria. Agora há teste com uma pasta de idiomas sem `configs/`, igual à do app, e o OCR nunca confunde "formato errado" com "imagem sem texto". Em 50 capturas reais, a versão corrigida achou 14 trechos úteis.
 
 **Observações da rodada:** 30 min 10 s (fala 23 min 24 s, OCR 6 min 26 s); velocidade 1,57x contra 1,68x (causa não identificada: carga do PC ou ctranslate2 4.8.3 no lugar da 4.8.2, ver X14). Previsão de ~37 min repetiu, como esperado em pasta de saída nova (N4 segue por conferir).
+
+## v0.1.7 (14/10/2026): limpeza do texto de tela
+
+A 3ª rodada (v0.1.6) leu 91 trechos em 548 capturas, mas 31% das linhas eram lixo de OCR em letra pequena ([registro](testes/2026-10-14-windows-p1-rodada3.md)).
+
+| ID | O que mudou |
+|---|---|
+| N9 | `ocr.limpar` descarta linhas em que menos de 60% das letras estão em palavras de 4+ letras (rótulos curtos reais como "Compartilhar" e "Opus 47" ficam) e descarta o bloco quando menos de 40% das linhas sobram. Sobre o `.md` real: 6.398 → 5.371 palavras de tela e 8 de 91 blocos descartados |
+
+**Decisão com dados:** subir a confiança de 50 para 60 tirava 18 linhas de lixo, mas também 9 linhas boas (3%) em 31 capturas; o filtro de linha pega o lixo sem esse custo. Confiança continua em 50.

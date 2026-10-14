@@ -26,7 +26,8 @@
 - [x] N1 a N3, N5 a N7 e o cabeçalho "Como ler este arquivo" ([ADR-018](DECISOES.md))
 - [x] Botão **Pacote para IA** (pasta + `.zip` com o `.md` e só as capturas citadas)
 - [x] N8 (v0.1.6): o OCR da v0.1.5 não lia nada com a pasta de idiomas do app; corrigido
-- [ ] Conferir no Windows real (3ª rodada): OCR com texto de tela legível; calibrar o limiar de confiança (P3)
+- [x] N9 (v0.1.7): limpeza de linhas e blocos ilegíveis do OCR
+- [ ] Conferir no Windows real (4ª rodada): OCR com texto de tela legível; calibrar o limiar de confiança (P3)
 
 ## v0.2: IA visual local (segunda fase)
 - Coluna "IA visual" na tabela: escolher **por vídeo**

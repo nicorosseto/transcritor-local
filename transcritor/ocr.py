@@ -151,15 +151,34 @@ def ler_imagem(estado: EstadoOCR, imagem: Path) -> str:
 _LETRAS = re.compile(r"[A-Za-zÀ-ÿ]")
 
 
+PROPORCAO_LINHAS_BOAS = 0.4   # bloco com menos linhas legíveis que isso é ruído (achado N9)
+
+
+def linha_legivel(linha: str) -> bool:
+    """Uma linha parece texto de verdade quando ao menos 60% das letras estão em palavras de 4+ letras.
+
+    Pega o lixo típico do OCR em letra pequena ("Es Ou ou mu ou", "voe 8") e mantém rótulos curtos
+    reais ("Compartilhar", "Opus 47", "FORMATO DE")."""
+    letras = len(_LETRAS.findall(linha))
+    if letras < 4:
+        return False
+    em_palavras = sum(len(w) for w in re.findall(r"[A-Za-zÀ-ÿ]{4,}", linha))
+    return em_palavras / letras >= 0.6
+
+
 def limpar(texto: str, max_chars: int = 1500) -> str:
-    """Tira o lixo típico de OCR: linhas sem letras, símbolos soltos, espaços repetidos."""
-    linhas = []
+    """Tira o lixo típico de OCR: linhas sem letras, linhas ilegíveis, espaços repetidos.
+
+    Se a maioria das linhas for ilegível, o bloco inteiro é descartado (devolve "")."""
+    candidatas = []
     for linha in texto.splitlines():
         linha = re.sub(r"\s+", " ", linha).strip()
         if len(_LETRAS.findall(linha)) >= 3:
-            linhas.append(linha)
-    resultado = "\n".join(linhas)
-    return resultado[:max_chars].rstrip()
+            candidatas.append(linha)
+    boas = [l for l in candidatas if linha_legivel(l)]
+    if not boas or len(boas) / len(candidatas) < PROPORCAO_LINHAS_BOAS:
+        return ""
+    return "\n".join(boas)[:max_chars].rstrip()
 
 
 def e_util(texto: str, minimo_letras: int = 25) -> bool:

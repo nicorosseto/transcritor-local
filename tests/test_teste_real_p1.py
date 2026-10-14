@@ -321,3 +321,22 @@ def test_pacote_para_ia_sem_nada_concluido_nao_cria_pasta(tmp_path):
     proj = Projeto(Config(tmp_path / "v", tmp_path / "s"))
     assert proj.gerar_pacotes() == []
     assert not (tmp_path / "s" / "pacote_para_ia").exists()
+
+
+# ----------------------------------------------------------------------------- N9: ruído do OCR
+
+
+def test_n9_linhas_ilegiveis_somem_e_rotulos_curtos_ficam():
+    bloco = "Compartilhar\nEs Ou ou mu ou\nvoe 8\nOpus 47\nCriar instruções para o projeto\n* SB* OD é"
+    assert ocr.limpar(bloco).splitlines() == ["Compartilhar", "Opus 47", "Criar instruções para o projeto"]
+
+
+def test_n9_bloco_dominado_por_ruido_e_descartado():
+    ruido = "Oy o GD 4\nen há 3 do chat\npara Ge qu rem\nCara\nme en\nTe Ye"
+    assert ocr.limpar(ruido + "\nCivilizações antigas que sumiram") == ""
+    assert not ocr.e_util(ocr.limpar(ruido))
+
+
+def test_n9_bloco_limpo_nao_muda():
+    texto = "AGENTE ROTEIRISTA — Teoria conspiratória\nCrie um roteiro sobre uma teoria absurda"
+    assert ocr.limpar(texto) == texto

@@ -2,17 +2,17 @@
 
 Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize ao fim de cada sessão.
 
-**Última atualização:** 14/10/2026 · **Versão:** 0.1.6 · **Branch:** `main`
+**Última atualização:** 14/10/2026 · **Versão:** 0.1.7 · **Branch:** `main`
 
 ## 1. Estado atual
 
 | Frente | Situação |
 |---|---|
-| Motor (transcrição, OCR, registro, base consolidada) | Estável. 71 testes automáticos (CI em Linux e Windows, Python 3.11 e 3.13) |
+| Motor (transcrição, OCR, registro, base consolidada) | Estável. 74 testes automáticos (CI em Linux e Windows, Python 3.11 e 3.13) |
 | Auditoria independente de 08/10/2026 (X1 a X16) | **15 de 16 corrigidos**, cada um com teste que falhava antes. Falta só o X14 (pré-publicação). Ver [auditorias/STATUS.md](auditorias/STATUS.md) |
 | Lentidão (P17) | Resolvida: threads = núcleos físicos (ADR-015). No PC de referência, 1,34x virou ~1,57x no trecho medido |
 | Layout aprovado (fase 3) | Implementado (ADR-017): barra lateral, preto, verde só no clicável, logotipo e ícone do `.exe`. Conferido em 1366x768 com modelo simulado |
-| Teste real no Windows (P1) | 2 rodadas feitas em 14/10/2026. A 2ª achou o N8 (OCR não lia nada), **corrigido na v0.1.6**; falta a 3ª rodada para conferir (ver seção 2) |
+| Teste real no Windows (P1) | 2 rodadas feitas em 14/10/2026. A 2ª achou o N8 (OCR não lia nada), **corrigido na v0.1.6**; a 3ª rodada confirmou o OCR (91 trechos) e a v0.1.7 limpa o ruído (N9); falta conferir a v0.1.7 (ver seção 2) |
 | Formato para IA | Cabeçalho "Como ler este arquivo" em todo `.md` e botão **Pacote para IA** ([ADR-018](DECISOES.md)) |
 | Build do `.exe` | Automático a cada push na `main` (GitHub Actions → "Build Windows (.exe)" → artefato `TranscritorLocal-windows`) |
 | Repositório | Privado. Publicar só depois do teste no Windows e do X14 (contra-auditoria, seção 7) |
@@ -25,7 +25,9 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 **2ª rodada (v0.1.5):** fala 100% idêntica à da 1ª, mas 0 trechos de tela (N8). Registro em [testes/2026-10-14-windows-p1-rodada2.md](testes/2026-10-14-windows-p1-rodada2.md).
 
-**Próximo passo: 3ª rodada no Windows com a v0.1.6**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.6. Conferir:
+**3ª rodada (v0.1.6):** OCR leu 91 trechos; ChatGPT e Gemini entenderam o vídeo só pelo `.md` ([registro](testes/2026-10-14-windows-p1-rodada3.md)).
+
+**Próximo passo: 4ª rodada no Windows com a v0.1.7**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.7. Conferir:
 
 | O que | Esperado |
 |---|---|
@@ -71,7 +73,7 @@ Roteiro original do teste (1ª rodada):
 ## 5. Comandos úteis (ambiente de desenvolvimento)
 
 ```
-python3 -m pytest -q                                  # 71 testes do motor
+python3 -m pytest -q                                  # 74 testes do motor
 python3 -m pyflakes transcritor tests ferramentas     # lint
 xvfb-run -a python3.12 ferramentas/fumaca/rodada_completa.py      # janela de verdade, modelo simulado
 xvfb-run -a -s "-screen 0 1366x768x24" python3.12 ferramentas/capturar_telas.py /tmp/telas
