@@ -29,7 +29,11 @@
 - [x] N9 (v0.1.7): limpeza de linhas e blocos ilegíveis do OCR
 - [ ] Conferir no Windows real (4ª rodada): OCR com texto de tela legível; calibrar o limiar de confiança (P3)
 
-## v0.2: IA visual local (segunda fase)
+## v0.1.8 (planejada): ajustes de interface do teste real
+Pedidos pelo responsável em 14/10/2026, a fazer **depois** da 4ª rodada no Windows:
+- [ ] **Barra de ação sem os cartões de quantidade (1, 3, 5, Todos).** A seleção é a tabela: botão único **Transcrever N** (N = marcados), com o tempo estimado ao lado. Substitui a regra de escolha obrigatória do ADR-007, que ficou redundante com as caixas de seleção; a proteção contra rodada acidental passa a ser só a confirmação (que já mostra quantidade e tempo). Manter os atalhos Pendentes / Todos / Nenhum
+- [ ] **Janela de confirmação centralizada sobre o app**, maior, com mais contraste (borda verde) e foco no botão **Começar**. Pop-up nativo do Windows descartado por ora: abre claro sobre um app preto e não segue o tema
+ (segunda fase)
 - Coluna "IA visual" na tabela: escolher **por vídeo**
 - Aplicação sobre as capturas já salvas (sem refazer a transcrição)
 - Ollama local + modelo de visão pequeno (candidatos: `qwen3-vl:2b` / `qwen3-vl:4b`), sem conta e sem nuvem

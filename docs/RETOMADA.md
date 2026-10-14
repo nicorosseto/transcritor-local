@@ -55,6 +55,7 @@ Roteiro original do teste (1ª rodada):
 
 | Ordem | Item | Referência |
 |---|---|---|
+| 0 | v0.1.8: botão único **Transcrever N** no lugar dos cartões de quantidade e confirmação centralizada (pedido de 14/10/2026, ver [ROADMAP.md](ROADMAP.md)); só depois da 4ª rodada | ROADMAP.md |
 | 1 | Fechar o P1: 2ª rodada no Windows com a v0.1.5 e o resto do roteiro; calibrar o limiar de confiança do OCR (P3) | seção 2 |
 | 2 | X14: travar dependências e conferir hashes (FFmpeg, tessdata, modelo) | STATUS.md |
 | 3 | P7 (assinatura do `.exe` / SmartScreen) e P8 (licença do FFmpeg) | AUDITORIA.md |
