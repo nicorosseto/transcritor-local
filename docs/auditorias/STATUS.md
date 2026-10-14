@@ -75,7 +75,7 @@ Mesma regra: testes em [`tests/test_auditoria_fase2.py`](../../tests/test_audito
 
 Todos os 16 achados da auditoria de 08/10/2026 estão corrigidos, exceto X14 (pré-publicação).
 
-## Teste real no Windows (v0.1.5 a v0.1.7, 14/10/2026)
+## Teste real no Windows (v0.1.5 a v0.1.8, 14/10/2026)
 
 Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests/test_teste_real_p1.py`](../../tests/test_teste_real_p1.py), escritos antes e falhando no commit `6ec55eb`. Registro: [testes/2026-10-14-windows-p1.md](../testes/2026-10-14-windows-p1.md).
 
@@ -84,9 +84,11 @@ Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests
 | N1 | 🟠 | ✅ (limiar provisório) | OCR amplia capturas estreitas e filtra por confiança. Calibrar o limiar com mais vídeos |
 | N2 | 🟡 | ✅ | `palavras` = fala; `palavras_tela` à parte |
 | N3 | 🟡 | ✅ | Capturas sem uso apagadas |
-| N4 | 🟡 | ⏳ | Previsão inicial conservadora por desenho; conferir na 2ª rodada |
+| N4 | 🟡 | ✅ (v0.1.8) | Previsão inicial conservadora por desenho; o aprendizado foi corrigido no N11 |
 | N5, N6 | ⚪ | ✅ | Textos da interface |
 | N7 | 🟠 | ✅ | Links de captura com espaço (achado no caminho) |
+| N12 | ⚪ | ✅ (v0.1.8) | Confirmação aparecia deslocada e para cima: o `CTkToplevel` nasce com 200x200 e a centralização media isso. Agora usa o tamanho real, centraliza nos dois eixos e ganhou borda verde |
+| N11 | 🟡 | ✅ (v0.1.8) | Estimativa aprendia com um vídeo de 42 s (1,2x) como se valesse tanto quanto um de 36 min (1,7x). Agora ignora vídeos com menos de 3 min e pondera pela duração (e o OCR por hora também). Fecha o N4 |
 | N10 | 🟡 | ✅ (v0.1.8) | Depois de **Cancelar** (ou Parar), a tabela seguia mostrando "Transcrevendo" e "Na fila" em vídeos que não terminaram. Agora é repintada ao fim da rodada. Reproduzido por `ferramentas/fumaca/cancelar_rodada.py` |
 | N9 | 🟡 | ✅ (v0.1.7) | Ruído no texto de tela: 31% das linhas lidas eram lixo ("Es Ou ou mu ou"). `ocr.limpar` descarta linhas ilegíveis e blocos dominados por ruído; confiança segue 50 (60 perdia 3% de linhas boas) |
 | N8 | 🔴 | ✅ (v0.1.6) | OCR da v0.1.5 descartava **todo** o texto de tela com a pasta de idiomas do app (sem `configs/tsv`). Agora usa `-c tessedit_create_tsv=1` e falha de forma explícita se a saída não for TSV |

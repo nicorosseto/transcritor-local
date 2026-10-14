@@ -26,7 +26,7 @@ def bombear(seg, ate=None):
         app.update(); time.sleep(0.03)
 app._definir(app.ent_videos, str(tmp/"v")); app._definir(app.ent_saida, str(tmp/"s"))
 app._ler_pasta(); bombear(5, lambda: app.projeto)
-app.chk_ocr.select(); app._escolher_qtd("todos")
+app.chk_ocr.select()
 app._iniciar(); bombear(60, lambda: not app.rodando)
 print(app.lbl_status.cget("text"))
 app._ler_pasta(); bombear(10, lambda: "concluído" in app.lbl_resumo.cget("text"))

@@ -154,7 +154,7 @@ def test_estimativa_usa_medicao(tmp_path):
     e0 = estimar([3600], r, "equilibrado", "cpu", com_ocr=False)
     assert not e0.medida and abs(e0.segundos_transcricao - 3600 / 1.2) < 1
     from transcritor.registro import Linha
-    r.linhas["x"] = Linha("x", status=OK, preset="equilibrado", velocidade=2.0, duracao_s=60)
+    r.linhas["x"] = Linha("x", status=OK, preset="equilibrado", velocidade=2.0, duracao_s=600)
     e1 = estimar([3600], r, "equilibrado", "cpu", com_ocr=True)
     assert e1.medida and e1.segundos_transcricao == 1800 and e1.segundos_ocr > 0
 

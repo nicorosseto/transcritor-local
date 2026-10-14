@@ -85,7 +85,7 @@ A barra lateral tem três páginas: **Vídeos** (onde se trabalha), **Resultados
 | 2 | **Saída** | É sugerida automaticamente (`<pasta>_transcricoes`). Não pode ficar **dentro** da pasta de vídeos. **Abrir** mostra a pasta |
 | 3 | Tabela | Clique na **caixinha** (1ª coluna) para marcar ou desmarcar; clique no nome para ver os detalhes ao lado. Os pendentes já vêm marcados. **Pendentes / Todos / Nenhum** marcam em bloco |
 | 4 | Opções da rodada | Qualidade, ler texto da tela e, em "Vocabulário e correções", as dicas de termos |
-| 5 | Barra de baixo | Escolha **quantos vídeos nesta rodada** (obrigatório): cada cartão mostra o tempo estimado. Depois, **Transcrever N** |
+| 5 | Barra de baixo | O botão **Transcrever N** roda os vídeos marcados na lista e mostra o tempo estimado. Antes de começar, o app pede confirmação |
 
 Durante a rodada, a barra de baixo mostra as etapas, o progresso e o término previsto, e a barra lateral repete o andamento. As pastas ficam travadas até o fim.
 

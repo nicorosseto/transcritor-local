@@ -49,17 +49,26 @@ class Dica:
             self._janela = None
 
 
+def centralizar(janela, pai) -> None:
+    """Centraliza a janela no meio do pai (horizontal e vertical).
+
+    Mede o tamanho PEDIDO pelo conteúdo: o CTkToplevel nasce com 200x200 e `winfo_width` devolvia isso,
+    o que deixava a janela deslocada para a direita e para cima (achado N12)."""
+    janela.update_idletasks()
+    w, h = janela.winfo_reqwidth(), janela.winfo_reqheight()
+    px, py = pai.winfo_rootx(), pai.winfo_rooty()
+    pw, ph = pai.winfo_width(), pai.winfo_height()
+    janela.geometry(f"{w}x{h}+{max(0, px + (pw - w) // 2)}+{max(0, py + (ph - h) // 2)}")
+
+
 def trazer_para_frente(janela, pai) -> None:
     """Centraliza sobre o pai, torna modal e garante que apareça NA FRENTE (problema comum no Windows)."""
     janela.transient(pai)
-    janela.update_idletasks()
-    w, h = janela.winfo_width(), janela.winfo_height()
-    px, py = pai.winfo_rootx(), pai.winfo_rooty()
-    pw, ph = pai.winfo_width(), pai.winfo_height()
-    janela.geometry(f"+{max(0, px + (pw - w) // 2)}+{max(0, py + (ph - h) // 3)}")
+    centralizar(janela, pai)
 
     def _frente():
         try:
+            centralizar(janela, pai)  # o CustomTkinter reposiciona a janela logo após criar
             janela.lift()
             janela.attributes("-topmost", True)
             janela.focus_force()
@@ -67,7 +76,16 @@ def trazer_para_frente(janela, pai) -> None:
             janela.after(300, lambda: janela.attributes("-topmost", False))
         except tk.TclError:
             pass
-    janela.after(60, _frente)  # o CustomTkinter reposiciona a janela logo após criar
+    janela.after(60, _frente)
+    janela.after(250, lambda: _recentralizar(janela, pai))
+
+
+def _recentralizar(janela, pai) -> None:
+    try:
+        if janela.winfo_exists():
+            centralizar(janela, pai)
+    except tk.TclError:
+        pass
 
 
 def piscar_barra_de_tarefas(janela, vezes: int = 5) -> None:
@@ -117,17 +135,20 @@ class Dialogo(ctk.CTkToplevel):
     """
 
     def __init__(self, pai, titulo: str, mensagem: str, botoes, icone: str = "⚠️", som: bool = True):
-        super().__init__(pai)
+        super().__init__(pai, fg_color="#0A0A0A")
         self.title(titulo)
         self.resizable(False, False)
         self.resultado = None
         self.botoes = botoes
-        topo = ctk.CTkFrame(self, fg_color="transparent")
-        topo.pack(fill="both", expand=True, padx=20, pady=(18, 8))
+        quadro = ctk.CTkFrame(self, fg_color="#0A0A0A", border_width=2, border_color="#4FD18B", corner_radius=0)
+        quadro.pack(fill="both", expand=True)  # borda verde: o diálogo se destaca do fundo preto
+        topo = ctk.CTkFrame(quadro, fg_color="transparent")
+        topo.pack(fill="both", expand=True, padx=22, pady=(22, 8))
         ctk.CTkLabel(topo, text=icone, font=ctk.CTkFont(size=30)).pack(side="left", anchor="n", padx=(0, 14))
-        ctk.CTkLabel(topo, text=mensagem, justify="left", wraplength=440, anchor="w").pack(side="left", fill="x")
-        barra = ctk.CTkFrame(self, fg_color="transparent")
-        barra.pack(fill="x", padx=20, pady=(4, 16))
+        ctk.CTkLabel(topo, text=mensagem, justify="left", wraplength=480, anchor="w",
+                     font=ctk.CTkFont(size=14)).pack(side="left", fill="x")
+        barra = ctk.CTkFrame(quadro, fg_color="transparent")
+        barra.pack(fill="x", padx=22, pady=(4, 20))
         for texto, valor, destaque in reversed(botoes):
             estilo = {} if destaque else dict(fg_color="#141414", hover_color="#1F1F1F", text_color="#FFFFFF",
                                               border_width=1, border_color="#3A3A3A")

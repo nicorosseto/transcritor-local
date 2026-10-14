@@ -97,7 +97,6 @@ class App(ctk.CTk):
         self.f_negrito = ctk.CTkFont(weight="bold")
         self.f_titulo = ctk.CTkFont(size=22, weight="bold")
         self.f_pequena = ctk.CTkFont(size=11)
-        self.f_qtd = ctk.CTkFont(size=12)
         self.f_principal = ctk.CTkFont(size=15, weight="bold")
         tema.estilo_tabela(self)
 
@@ -392,13 +391,9 @@ class App(ctk.CTk):
         self.lbl_sel_det = ctk.CTkLabel(txt, text="Escolha a pasta dos vídeos para começar.", anchor="w",
                                         text_color=tema.CINZA, font=self.f_pequena, justify="left")
         self.lbl_sel_det.pack(fill="x")
-        self.frm_qtd = ctk.CTkFrame(acao, fg_color="transparent")
-        self.frm_qtd.grid(row=0, column=1, padx=4)
-        self.btns_qtd: dict[str, ctk.CTkButton] = {}
-        self._qtd: str | None = None
-        self.btn_iniciar = ctk.CTkButton(acao, text="Transcrever", width=170, height=52, state="disabled",
+        self.btn_iniciar = ctk.CTkButton(acao, text="Transcrever", width=210, height=52, state="disabled",
                                          font=self.f_principal, command=self._iniciar)
-        self.btn_iniciar.grid(row=0, column=2, padx=(8, 14), pady=12)
+        self.btn_iniciar.grid(row=0, column=1, padx=(8, 14), pady=12)
         self._estado_principal(False)
 
         # ---- modo "rodada em andamento / terminada"
@@ -821,40 +816,16 @@ class App(ctk.CTk):
         return [i for i in self.itens if i.rel in self.marcados]
 
     def _atualizar_quantidades(self):
-        if not hasattr(self, "frm_qtd"):
+        """A seleção é a tabela: o que está marcado é o que roda (sem escolha extra de quantidade)."""
+        if not hasattr(self, "btn_iniciar"):
             return
         n = len(self._selecionados())
-        opcoes = [str(q) for q in (1, 3, 5) if q < n] + (["todos"] if n else [])
-        if list(self.btns_qtd) != opcoes:
-            for b in self.btns_qtd.values():
-                b.destroy()
-            self.btns_qtd = {}
-            for chave in opcoes:
-                b = ctk.CTkButton(self.frm_qtd, text="", width=92, height=52, font=self.f_qtd,
-                                  command=lambda c=chave: self._escolher_qtd(c), **tema.secundario())
-                b.pack(side="left", padx=4)
-                self.btns_qtd[chave] = b
-        if self._qtd not in opcoes:
-            self._qtd = None
         self.lbl_contagem.configure(text=f"{len(self.itens)} vídeo(s) · {n} marcado(s)" if self.itens
                                     else "Nenhum vídeo listado")
         self._atualizar_estimativa()
 
-    def _escolher_qtd(self, chave: str):
-        if self.rodando:
-            return
-        self._qtd = chave
-        self._atualizar_estimativa()
-
-    def _quantidade(self) -> int:
-        if self._qtd is None:
-            return 0
-        if self._qtd == "todos":
-            return len(self._selecionados())
-        return int(self._qtd)
-
     def _rodada(self) -> list[Item]:
-        return self._selecionados()[: self._quantidade()]
+        return self._selecionados()
 
     def _atualizar_resumo(self):
         if not self.projeto:
@@ -896,25 +867,16 @@ class App(ctk.CTk):
         self.lbl_sel_resumo.configure(
             text=f"{len(sel)} marcado(s) · {tempo_humano(sum(i.duracao for i in sel))} de vídeo" if sel
             else "Nenhum vídeo marcado")
-        for chave, b in self.btns_qtd.items():
-            q = len(sel) if chave == "todos" else int(chave)
-            rot = f"Todos ({len(sel)})" if chave == "todos" else chave
-            e = self.projeto.estimar(sel[:q], com_ocr)
-            escolhido = chave == self._qtd
-            b.configure(text=f"{rot}\n≈ {tempo_humano(e.total)}",
-                        fg_color=tema.VERDE_FUNDO if escolhido else tema.SUPERFICIE_2,
-                        border_color=tema.VERDE if escolhido else tema.BORDA_FORTE,
-                        text_color=tema.BRANCO)
         if rodada:
             er = self.projeto.estimar(rodada, com_ocr)
             fim = (datetime.now() + timedelta(seconds=er.total)).strftime("%H:%M")
             base = "medida neste PC" if er.medida else "estimativa inicial"
             self.lbl_sel_det.configure(text=f"Esta rodada: ≈ {tempo_humano(er.total)}, término ~{fim} · "
                                             f"{er.velocidade:.1f}x ({base})".replace(".", ","))
-            self.btn_iniciar.configure(text=f"Transcrever {len(rodada)}")
+            self.btn_iniciar.configure(text=f"Transcrever {len(rodada)}\n≈ {tempo_humano(er.total)}")
         else:
-            self.lbl_sel_det.configure(text="Quantos vídeos nesta rodada? (obrigatório)" if sel
-                                       else "Marque os vídeos na lista.")
+            self.lbl_sel_det.configure(text="Marque os vídeos na lista." if not sel
+                                       else "")
             self.btn_iniciar.configure(text="Transcrever")
         self._estado_principal(bool(rodada) and not self.rodando)
 
@@ -958,6 +920,8 @@ class App(ctk.CTk):
         e = self.projeto.estimar(rodada, cfg.ocr)
         r = Dialogo(self, "Confirmar rodada",
                     f"Processar {len(rodada)} vídeo(s)? Tempo estimado: ≈ {tempo_humano(e.total)}.\n\n"
+                    + "".join(f"• {i.rel}\n" for i in rodada[:5])
+                    + (f"• ... e mais {len(rodada) - 5}\n" if len(rodada) > 5 else "") + "\n"
                     "O PC fica mais lento enquanto isso, e o app impede que ele entre em suspensão. "
                     "Pode deixar rodando sozinho.",
                     [("Começar", "ok", True), ("Cancelar", None, False)], icone="▶️", som=False).perguntar()
@@ -1019,7 +983,7 @@ class App(ctk.CTk):
         estado = "disabled" if sim else "normal"
         for w in (self.btn_ler, self.seg_preset, self.chk_ocr, self.ent_vocab, self.ent_videos, self.ent_saida,
                   self.btn_proc_videos, self.btn_proc_saida, self.btn_corr, *self.btns_marcar,
-                  *self.btns_qtd.values()):
+                  ):
             w.configure(state=estado)
         if sim:
             self.lbl_trava.pack(side="right")

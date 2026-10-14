@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import csv
 import shutil
-import statistics
 import time
 from dataclasses import asdict, dataclass, fields
 from datetime import datetime
@@ -55,6 +54,8 @@ class Linha:
     def concluido(self) -> bool:
         return self.status == OK
 
+
+MIN_APRENDER_S = 180.0   # vídeos mais curtos não entram nas estimativas (achado N11)
 
 _NUMERICOS = {"duracao_s", "seg_transcricao", "seg_ocr", "velocidade"}
 _INTEIROS = {"tamanho_bytes", "palavras", "palavras_tela", "capturas", "correcoes", "threads"}
@@ -211,14 +212,25 @@ class Registro:
     def pendentes(self) -> list[Linha]:
         return [l for l in self.ativos() if l.status != OK]
 
+    def _para_aprender(self, preset: str | None = None) -> list[Linha]:
+        """Últimos 5 vídeos concluídos que servem de amostra: com pelo menos MIN_APRENDER_S de duração.
+
+        Vídeo curto tem tempo fixo de partida (1,2x num de 42 s contra 1,7x num de 36 min) e envenenava
+        a estimativa (achado N11)."""
+        v = [l for l in self.linhas.values()
+             if l.status == OK and l.duracao_s >= MIN_APRENDER_S and (preset is None or l.preset == preset)]
+        return v[-5:]
+
     def velocidade_medida(self, preset: str) -> float | None:
-        """Mediana das últimas 5 velocidades reais para esta predefinição."""
-        v = [l.velocidade for l in self.linhas.values()
-             if l.status == OK and l.preset == preset and l.velocidade > 0]
-        return statistics.median(v[-5:]) if v else None
+        """Velocidade ponderada pela duração dos últimos 5 vídeos longos (minutos de vídeo por minuto real)."""
+        v = [l for l in self._para_aprender(preset) if l.velocidade > 0]
+        if not v:
+            return None
+        return sum(l.duracao_s for l in v) / sum(l.duracao_s / l.velocidade for l in v)
 
     def ocr_por_hora_medido(self) -> float | None:
-        """Segundos de OCR por hora de vídeo, medidos."""
-        v = [l.seg_ocr / (l.duracao_s / 3600) for l in self.linhas.values()
-             if l.status == OK and l.ocr == "sim" and l.seg_ocr > 0 and l.duracao_s > 0]
-        return statistics.median(v[-5:]) if v else None
+        """Segundos de OCR por hora de vídeo, medidos (ponderado pela duração)."""
+        v = [l for l in self._para_aprender() if l.ocr == "sim" and l.seg_ocr > 0]
+        if not v:
+            return None
+        return sum(l.seg_ocr for l in v) / (sum(l.duracao_s for l in v) / 3600)

@@ -61,8 +61,9 @@ COMO_USAR = """COMO USAR — em 5 passos
      abre o arquivo correcoes.json no Bloco de Notas.
 
 5) TRANSCREVER
-   Na barra de baixo, escolha quantos vídeos fazer agora (obrigatório). Cada
-   cartão mostra o tempo estimado. Depois, clique em "Transcrever".
+   Marque na lista os vídeos desta rodada (use Pendentes, Todos ou Nenhum). O
+   botão da barra de baixo mostra quantos são e o tempo estimado: "Transcrever
+   N". O app pede confirmação antes de começar.
    A barra mostra a etapa (Áudio > Transcrição > Texto da tela > Salvar), o
    progresso e o término previsto. "Parar após este vídeo" não perde nada.
    Ao terminar, o app avisa com som e faz o ícone piscar na barra de tarefas.

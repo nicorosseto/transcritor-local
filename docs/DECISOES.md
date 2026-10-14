@@ -238,3 +238,15 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 **Adendo (v0.1.6, N8).** O Tesseract é chamado com `-c tessedit_create_tsv=1`, nunca com a configuração `tsv`, porque a pasta de idiomas do app não tem `configs/`. Se a saída não for TSV, o OCR falha de forma explícita (`ErroOCR`); "imagem sem texto" e "formato errado" são casos diferentes e aparecem diferentes no `.md`, no log e em Resultados.
 
 **Adendo (v0.1.7, N9).** Depois da confiança por palavra, `ocr.limpar` filtra por linha (60% das letras em palavras de 4+ letras) e descarta o bloco se menos de 40% das linhas forem legíveis. Confiança mínima mantida em 50 (medido: 60 perdia 3% das linhas boas).
+
+---
+
+## ADR-019: A tabela é a seleção; sem cartões de quantidade
+
+**Data:** 14/10/2026 · **Status:** aceita · **Substitui** o ADR-007 na janela (o modo terminal mantém a pergunta de quantidade) · **Origem:** teste real no Windows
+
+**Contexto.** O ADR-007 exigia escolher a quantidade antes de começar, porque a janela não tinha como limitar a rodada. Depois das caixas de seleção na tabela, a escolha ficou duplicada: com 2 vídeos marcados o botão seguia apagado até clicar em "Todos (2)", e o cartão "1" pegava o primeiro da lista, não o marcado.
+
+**Decisão.** O botão é **Transcrever N**, com N igual ao número de marcados e o tempo estimado embaixo. A proteção contra rodada acidental é a confirmação, que lista até 5 vídeos, a quantidade e o tempo, centralizada sobre a janela. Os atalhos Pendentes, Todos e Nenhum ficam.
+
+**Consequências.** (+) Um gesto a menos e nenhuma ambiguidade sobre quais vídeos rodam. (−) Quem deixa tudo marcado e clica rápido vê a confirmação como única barreira; por isso ela lista os vídeos.

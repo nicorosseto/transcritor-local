@@ -32,7 +32,6 @@ def bombear(seg, ate=None):
         app.update(); time.sleep(0.03)
 app._definir(app.ent_videos, str(tmp/"v")); app._definir(app.ent_saida, str(tmp/"s"))
 app._ler_pasta(); bombear(5, lambda: app.projeto)
-app._escolher_qtd("todos")
 app._iniciar()
 bombear(30, lambda: app.tabela.set("a.mp4", "status") == A.ROTULO_PROCESSANDO)
 bombear(1.5)

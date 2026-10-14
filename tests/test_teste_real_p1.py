@@ -340,3 +340,32 @@ def test_n9_bloco_dominado_por_ruido_e_descartado():
 def test_n9_bloco_limpo_nao_muda():
     texto = "AGENTE ROTEIRISTA — Teoria conspiratória\nCrie um roteiro sobre uma teoria absurda"
     assert ocr.limpar(texto) == texto
+
+
+# ----------------------------------------------------------------------------- N11: aprender com vídeos longos
+
+
+def _linha(rel, dur, vel, seg_ocr=0.0):
+    from transcritor.registro import Linha
+    return Linha(rel, status="ok", preset="equilibrado", velocidade=vel, duracao_s=dur,
+                 ocr="sim" if seg_ocr else "nao", seg_ocr=seg_ocr)
+
+
+def test_n11_video_curto_nao_entra_na_estimativa(tmp_path):
+    from transcritor.registro import Registro
+    r = Registro(tmp_path / "r.csv")
+    r.linhas["curto"] = _linha("curto", 42, 1.2, seg_ocr=30)
+    assert r.velocidade_medida("equilibrado") is None
+    assert r.ocr_por_hora_medido() is None
+    r.linhas["longo"] = _linha("longo", 2200, 1.7, seg_ocr=350)
+    assert abs(r.velocidade_medida("equilibrado") - 1.7) < 1e-9
+    assert abs(r.ocr_por_hora_medido() - 350 / (2200 / 3600)) < 1e-6
+
+
+def test_n11_velocidade_pesa_pela_duracao(tmp_path):
+    from transcritor.registro import Registro
+    r = Registro(tmp_path / "r.csv")
+    r.linhas["a"] = _linha("a", 600, 1.0)    # 600 s de vídeo em 600 s
+    r.linhas["b"] = _linha("b", 3600, 2.0)   # 3600 s de vídeo em 1800 s
+    # total: 4200 s de vídeo em 2400 s reais = 1,75x (a mediana simples daria 1,5x)
+    assert abs(r.velocidade_medida("equilibrado") - 1.75) < 1e-9
