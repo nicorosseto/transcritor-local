@@ -75,7 +75,7 @@ Mesma regra: testes em [`tests/test_auditoria_fase2.py`](../../tests/test_audito
 
 Todos os 16 achados da auditoria de 08/10/2026 estão corrigidos, exceto X14 (pré-publicação).
 
-## Teste real no Windows (v0.1.5 a v0.1.10, 14/10/2026)
+## Teste real no Windows (v0.1.5 a v0.1.11, 14/10/2026)
 
 Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests/test_teste_real_p1.py`](../../tests/test_teste_real_p1.py), escritos antes e falhando no commit `6ec55eb`. Registro: [testes/2026-10-14-windows-p1.md](../testes/2026-10-14-windows-p1.md).
 
@@ -87,6 +87,7 @@ Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests
 | N4 | 🟡 | ✅ (v0.1.8) | Previsão inicial conservadora por desenho; o aprendizado foi corrigido no N11 |
 | N5, N6 | ⚪ | ✅ | Textos da interface |
 | N7 | 🟠 | ✅ | Links de captura com espaço (achado no caminho) |
+| N15 | 🟠 | ✅ (v0.1.11) | Na fase do texto de tela, o % e o término da rodada ficavam congelados ("Rodada 83% · término ~18:28" com o relógio em 18:31). Causa 1: o texto só atualizava nos eventos da fala. Causa 2: a previsão multiplicava só a fala restante pelo fator do OCR, e no fim da fala isso dá zero. Agora a previsão soma o OCR (ritmo medido na rodada) e atualiza a cada captura lida |
 | N14 | 🟡 | ✅ (v0.1.10) | Ao clicar em Cancelar nada mudava na tela até a rodada terminar, e os botões seguiam clicáveis. Agora aparece "Cancelando..." na hora, a barra fica indeterminada, Cancelar e Parar travam e eventos atrasados não sobrescrevem a mensagem. Pedido do responsável |
 | N13 | 🟡 | ✅ (v0.1.9) | Uma IA (Gemini, recebendo zips) inventou o resumo de duas aulas sem ler o conteúdo. O cabeçalho do `.md` agora manda dizer "não consegui ler" em vez de inventar, e o app e o guia avisam que algumas IAs não abrem `.zip`. Mitigação, não garantia |
 | N12 | ⚪ | ✅ (v0.1.8) | Confirmação aparecia deslocada e para cima: o `CTkToplevel` nasce com 200x200 e a centralização media isso. Agora usa o tamanho real, centraliza nos dois eixos e ganhou borda verde |

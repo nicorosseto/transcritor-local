@@ -947,6 +947,7 @@ class App(ctk.CTk):
         self._feitos, self._erros, self._palavras, self._total_rodada = 0, 0, 0, len(rodada)
         self._inicio = datetime.now()
         self._cancelando = False
+        self._vel_atual = None
         self.pb.stop()
         self.pb.configure(mode="determinate", progress_color=tema.VERDE)
         self.pb.set(0)
@@ -1025,6 +1026,15 @@ class App(ctk.CTk):
             else:
                 lb.configure(text=f"○ {rot}", text_color=COR_ESPERA, font=self.f_normal)
 
+    def _mostrar_previsao(self, d):
+        """Texto de apoio com o término previsto; atualizado na fala E durante o texto de tela (achado N15)."""
+        vel = getattr(self, "_vel_atual", None)
+        extra = f" · velocidade {vel:.1f}x".replace(".", ",") if vel else ""
+        self.lbl_tempo.configure(
+            text=f"Rodada {self.pb.get():.0%} · faltam ~{tempo_humano(d['falta_lote'])} · término "
+                 f"~{d['termino']:%H:%M}{extra}")
+        self.lbl_lat_fim.configure(text=f"término ~{d['termino']:%H:%M}")
+
     def _avancar(self, frac_video: float):
         """Barra única da rodada, ponderada pela duração; nunca volta para trás."""
         self._frac = max(self._frac, frac_video)
@@ -1050,7 +1060,7 @@ class App(ctk.CTk):
 
     def _tratar(self, ev: Evento):
         d, t = ev.dados, ev.tipo
-        if self._cancelando and t in ("progresso", "progresso_telas", "etapa"):
+        if self._cancelando and t in ("progresso", "progresso_telas", "previsao", "etapa"):
             return  # a tela já diz "Cancelando"; eventos atrasados não podem sobrescrever
         if t == "chamar":
             d["fn"]()
@@ -1124,13 +1134,15 @@ class App(ctk.CTk):
                 self._avancar(0.03 + parte * d["pos"] / d["total"])
             self.lbl_info_det.configure(text=f"{hhmmss(d['pos'])} de {hhmmss(d['total'])}")
             if "falta_lote" in d:
-                self.lbl_tempo.configure(
-                    text=f"Rodada {self.pb.get():.0%} · faltam ~{tempo_humano(d['falta_lote'])} · término "
-                         f"~{d['termino']:%H:%M} · velocidade {d['velocidade']:.1f}x".replace(".", ","))
-                self.lbl_lat_fim.configure(text=f"término ~{d['termino']:%H:%M}")
+                self._vel_atual = d["velocidade"]
+                self._mostrar_previsao(d)
+        elif t == "previsao":
+            self._mostrar_previsao(d)
         elif t == "progresso_telas":
             if d["total"]:
                 self._avancar(0.83 + 0.15 * d["feito"] / d["total"])
+            if "falta_lote" in d:
+                self._mostrar_previsao(d)
         elif t in ("video_fim", "video_erro"):
             self._dur_feita += self._dur_atual
             self._dur_atual, self._frac = 0.0, 0.0

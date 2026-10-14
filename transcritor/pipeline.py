@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Callable
 
-from . import consolidacao, correcoes, markdown, midia, ocr, pacote, preparacao
+from . import consolidacao, correcoes, estimativa, markdown, midia, ocr, pacote, preparacao
 from .config import EXTENSOES_VIDEO, Config
 from .estimativa import Estimativa, estimar
 from .registro import ERRO, OK, Linha, Registro, assinatura_da_linha, chave_padrao
@@ -288,6 +288,13 @@ class Projeto:
 
         video_restante = sum(i.duracao for i in itens)
         gasto_lote, feito_lote = 0.0, 0.0
+        ocr_gasto, ocr_video = 0.0, 0.0
+        ocr_hora_inicial = (estimativa_lote.segundos_ocr / max(sum(i.duracao for i in itens), 1.0) * 3600
+                            if estado_ocr is not None else 0.0)
+
+        def ocr_hora() -> float:
+            # depois de 3 min de vídeo lidos, vale o ritmo desta rodada; antes, a estimativa inicial
+            return ocr_gasto / ocr_video * 3600 if ocr_video >= 180 else ocr_hora_inicial
         for n, item in enumerate(itens, 1):
             if parar_apos_atual.is_set():
                 resumo["parado"] = True
@@ -312,10 +319,7 @@ class Projeto:
                     if gasto >= 30 and pos > 0:
                         vel = pos / gasto
                         vel_lote = (feito_lote + pos) / (gasto_lote + gasto)
-                        falta_lote = max(0.0, video_restante - pos) / vel_lote
-                        if estado_ocr is not None:
-                            falta_lote *= 1 + (estimativa_lote.segundos_ocr /
-                                               max(estimativa_lote.segundos_transcricao, 1))
+                        falta_lote = estimativa.falta_da_rodada(max(0.0, video_restante - pos), vel_lote, ocr_hora())
                         dados.update(velocidade=vel, falta_video=(total - pos) / vel,
                                      falta_lote=falta_lote,
                                      termino=(datetime.now() + timedelta(seconds=falta_lote)))
@@ -339,8 +343,20 @@ class Projeto:
                 falha_telas = resumo.get("ocr_indisponivel") if self.cfg.ocr else None
                 if estado_ocr is not None:
                     t_ocr = time.perf_counter()
-                    telas, falha_telas, capturas_lidas = self._ler_telas(item, estado_ocr, emitir, cancelar)
+                    vel_depois = (feito_lote + item.duracao) / max(gasto_lote + seg_trans, 1e-6)
+                    depois = max(0.0, video_restante - item.duracao)
+
+                    def previsao(feitas, total, _t=t_ocr, _v=vel_depois, _d=depois):
+                        atual = estimativa.ocr_restante_do_video(
+                            feitas, total, time.perf_counter() - _t, ocr_hora(), item.duracao)
+                        falta = estimativa.falta_da_rodada(0.0, _v, ocr_hora(), atual, _d)
+                        return {"falta_lote": falta, "termino": datetime.now() + timedelta(seconds=falta)}
+
+                    telas, falha_telas, capturas_lidas = self._ler_telas(item, estado_ocr, emitir, cancelar,
+                                                                         previsao)
                     seg_ocr = time.perf_counter() - t_ocr
+                    ocr_gasto += seg_ocr
+                    ocr_video += item.duracao
                 if falha_telas:  # a fala vale; a parte da tela fica marcada como falha (achado X10)
                     resumo["telas_falharam"] = resumo.get("telas_falharam", 0) + 1
                     emitir("aviso", texto=f"{item.rel}: texto da tela não foi lido por completo ({falha_telas}).")
@@ -393,10 +409,12 @@ class Projeto:
         emitir("lote_fim", **resumo)
         return resumo
 
-    def _ler_telas(self, item: Item, estado: ocr.EstadoOCR, emitir,
-                   cancelar) -> tuple[list[markdown.Tela], str | None, int]:
+    def _ler_telas(self, item: Item, estado: ocr.EstadoOCR, emitir, cancelar,
+                   previsao=None) -> tuple[list[markdown.Tela], str | None, int]:
         """Retorna (telas, falha, capturas_lidas). falha=None quando tudo foi lido; senão, o motivo (X10)."""
         emitir("etapa", codigo="telas", texto="Procurando trocas de tela...")
+        if previsao:
+            emitir("previsao", **previsao(0, 0))  # já mostra a previsão com o OCR que vem pela frente
         try:
             capturas = midia.extrair_capturas(item.caminho, self.pasta_capturas(item.rel), cancelar=cancelar)
         except RuntimeError as e:
@@ -406,7 +424,7 @@ class Projeto:
         for i, (t, img) in enumerate(capturas, 1):
             if cancelar.is_set():
                 raise Cancelado()
-            emitir("progresso_telas", feito=i, total=len(capturas))
+            emitir("progresso_telas", feito=i, total=len(capturas), **(previsao(i - 1, len(capturas)) if previsao else {}))
             try:
                 texto = ocr.limpar(ocr.ler_imagem(estado, img))
             except ocr.ErroOCR as e:

@@ -2,13 +2,13 @@
 
 Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize ao fim de cada sessão.
 
-**Última atualização:** 14/10/2026 · **Versão:** 0.1.10 · **Branch:** `main`
+**Última atualização:** 14/10/2026 · **Versão:** 0.1.11 · **Branch:** `main`
 
 ## 1. Estado atual
 
 | Frente | Situação |
 |---|---|
-| Motor (transcrição, OCR, registro, base consolidada) | Estável. 76 testes automáticos (CI em Linux e Windows, Python 3.11 e 3.13) |
+| Motor (transcrição, OCR, registro, base consolidada) | Estável. 79 testes automáticos (CI em Linux e Windows, Python 3.11 e 3.13) |
 | Auditoria independente de 08/10/2026 (X1 a X16) | **15 de 16 corrigidos**, cada um com teste que falhava antes. Falta só o X14 (pré-publicação). Ver [auditorias/STATUS.md](auditorias/STATUS.md) |
 | Lentidão (P17) | Resolvida: threads = núcleos físicos (ADR-015). No PC de referência, 1,34x virou ~1,57x no trecho medido |
 | Layout aprovado (fase 3) | Implementado (ADR-017): barra lateral, preto, verde só no clicável, logotipo e ícone do `.exe`. Conferido em 1366x768 com modelo simulado |
@@ -29,7 +29,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 **4ª rodada (v0.1.7):** N9 funcionou (80 trechos), Cancelar e refazer ok, previsão 37 min contra 28 reais ([registro](testes/2026-10-14-windows-p1-rodada4.md)). A v0.1.8 trouxe botão único, confirmação centralizada, N10, N11, N12; a v0.1.9 (N13) responde ao Gemini que inventou um resumo: cabeçalho "não invente" e aviso sobre `.zip`.
 
-**Próximo passo: 5ª rodada (em andamento) com a v0.1.10 ([Parar após este vídeo] já validado; Cancelar sem feedback virou N14), mais o teste do Gemini com o `.md` solto**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.10. Conferir:
+**Próximo passo: 5ª rodada (em andamento) com a v0.1.11 ([Parar após este vídeo] já validado; Cancelar sem feedback virou N14), mais o teste do Gemini com o `.md` solto**, mesmo vídeo, pasta de saída nova. O build roda sozinho no push; se não rodar, GitHub → Actions → **Build Windows (.exe)** → **Run workflow** (branch `main`) e baixar o artefato `TranscritorLocal-windows`. O título da janela deve mostrar v0.1.11. Conferir:
 
 | O que | Esperado |
 |---|---|
@@ -77,7 +77,7 @@ Roteiro original do teste (1ª rodada):
 ## 5. Comandos úteis (ambiente de desenvolvimento)
 
 ```
-python3 -m pytest -q                                  # 76 testes do motor
+python3 -m pytest -q                                  # 79 testes do motor
 python3 -m pyflakes transcritor tests ferramentas     # lint
 xvfb-run -a python3.12 ferramentas/fumaca/rodada_completa.py      # janela de verdade, modelo simulado
 xvfb-run -a -s "-screen 0 1366x768x24" python3.12 ferramentas/capturar_telas.py /tmp/telas

@@ -162,3 +162,11 @@ Na 5ª rodada o **Parar após este vídeo** funcionou. No **Cancelar**, a tela f
 | ID | O que mudou |
 |---|---|
 | N14 | "Cancelando..." na hora (barra de status, barra lateral e texto de apoio), barra indeterminada em laranja, Cancelar e Parar travados; ao terminar, volta ao normal e mostra "Rodada cancelada". Coberto por `ferramentas/fumaca/cancelar_rodada.py` |
+
+## v0.1.11 (14/10/2026): previsão que conta o texto de tela
+
+Na 5ª rodada o responsável viu "Rodada 83% · faltam ~menos de 1 min · término ~18:28" parado enquanto o relógio já marcava 18:31 e a barra seguia andando (N15).
+
+| ID | O que mudou |
+|---|---|
+| N15 | A previsão da rodada passou a somar a fala restante **e** o OCR (de todos os vídeos), usa o ritmo de OCR medido nesta rodada (depois de 3 min de vídeo lidos) e é recalculada a cada captura; o % e o término agora andam também nessa fase. Funções puras testadas em `estimativa.falta_da_rodada` e `ocr_restante_do_video` |

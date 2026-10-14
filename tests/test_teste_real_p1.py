@@ -370,3 +370,42 @@ def test_n11_velocidade_pesa_pela_duracao(tmp_path):
     r.linhas["b"] = _linha("b", 3600, 2.0)   # 3600 s de vídeo em 1800 s
     # total: 4200 s de vídeo em 2400 s reais = 1,75x (a mediana simples daria 1,5x)
     assert abs(r.velocidade_medida("equilibrado") - 1.75) < 1e-9
+
+
+# ----------------------------------------------------------------------------- N15: previsão com o texto de tela
+
+
+def test_n15_no_fim_da_fala_a_previsao_ainda_conta_o_ocr():
+    from transcritor.estimativa import falta_da_rodada
+    # fala quase no fim (0 s de áudio restante) de 1 vídeo de 1 h; OCR a 600 s por hora de vídeo
+    # (a fórmula antiga multiplicava a fala restante e dava 0: "menos de 1 min" com 10 min de OCR pela frente)
+    assert falta_da_rodada(0.0, 1.7, 600.0, ocr_do_video_atual=600.0, video_depois=0.0) == 600.0
+    # ainda na fala: 3600 s de áudio a 2x + 600 s de OCR
+    assert falta_da_rodada(3600.0, 2.0, 600.0) == 1800.0 + 600.0
+    # no OCR, com mais um vídeo de 1 h depois: OCR atual + (fala + OCR) do próximo
+    assert falta_da_rodada(0.0, 2.0, 600.0, ocr_do_video_atual=100.0, video_depois=3600.0) == 100.0 + 1800.0 + 600.0
+
+
+def test_n15_ocr_restante_usa_o_ritmo_medido_depois_de_5_capturas():
+    from transcritor.estimativa import ocr_restante_do_video
+    # antes de 5 capturas: estimativa por hora (600 s/h x 1800 s de vídeo, metade feita)
+    assert ocr_restante_do_video(2, 4, 3.0, 600.0, 1800.0) == 600 / 3600 * 1800 * 2 / 4
+    # com 10 de 40 lidas em 6 s: faltam 30 x 0,6 s
+    assert abs(ocr_restante_do_video(10, 40, 6.0, 600.0, 1800.0) - 18.0) < 1e-9
+
+
+@requer_ffmpeg
+def test_n15_eventos_do_ocr_trazem_a_previsao(tmp_path, modelo_falso, monkeypatch):
+    videos, saida = tmp_path / "v", tmp_path / "s"
+    criar_video(videos / "a.mp4",
+                [("Slide um\nIntroducao", 5), ("Slide dois\nMedidas", 5), ("Slide tres\nFim", 5)],
+                cores=[(255, 255, 255), (200, 230, 255), (255, 240, 200)])
+    _ocr_falso(monkeypatch, [TELA_A, "", TELA_B])
+    eventos = []
+    proj = Projeto(Config(videos, saida, ocr=True))
+    proj.executar(proj.escanear(), eventos.append)
+    previsoes = [e.dados for e in eventos if e.tipo == "previsao"]
+    telas = [e.dados for e in eventos if e.tipo == "progresso_telas"]
+    assert previsoes and "termino" in previsoes[0] and previsoes[0]["falta_lote"] > 0
+    assert telas and all("falta_lote" in d and "termino" in d for d in telas)
+    assert all(d["falta_lote"] > 0 for d in telas), "ainda há capturas por ler: a previsão não pode zerar"

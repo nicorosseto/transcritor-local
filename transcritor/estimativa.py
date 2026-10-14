@@ -40,3 +40,30 @@ def estimar(duracoes_s: list[float], registro: Registro, preset: str, dispositiv
         por_hora = registro.ocr_por_hora_medido() or OCR_SEG_POR_HORA_PADRAO
         seg_ocr = total_video / 3600 * por_hora
     return Estimativa(total_video / vel if vel > 0 else 0.0, seg_ocr, vel, medida)
+
+
+def ocr_restante_do_video(feitas: int, total: int, segundos_gastos: float, ocr_por_hora: float,
+                          duracao: float) -> float:
+    """Segundos que faltam de OCR no vídeo em andamento (achado N15).
+
+    Com 5 capturas lidas ou mais, usa o ritmo medido nesta mesma rodada; antes disso, a estimativa por hora."""
+    if total <= 0:
+        return ocr_por_hora / 3600 * duracao
+    if feitas >= 5 and segundos_gastos > 0:
+        return max(0, total - feitas) * segundos_gastos / feitas
+    return ocr_por_hora / 3600 * duracao * max(0, total - feitas) / total
+
+
+def falta_da_rodada(video_restante: float, velocidade_lote: float, ocr_por_hora: float,
+                    ocr_do_video_atual: float | None = None, video_depois: float = 0.0) -> float:
+    """Segundos que faltam na rodada, contando fala E texto de tela.
+
+    Na fala: o que falta de áudio de todos os vídeos ÷ velocidade + o OCR de todos eles (inclusive o atual
+    inteiro). No OCR: o que falta do vídeo atual (`ocr_do_video_atual`) + fala e OCR dos próximos
+    (`video_depois`, em segundos de vídeo). A fórmula antiga multiplicava só a fala restante, e no fim da
+    fala isso dava zero: a previsão travava em "menos de 1 min" enquanto o OCR ainda rodava."""
+    vel = velocidade_lote if velocidade_lote > 0 else 1.0
+    if ocr_do_video_atual is None:  # ainda na fala
+        return video_restante / vel + ocr_por_hora / 3600 * video_restante
+    return ocr_do_video_atual + video_depois / vel + ocr_por_hora / 3600 * video_depois
+
