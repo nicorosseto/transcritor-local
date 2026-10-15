@@ -39,7 +39,10 @@
 - [x] Repetir o teste em máquina limpa com a v0.1.13 ([registro](testes/2026-10-14-sandbox-maquina-limpa.md)) e teste cego com 3 IAs ([registro](testes/2026-10-14-ia-cega.md))
 - [x] Auditorias de pré-publicação (Codex e Claude, 14/10) e correção dos bloqueios na v0.1.14 ([status](auditorias/STATUS.md))
 - [x] O `.zip` sem binário GPL: FFmpeg baixado na primeira abertura, PyAV fora do executável ([ADR-021](DECISOES.md))
-- [ ] Teste do responsável com a v0.1.14 no Windows Sandbox ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
+- [x] Teste da v0.1.14 numa máquina corporativa sem administrador: FFmpeg baixado, transcrição sem PyAV a 4,6x a 4,9x ([registro](testes/2026-10-15-maquina-corporativa.md))
+- [x] N22: Tesseract instalado só para o usuário é encontrado (falta conferir no build)
+- [ ] N23: avisar que falta o Tesseract ao marcar "Ler texto da tela", não só ao começar
+- [ ] Restante do roteiro da v0.1.14: K1 (passo 6), C1/K3 (passo 7) ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
 - [ ] Publicação beta: repositório público + Release v0.1.14 (rascunho de pre-release criado pelo workflow)
 - [ ] N21: OCR em texto sobre fundo colorido (caixas de diagrama): preparar a captura antes do OCR (contraste, inversão por bloco) e medir com capturas reais
 - [ ] Embutir o Tesseract e o português no zip, como o FFmpeg (o usuário não instala nada para ler a tela)
