@@ -14,6 +14,9 @@
 | 4 | Tesseract pelo `winget` | ❌ "Instalado com êxito", mas o app não reconheceu (**N22**) |
 | 5 | **Transcrever 2 vídeos sem o PyAV no executável** | ✅ Os dois concluídos com o modelo real. **Prova de que o app funciona sem o PyAV (ADR-021)** |
 | 8 | Pacote para IA | ✅ Uma pasta e um `.zip` por vídeo, com o `.md` |
+| N22 | Tesseract reconhecido no build com a correção | ✅ "Tudo pronto"; cartão "Instalado", sem administrador |
+| OCR | Vídeo B com "Ler texto da tela" | ✅ O app baixou sozinho o português do Tesseract (~2 MB, N6); 4 capturas lidas, 2 trechos de tela no `.md`, imagens no pacote; 6,4x. **N21 se repete:** do diagrama de 7 caixas, o OCR leu só "GRAVAÇÃO" (mesmo resultado do Sandbox) |
+| N19 | Trocar a pasta de saída | ✅ A pasta foi relida sozinha |
 
 | Vídeo | Duração | Fala | Velocidade | Threads |
 |---|---|---|---|---|
@@ -28,5 +31,6 @@
 
 | ID | Achado | Situação |
 |---|---|---|
-| N22 | Sem administrador, o `winget` instala o Tesseract em `%LOCALAPPDATA%\Programs\Tesseract-OCR` e muda só o PATH do usuário; o app só procurava em `Program Files` e no PATH antigo do processo | Corrigido no commit `51e3e15` (procura nessa pasta e relê o PATH do registro). Falta conferir no build novo |
+| N21 | OCR lê só 1 das 7 caixas coloridas do diagrama | Limitação conhecida, igual nas duas máquinas; correção prevista na v0.2 (captura em cinza ampliada 2x leu as 7 caixas no teste de 14/10) |
+| N22 | Sem administrador, o `winget` instala o Tesseract em `%LOCALAPPDATA%\Programs\Tesseract-OCR` e muda só o PATH do usuário; o app só procurava em `Program Files` e no PATH antigo do processo | Corrigido no commit `51e3e15` (procura nessa pasta e relê o PATH do registro) e **conferido no build** |
 | N23 | A caixa "Ler texto da tela" só avisa que falta o Tesseract ao clicar em Transcrever | A corrigir depois desta sessão: aviso em laranja com "Instalar agora" e diálogo ao marcar a caixa |

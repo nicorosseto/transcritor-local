@@ -40,7 +40,7 @@
 - [x] Auditorias de pré-publicação (Codex e Claude, 14/10) e correção dos bloqueios na v0.1.14 ([status](auditorias/STATUS.md))
 - [x] O `.zip` sem binário GPL: FFmpeg baixado na primeira abertura, PyAV fora do executável ([ADR-021](DECISOES.md))
 - [x] Teste da v0.1.14 numa máquina corporativa sem administrador: FFmpeg baixado, transcrição sem PyAV a 4,6x a 4,9x ([registro](testes/2026-10-15-maquina-corporativa.md))
-- [x] N22: Tesseract instalado só para o usuário é encontrado (falta conferir no build)
+- [x] N22: Tesseract instalado só para o usuário é encontrado (conferido no build) e OCR de ponta a ponta na máquina corporativa
 - [ ] N23: avisar que falta o Tesseract ao marcar "Ler texto da tela", não só ao começar
 - [ ] Restante do roteiro da v0.1.14: K1 (passo 6), C1/K3 (passo 7) ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
 - [ ] Publicação beta: repositório público + Release v0.1.14 (rascunho de pre-release criado pelo workflow)
