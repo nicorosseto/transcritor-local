@@ -17,6 +17,7 @@
 | N22 | Tesseract reconhecido no build com a correção | ✅ "Tudo pronto"; cartão "Instalado", sem administrador |
 | OCR | Vídeo B com "Ler texto da tela" | ✅ O app baixou sozinho o português do Tesseract (~2 MB, N6); 4 capturas lidas, 2 trechos de tela no `.md`, imagens no pacote; 6,4x. **N21 se repete:** do diagrama de 7 caixas, o OCR leu só "GRAVAÇÃO" (mesmo resultado do Sandbox) |
 | N19 | Trocar a pasta de saída | ✅ A pasta foi relida sozinha |
+| K1 | Ler pasta com 55 vídeos e olhar o botão | ✅ Durante "Lendo a pasta e medindo as durações...", **Transcrever 55** e **Ler pasta** ficaram cinza (desabilitados) |
 
 | Vídeo | Duração | Fala | Velocidade | Threads |
 |---|---|---|---|---|
@@ -33,4 +34,5 @@
 |---|---|---|
 | N21 | OCR lê só 1 das 7 caixas coloridas do diagrama | Limitação conhecida, igual nas duas máquinas; correção prevista na v0.2 (captura em cinza ampliada 2x leu as 7 caixas no teste de 14/10) |
 | N22 | Sem administrador, o `winget` instala o Tesseract em `%LOCALAPPDATA%\Programs\Tesseract-OCR` e muda só o PATH do usuário; o app só procurava em `Program Files` e no PATH antigo do processo | Corrigido no commit `51e3e15` (procura nessa pasta e relê o PATH do registro) e **conferido no build** |
+| N24 | A velocidade medida fica no `registro.csv` de cada pasta de saída: numa saída nova, no mesmo PC, a previsão volta à estimativa inicial (1,2x, quando o PC já tinha medido 4,6x a 6,4x) | v0.2: guardar a velocidade medida por PC, na pasta do usuário, e usar quando o projeto ainda não tem medição |
 | N23 | A caixa "Ler texto da tela" só avisa que falta o Tesseract ao clicar em Transcrever | A corrigir depois desta sessão: aviso em laranja com "Instalar agora" e diálogo ao marcar a caixa |

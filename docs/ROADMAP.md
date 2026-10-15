@@ -42,7 +42,8 @@
 - [x] Teste da v0.1.14 numa máquina corporativa sem administrador: FFmpeg baixado, transcrição sem PyAV a 4,6x a 4,9x ([registro](testes/2026-10-15-maquina-corporativa.md))
 - [x] N22: Tesseract instalado só para o usuário é encontrado (conferido no build) e OCR de ponta a ponta na máquina corporativa
 - [ ] N23: avisar que falta o Tesseract ao marcar "Ler texto da tela", não só ao começar
-- [ ] Restante do roteiro da v0.1.14: K1 (passo 6), C1/K3 (passo 7) ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
+- [x] K1 conferido no Windows (botão travado durante a leitura de 55 vídeos)
+- [ ] C1/K3 no Windows (passo 7) ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
 - [ ] Publicação beta: repositório público + Release v0.1.14 (rascunho de pre-release criado pelo workflow)
 - [ ] N21: OCR em texto sobre fundo colorido (caixas de diagrama): preparar a captura antes do OCR (contraste, inversão por bloco) e medir com capturas reais
 - [ ] Embutir o Tesseract e o português no zip, como o FFmpeg (o usuário não instala nada para ler a tela)
@@ -63,7 +64,7 @@ Pedidos pelo responsável em 14/10/2026, a fazer **depois** da 4ª rodada no Win
 - [ ] OCR: filtro que não descarte siglas e linhas curtas (C3/K4) + captura em cinza ampliada 2x (N21), calibrados com vídeos reais
 - [ ] Previsão durante a fala conta o OCR inteiro do vídeo atual (C2)
 - [ ] Base consolidada trocada de uma vez, com volta atrás em falha (C5)
-- [ ] Estimativa: "últimos 5" por data, não por ordem alfabética (K6)
+- [ ] Estimativa: "últimos 5" por data, não por ordem alfabética (K6); velocidade medida guardada por PC, não só por pasta de saída (N24)
 - [ ] Sobras depois de o app ser fechado à força e trava deixada ao fechar durante a leitura (K15, K16, C4)
 - [ ] Pacote para IA fora da thread da interface (K19)
 - [ ] Dependências Python com hash, autoteste que abre a janela e Tesseract no CI do Windows (K8, X14, K12)
