@@ -6,7 +6,7 @@ Para quem nunca programou. Leva ~15 minutos para preparar o PC na primeira vez.
 
 | Caminho | Para quem | O que instalar |
 |---|---|---|
-| **A. Executável (.exe)** | Quem só quer usar | Nada além do app (o FFmpeg vem junto) |
+| **A. Executável (.exe)** | Quem só quer usar | Nada além do app (o FFmpeg é baixado por ele na primeira vez) |
 | **B. Código-fonte (Python)** | Quem quer mexer no código | Python + FFmpeg + bibliotecas |
 
 O Tesseract é **opcional** nos dois caminhos: só é necessário para ler o texto que aparece na tela.
@@ -20,7 +20,7 @@ O Tesseract é **opcional** nos dois caminhos: só é necessário para ler o tex
 3. Abra **`TranscritorLocal.exe`**.
 4. Se aparecer "O Windows protegeu o computador": **Mais informações → Executar assim mesmo**. Isso ocorre porque o app não tem assinatura digital paga, não porque é perigoso. O código é aberto e está neste repositório.
 
-5. Na primeira vez, o app abre na página **Preparação do PC**. Clique em **Baixar agora** no item "Modelo de transcrição" (~1,6 GB, uma única vez). Você não precisa instalar Python nem FFmpeg.
+5. Na primeira vez, o app abre na página **Preparação do PC**. Clique em **Baixar FFmpeg** (~115 MB) e depois no botão de download do "Modelo de transcrição" (~0,5 GB no Rápido, ~1,6 GB no Equilibrado e no Preciso). Cada um é baixado uma única vez. Você não precisa instalar Python.
 
 > O modo terminal existe só para quem roda pelo código-fonte (`python transcrever.py`).
 
@@ -123,7 +123,7 @@ A IA reconstrói **o que foi dito e o texto que apareceu na tela**. Gráficos, p
 |---|---|---|
 | `python não é reconhecido` | Python fora do PATH | Reinstale marcando "Add to PATH", ou use `py` no lugar de `python` |
 | Abre a Microsoft Store ao digitar `python` | Atalho do Windows | Configurações → Aplicativos → Aliases de execução → desligue `python.exe` e `python3.exe` |
-| `FFmpeg não encontrado` | Terminal aberto antes da instalação | Feche e reabra o PowerShell |
+| `FFmpeg não encontrado` | No executável: o FFmpeg ainda não foi baixado. No código-fonte: terminal aberto antes da instalação | Executável: **Preparação do PC → Baixar FFmpeg**. Código-fonte: feche e reabra o PowerShell |
 | `unexpected keyword argument 'metadata_errors'` | PyAV novo incompatível com faster-whisper | Já resolvido nesta versão (o áudio é lido pelo FFmpeg) |
 | Parece travado em "Carregando modelo" | Download de até ~1,6 GB na primeira vez | Aguarde. Depois funciona offline |
 | `Falha ao carregar o modelo ... 403/proxy` | Rede corporativa bloqueando o download | Baixe o modelo uma vez em outra rede |

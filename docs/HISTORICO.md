@@ -193,3 +193,17 @@ Antes de publicar, o app rodou num Windows Sandbox (Windows vazio, 4 GB de RAM, 
 ## Antes da publicação (14/10/2026): teste cego com IAs
 
 Repetido o teste em máquina limpa com a v0.1.13: ponta a ponta sem erro. Em seguida, três IAs sem nenhum contexto (Haiku, Sonnet e Opus 5.5) leram os arquivos gerados. Nenhuma inventou conteúdo; com o Pacote para IA, abriram as capturas por conta própria. O Opus notou que o OCR perdeu o texto de um diagrama colorido que estava legível na imagem (N21, no roadmap). Registro em [testes/2026-10-14-ia-cega.md](testes/2026-10-14-ia-cega.md).
+
+## v0.1.14 (15/10/2026): auditorias de pré-publicação
+
+Duas auditorias independentes, feitas em paralelo sem uma ver a outra: Codex (9 achados, 3 bloqueios) e uma sessão nova do Claude, sem o contexto do desenvolvimento (20 achados, 2 bloqueios). Valeu ter as duas: o achado mais sério, K1 (clicar em Transcrever durante a releitura da pasta terminava em "Pronto!" sem registrar nada), só a segunda encontrou. As duas concordaram no problema de licença: o `.zip` levava binários GPL sem o código-fonte correspondente, e um deles (as DLLs libx264/libx265 do PyAV) ninguém tinha notado.
+
+| ID | O que mudou |
+|---|---|
+| K1 | Transcrever travado durante a leitura; releitura com a confirmação aberta cancela a rodada |
+| B1/K5 | Pacote para IA só leva imagens de dentro de `capturas/` |
+| B2/K2 | FFmpeg baixado na primeira abertura (versão fixa, SHA-256); PyAV fora do executável ([ADR-021](DECISOES.md)) |
+| B3/K7 | Release criado como rascunho de pre-release, com notas e SHA-256 |
+| C1/K3, K9 a K18 | Verificação do PC por um único caminho; licenças das bibliotecas no zip; links com `#`; `correcoes.json` em ANSI; temporários; colisão de pacotes |
+
+O resto dos achados está na lista da v0.2 do [roadmap](ROADMAP.md).

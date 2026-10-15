@@ -14,8 +14,9 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 
 </details>
 
-> **Status: v0.1.13, beta.** Como foi testado:
-> - 87 testes automatizados a cada mudança, em Windows e Linux (Python 3.11 e 3.13); o `.exe` é gerado no GitHub Actions.
+> **Status: v0.1.14, beta.** Como foi testado:
+> - 112 testes automatizados a cada mudança, no Linux e no Windows (Python 3.11 e 3.13); no Windows, os 4 testes de OCR são pulados porque o CI não tem o Tesseract. O `.exe` é gerado e conferido no GitHub Actions.
+> - Duas auditorias independentes antes da publicação (Codex e uma sessão nova do Claude), com os bloqueios corrigidos ([status](docs/auditorias/STATUS.md)).
 > - 5 rodadas de uso real num PC com Windows, só CPU (vídeo de 36 min, fala a ~1,7x, texto de tela, cancelar e retomar).
 > - Primeiro uso numa [máquina limpa](docs/testes/2026-10-14-sandbox-maquina-limpa.md) (Windows Sandbox, sem nada instalado).
 > - [Teste cego com três IAs](docs/testes/2026-10-14-ia-cega.md) sem nenhum contexto: entenderam os arquivos e nenhuma inventou conteúdo.
@@ -75,10 +76,12 @@ Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/
 
 1. Baixe o `.zip` da versão mais recente em **Releases**
 2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`). Dentro há um único programa, o `COMO_ABRIR.txt` e a pasta `licencas`
-3. Abra `TranscritorLocal.exe`. Na primeira vez, a página **Preparação do PC** confere o PC e baixa o modelo de transcrição uma única vez: ~0,5 GB na qualidade **Rápido**, ~1,6 GB na **Equilibrado** e na **Preciso**
+3. Abra `TranscritorLocal.exe`. Na primeira vez, a página **Preparação do PC** confere o PC e, com um clique em cada botão, baixa uma única vez:
+   - o **FFmpeg**, programa que abre os vídeos (~115 MB). É a versão oficial fixa, baixada direto do distribuidor e conferida por SHA-256 antes de usar ([por que não vem no zip](docs/DECISOES.md#adr-021-o-zip-não-redistribui-binário-gpl-o-ffmpeg-é-baixado-na-primeira-abertura));
+   - o **modelo de transcrição**: ~0,5 GB na qualidade **Rápido**, ~1,6 GB na **Equilibrado** e na **Preciso**
 4. Para ler o texto da tela, instale o Tesseract pelo botão da mesma página
 
-Python e FFmpeg já vêm embutidos. Como o app ainda não tem assinatura digital, o Chrome pode chamar o arquivo de perigoso (em `chrome://downloads`, escolha **Manter**) e o Windows pode exibir *"O Windows protegeu o computador"* (clique em **Mais informações → Executar assim mesmo**). Para conferir o arquivo, compare `Get-FileHash .\TranscritorLocal.exe` com o SHA-256 publicado na página do Release.
+O Python já vem embutido. Como o app ainda não tem assinatura digital, o Chrome pode chamar o arquivo de perigoso (em `chrome://downloads`, escolha **Manter**) e o Windows pode exibir *"O Windows protegeu o computador"* (clique em **Mais informações → Executar assim mesmo**). Para conferir o arquivo, compare `Get-FileHash .\TranscritorLocal.exe` com o SHA-256 publicado na página do Release.
 
 ### Opção B: pelo código-fonte (Python 3.10+)
 
@@ -147,7 +150,7 @@ Todo `.md` começa com um bloco "Como ler este arquivo", que explica a fala, o t
 
 ## Privacidade e direitos autorais
 
-- O processamento é local. Os únicos acessos à internet são: download do modelo Whisper (Hugging Face, uma vez) e do pacote de português do Tesseract (GitHub, ~2 MB, uma vez).
+- O processamento é local. Os únicos acessos à internet são downloads feitos uma vez: o FFmpeg (GitHub do distribuidor, ~115 MB, só no Windows), o modelo Whisper (Hugging Face) e o pacote de português do Tesseract (GitHub, ~2 MB).
 - **Não publique transcrições de cursos pagos** nem de material de trabalho sem autorização. O `.gitignore` deste repositório bloqueia vídeos, áudios e saídas justamente para evitar isso.
 
 ## Documentação

@@ -37,7 +37,10 @@
 - [x] N16 (v0.1.12): janela que cabe na tela com escala 125%/150%
 - [x] N17 a N20 (v0.1.13): achados do teste em máquina limpa ([registro](testes/2026-10-14-sandbox-maquina-limpa.md))
 - [x] Repetir o teste em máquina limpa com a v0.1.13 ([registro](testes/2026-10-14-sandbox-maquina-limpa.md)) e teste cego com 3 IAs ([registro](testes/2026-10-14-ia-cega.md))
-- [ ] Publicação beta: repositório público + Release v0.1.13 como pre-release, com SHA-256 e aviso do SmartScreen (depois da auditoria do Codex)
+- [x] Auditorias de pré-publicação (Codex e Claude, 14/10) e correção dos bloqueios na v0.1.14 ([status](auditorias/STATUS.md))
+- [x] O `.zip` sem binário GPL: FFmpeg baixado na primeira abertura, PyAV fora do executável ([ADR-021](DECISOES.md))
+- [ ] Teste do responsável com a v0.1.14 no Windows Sandbox ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
+- [ ] Publicação beta: repositório público + Release v0.1.14 (rascunho de pre-release criado pelo workflow)
 - [ ] N21: OCR em texto sobre fundo colorido (caixas de diagrama): preparar a captura antes do OCR (contraste, inversão por bloco) e medir com capturas reais
 - [ ] Embutir o Tesseract e o português no zip, como o FFmpeg (o usuário não instala nada para ler a tela)
 - [ ] Não criar a pasta de saída sugerida antes de o usuário confirmar a saída
@@ -52,6 +55,15 @@ Pedidos pelo responsável em 14/10/2026, a fazer **depois** da 4ª rodada no Win
 - Estimativa separada para a fase visual, aprendida no PC
 - Detecção do Ollama e da RAM disponível no "Verificar PC"
 - Calibração dos limiares de captura (P3) (o progresso do download, P4, já entrou na v0.1.1)
+
+## v0.2 (antes da IA visual): pendências das auditorias de 14/10
+- [ ] OCR: filtro que não descarte siglas e linhas curtas (C3/K4) + captura em cinza ampliada 2x (N21), calibrados com vídeos reais
+- [ ] Previsão durante a fala conta o OCR inteiro do vídeo atual (C2)
+- [ ] Base consolidada trocada de uma vez, com volta atrás em falha (C5)
+- [ ] Estimativa: "últimos 5" por data, não por ordem alfabética (K6)
+- [ ] Sobras depois de o app ser fechado à força e trava deixada ao fechar durante a leitura (K15, K16, C4)
+- [ ] Pacote para IA fora da thread da interface (K19)
+- [ ] Dependências Python com hash, autoteste que abre a janela e Tesseract no CI do Windows (K8, X14, K12)
 
 ## v0.3: acabamento e publicação
 - Release assinada (P7); o repositório fica público já na v0.1.13, como beta sem assinatura

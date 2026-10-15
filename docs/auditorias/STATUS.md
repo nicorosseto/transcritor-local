@@ -8,6 +8,8 @@ Este é o **único arquivo que muda** depois de cada rodada. As pastas datadas s
 | [2026-10-08 · contra-auditoria](2026-10-08/CONTRA_AUDITORIA_CLAUDE.md) | Claude | Reprodução, severidades revisadas, hipótese da lentidão (P17) |
 | [2026-10-11 · fase 1](2026-10-11-fase1/) | Claude | Script do Codex rodado de novo depois das correções |
 | [2026-10-11 · fase 2](2026-10-11-fase2/) | Claude | Idem, depois da fase 2 |
+| [2026-10-14](2026-10-14/README.md) | Codex (independente) | Pré-publicação da v0.1.13: B1 a B3 (bloqueios), C1 a C6 |
+| [2026-10-14 · Claude](2026-10-14-claude/README.md) | Claude (sessão nova, independente) | Pré-publicação da v0.1.13: K1 a K20 |
 
 Status: ✅ corrigido · ⏳ pendente · 🔎 em medição. Severidade da contra-auditoria.
 
@@ -97,9 +99,37 @@ Achados do primeiro teste fora do ambiente de desenvolvimento. Testes em [`tests
 | N9 | 🟡 | ✅ (v0.1.7) | Ruído no texto de tela: 31% das linhas lidas eram lixo ("Es Ou ou mu ou"). `ocr.limpar` descarta linhas ilegíveis e blocos dominados por ruído; confiança segue 50 (60 perdia 3% de linhas boas) |
 | N8 | 🔴 | ✅ (v0.1.6) | OCR da v0.1.5 descartava **todo** o texto de tela com a pasta de idiomas do app (sem `configs/tsv`). Agora usa `-c tessedit_create_tsv=1` e falha de forma explícita se a saída não for TSV |
 
+## Auditorias de pré-publicação (14/10/2026), corrigidas na v0.1.14
+
+As duas foram feitas em paralelo, sem uma ver a outra, sobre o commit `84c6ab1`. Achados iguais nas duas aparecem numa linha só. Testes em [`tests/test_auditoria_2026_10_14.py`](../../tests/test_auditoria_2026_10_14.py) (todos falham no código anterior) e fumaças em `ferramentas/fumaca/auditoria_k1.py`, `auditoria_c1.py` e `ffmpeg_primeiro_uso.py`.
+
+| ID | Sev. | Status | O que mudou |
+|---|---|---|---|
+| K1 | 🔴 | ✅ v0.1.14 | Transcrever ficava ativo durante a releitura da pasta e a rodada terminava em "Pronto!" sem registrar nada. Agora o botão trava durante a leitura e, se a pasta for relida com a confirmação aberta, a rodada não começa e o usuário é avisado |
+| B1 = K5 | 🔴 | ✅ v0.1.14 | O Pacote para IA copiava qualquer arquivo citado como captura, inclusive de fora da saída. Agora só entra imagem que, resolvidos `..` e links simbólicos, esteja dentro de `capturas/`, e só a linha de cabeçalho escrita pelo app é seguida |
+| B2 = K2 | 🔴 | ✅ v0.1.14 | O `.zip` levava binários GPL (FFmpeg da gyan.dev e as DLLs libx264/libx265 do PyAV) sem o código-fonte correspondente. Agora não leva nenhum: FFmpeg baixado na primeira abertura com SHA-256 fixo e PyAV fora do executável ([ADR-021](../DECISOES.md)) |
+| B3 = K7 | 🔴 | ✅ v0.1.14 | O Release sairia como versão estável, sem notas e com nome de arquivo diferente do texto. Agora sai como **rascunho** e **pre-release**, com as notas de `docs/release/<tag>.md` e os SHA-256 do `.exe` e do `.zip` preenchidos pelo build |
+| C1 + K3 | 🟠 | ✅ v0.1.14 | O N18 ainda acontecia por dois caminhos ("Verificar de novo" lenta; troca de qualidade durante a verificação). Agora há um único caminho de verificação e só vale o resultado do último pedido |
+| K9 | 🟠 | ✅ v0.1.14 | Textos de licença das bibliotecas: `licencas/BIBLIOTECAS.txt` gerado no build |
+| K10 | 🟠 | ✅ v0.1.14 | `#` e `?` no nome quebravam o link da captura |
+| K11 | 🟠 | ✅ v0.1.14 | `correcoes.json` salvo em ANSI derrubava a rodada; agora é lido (ou vira aviso) |
+| K12 | 🟠 | ✅ v0.1.14 (texto) | README e notas diziam "87 testes no Windows"; lá 4 são pulados. O texto foi corrigido; instalar o Tesseract no CI fica para a v0.2 |
+| K13, K14, C4 (parte) | 🟡/🟠 | ✅ v0.1.14 | Temporários limpos em qualquer erro, no download do português e na troca final do áudio |
+| K17 = C6 | 🟡/🟠 | ✅ v0.1.14 | Pacotes com o mesmo nome ganham sufixo em vez de um apagar o outro |
+| K18 | 🟡 | ✅ v0.1.14 | Cópia `registro_PENDENTE` aberta no Excel não vira falso "registro não salvo"; e esse aviso aparece em qualquer desfecho |
+| K20 | 🟡 | ✅ | Auditorias trazidas para a `main`; branches antigas a apagar pelo site antes de abrir o repositório |
+| C2 | 🟠 | ⏳ v0.2 | Previsão subestima o OCR do vídeo atual durante a fala |
+| C3 = K4 | 🟠 | ⏳ v0.2 | O filtro do N9 descarta siglas e linhas curtas ("SQL", "DAX"). Junto com o N21: no diagrama do teste cego, captura em cinza e ampliada 2x leu as 7 caixas (hoje lê 1), com OCR ~1,8x mais lento. Calibrar com vídeos reais |
+| C4 (resto), K15 | 🟡/🟠 | ⏳ v0.2 | `_ocr_*.png` e `tmp_%06d.jpg` com nome fixo; varrer sobras depois de o app ser fechado à força |
+| C5 | 🟠 | ⏳ v0.2 | Base consolidada: trocar o conjunto inteiro de uma vez (hoje uma falha no meio pode deixar a base incompleta; os `.md` individuais ficam intactos) |
+| K6 | 🟠 | ⏳ v0.2 | "Últimos 5" da estimativa viram os 5 últimos em ordem alfabética depois de reabrir |
+| K8 + X14 | 🟠 | ⏳ v0.2 | Dependências Python travadas com hash; autoteste que abre a janela |
+| K16 | 🟡 | ⏳ v0.2 | Fechar durante a leitura deixa a trava; mensagem não diz que basta apagar `.em_uso.lock` |
+| K19 | 🟡 | ⏳ v0.2 | Pacote para IA na thread da interface |
+
 ## Pré-publicação
 
 | ID | Status | Próximo passo |
 |---|---|---|
-| X14 | ⏳ | Dependências travadas e hashes do FFmpeg, tessdata e modelo |
-| P1, P7, P8 | ⏳ | Ver [AUDITORIA.md](../AUDITORIA.md) |
+| X14 | ⏳ (parcial) | FFmpeg já fixado por versão e hash (ADR-021). Faltam dependências Python, tessdata e modelo: v0.2 |
+| P1, P7, P8 | ⏳ | Ver [AUDITORIA.md](../AUDITORIA.md). P8 (fonte do FFmpeg) deixa de se aplicar ao `.zip`: ele não leva mais o FFmpeg |
