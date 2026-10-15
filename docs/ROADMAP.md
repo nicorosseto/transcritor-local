@@ -43,7 +43,7 @@
 - [x] N22: Tesseract instalado só para o usuário é encontrado (conferido no build) e OCR de ponta a ponta na máquina corporativa
 - [ ] N23: avisar que falta o Tesseract ao marcar "Ler texto da tela", não só ao começar
 - [x] K1 conferido no Windows (botão travado durante a leitura de 55 vídeos)
-- [ ] C1/K3 no Windows (passo 7) ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
+- [x] C1/K3 conferido no Windows: roteiro da v0.1.14 completo ([roteiro](RETOMADA.md#11-próxima-sessão-roteiro-de-testes-do-responsável))
 - [ ] Publicação beta: repositório público + Release v0.1.14 (rascunho de pre-release criado pelo workflow)
 - [ ] N21: OCR em texto sobre fundo colorido (caixas de diagrama): preparar a captura antes do OCR (contraste, inversão por bloco) e medir com capturas reais
 - [ ] Embutir o Tesseract e o português no zip, como o FFmpeg (o usuário não instala nada para ler a tela)

@@ -17,6 +17,8 @@
 | N22 | Tesseract reconhecido no build com a correção | ✅ "Tudo pronto"; cartão "Instalado", sem administrador |
 | OCR | Vídeo B com "Ler texto da tela" | ✅ O app baixou sozinho o português do Tesseract (~2 MB, N6); 4 capturas lidas, 2 trechos de tela no `.md`, imagens no pacote; 6,4x. **N21 se repete:** do diagrama de 7 caixas, o OCR leu só "GRAVAÇÃO" (mesmo resultado do Sandbox) |
 | N19 | Trocar a pasta de saída | ✅ A pasta foi relida sozinha |
+| C1/K3 | "Verificar de novo" e troca para Rápido logo em seguida | ✅ O cartão terminou em "Rápido: small" com "Baixar small (~0,5 GB)"; a barra lateral acompanhou ("Falta preparar o PC") |
+| X6/órfãos | Apagar 47 cópias de vídeos da pasta e ler de novo | ✅ "47 removidos (→ _orfaos)" |
 | K1 | Ler pasta com 55 vídeos e olhar o botão | ✅ Durante "Lendo a pasta e medindo as durações...", **Transcrever 55** e **Ler pasta** ficaram cinza (desabilitados) |
 
 | Vídeo | Duração | Fala | Velocidade | Threads |

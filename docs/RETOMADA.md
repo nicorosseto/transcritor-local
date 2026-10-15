@@ -6,7 +6,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 ## 1. Estado atual (15/10/2026)
 
-**Resumo:** a v0.1.14 tem todos os bloqueios das duas auditorias de pré-publicação corrigidos e testados aqui. **Falta só o teste do responsável no Windows (seção 1.1) e a decisão de publicar.** O repositório continua privado.
+**Resumo:** a v0.1.14 tem todos os bloqueios das duas auditorias corrigidos e **passou no roteiro de testes do responsável** numa máquina corporativa sem administrador (15/10/2026, [registro](testes/2026-10-15-maquina-corporativa.md)), com o N22 corrigido no caminho. **Próximo passo: publicar** (repositório público + tag `v0.1.14`).
 
 | Frente | Situação |
 |---|---|

@@ -18,7 +18,7 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 > - 112 testes automatizados a cada mudança, no Linux e no Windows (Python 3.11 e 3.13); no Windows, os 4 testes de OCR são pulados porque o CI não tem o Tesseract. O `.exe` é gerado e conferido no GitHub Actions.
 > - Duas auditorias independentes antes da publicação (Codex e uma sessão nova do Claude), com os bloqueios corrigidos ([status](docs/auditorias/STATUS.md)).
 > - 5 rodadas de uso real num PC com Windows, só CPU (vídeo de 36 min, fala a ~1,7x, texto de tela, cancelar e retomar).
-> - Primeiro uso numa [máquina limpa](docs/testes/2026-10-14-sandbox-maquina-limpa.md) (Windows Sandbox, sem nada instalado).
+> - Primeiro uso numa [máquina limpa](docs/testes/2026-10-14-sandbox-maquina-limpa.md) (Windows Sandbox, sem nada instalado) e numa [máquina corporativa sem administrador](docs/testes/2026-10-15-maquina-corporativa.md) (fala a 4,6x a 6,4x num i7 de 13ª geração).
 > - [Teste cego com três IAs](docs/testes/2026-10-14-ia-cega.md) sem nenhum contexto: entenderam os arquivos e nenhuma inventou conteúdo.
 >
 > O `.exe` ainda **não é assinado**, então o Chrome e o Windows SmartScreen podem avisar. Veja as [limitações conhecidas](#limitações-conhecidas) e o [Roadmap](docs/ROADMAP.md).
