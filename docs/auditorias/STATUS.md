@@ -10,6 +10,7 @@ Este é o **único arquivo que muda** depois de cada rodada. As pastas datadas s
 | [2026-10-11 · fase 2](2026-10-11-fase2/) | Claude | Idem, depois da fase 2 |
 | [2026-10-14](2026-10-14/README.md) | Codex (independente) | Pré-publicação da v0.1.13: B1 a B3 (bloqueios), C1 a C6 |
 | [2026-10-14 · Claude](2026-10-14-claude/README.md) | Claude (sessão nova, independente) | Pré-publicação da v0.1.13: K1 a K20 |
+| [2026-10-15 · rechecagem Codex](2026-10-15-rechecagem-codex/README.md) | Codex | Os 5 bloqueios resolvidos; ressalva: inspecionar o ZIP do Windows do Release antes de publicar |
 | [2026-10-15 · rechecagem Claude](2026-10-15-rechecagem-claude/README.md) | Claude (sessão nova) | Os 5 bloqueios resolvidos (B2 e B3 com ressalvas de texto, ajustadas); R1: apagar os artefatos antigos do Actions antes de abrir o repositório |
 
 Status: ✅ corrigido · ⏳ pendente · 🔎 em medição. Severidade da contra-auditoria.
