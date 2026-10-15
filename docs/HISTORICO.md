@@ -189,3 +189,7 @@ Antes de publicar, o app rodou num Windows Sandbox (Windows vazio, 4 GB de RAM, 
 | N18 | Trocar a qualidade confere de novo o modelo; antes baixava o modelo da qualidade anterior (1,6 GB à toa) |
 | N19 | Escolher a saída relê a pasta, em vez de apagar a lista |
 | N20 | O Sandbox não deixa recriar um arquivo com o nome de um recém-renomeado (`registro.tmp`), e isso derrubava a rodada. Confirmado com `New-Item` no PowerShell, fora do app. Temporários passaram a ter nome único, gravações tentam de novo e falha ao salvar o registro não para mais a rodada |
+
+## Antes da publicação (14/10/2026): teste cego com IAs
+
+Repetido o teste em máquina limpa com a v0.1.13: ponta a ponta sem erro. Em seguida, três IAs sem nenhum contexto (Haiku, Sonnet e Opus 5.5) leram os arquivos gerados. Nenhuma inventou conteúdo; com o Pacote para IA, abriram as capturas por conta própria. O Opus notou que o OCR perdeu o texto de um diagrama colorido que estava legível na imagem (N21, no roadmap). Registro em [testes/2026-10-14-ia-cega.md](testes/2026-10-14-ia-cega.md).

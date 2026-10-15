@@ -51,6 +51,14 @@ Também: o painel "Última rodada" dizia "Falhou · 0 com erro"; agora diz "paro
 
 **Fica em aberto:** a pasta sugerida (`<vídeos>_transcricoes`) ainda é criada quando se escolhe a origem antes da saída. Inofensiva, mas não pedida.
 
-## Próximo passo
+## Repetição com a v0.1.13 (Sandbox novo, 14/10/2026)
 
-Baixar o build da v0.1.13 e repetir o roteiro num Sandbox novo (o Sandbox apaga tudo ao fechar): escolher Rápido antes de baixar o modelo, origem e saída, rodada com os dois vídeos e OCR, e um segundo "Ler pasta" no fim.
+| Item | Resultado |
+|---|---|
+| N18: escolher Rápido antes de baixar | ✅ Baixou só o modelo small |
+| N19: origem e depois saída | ✅ A pasta foi relida sozinha nas duas escolhas (log: "Pasta lida" às 21:18:16 e 21:18:26) |
+| N20: rodada com 2 vídeos sem OCR | ✅ Os dois concluídos (4,3x e 3,5x); registro salvo a cada vídeo, sem erro |
+| N20: rodada com 2 vídeos com OCR, refazendo os concluídos | ✅ Concluída; capturas e texto de tela no `.md` |
+| Pacote para IA | ✅ Gerado; usado no [teste cego com IAs](2026-10-14-ia-cega.md) |
+
+Conclusão: o primeiro uso numa máquina limpa funciona de ponta a ponta. Ficam como limitações conhecidas o Tesseract instalado à parte e a pasta de saída sugerida criada antes da escolha da saída.

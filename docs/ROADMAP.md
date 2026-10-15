@@ -36,7 +36,9 @@
 - [x] N15 (v0.1.11): previsão e % da rodada contam o texto de tela
 - [x] N16 (v0.1.12): janela que cabe na tela com escala 125%/150%
 - [x] N17 a N20 (v0.1.13): achados do teste em máquina limpa ([registro](testes/2026-10-14-sandbox-maquina-limpa.md))
-- [ ] Repetir o teste em máquina limpa com a v0.1.13 (último passo antes de publicar)
+- [x] Repetir o teste em máquina limpa com a v0.1.13 ([registro](testes/2026-10-14-sandbox-maquina-limpa.md)) e teste cego com 3 IAs ([registro](testes/2026-10-14-ia-cega.md))
+- [ ] Publicação beta: repositório público + Release v0.1.13 como pre-release, com SHA-256 e aviso do SmartScreen (depois da auditoria do Codex)
+- [ ] N21: OCR em texto sobre fundo colorido (caixas de diagrama): preparar a captura antes do OCR (contraste, inversão por bloco) e medir com capturas reais
 - [ ] Embutir o Tesseract e o português no zip, como o FFmpeg (o usuário não instala nada para ler a tela)
 - [ ] Não criar a pasta de saída sugerida antes de o usuário confirmar a saída
 - [ ] Conferir no Windows real (v0.1.12): botão único, confirmação centralizada e previsão depois do 1º vídeo longo
@@ -52,7 +54,8 @@ Pedidos pelo responsável em 14/10/2026, a fazer **depois** da 4ª rodada no Win
 - Calibração dos limiares de captura (P3) (o progresso do download, P4, já entrou na v0.1.1)
 
 ## v0.3: acabamento e publicação
-- Repositório público + Release assinada (P7)
+- Release assinada (P7); o repositório fica público já na v0.1.13, como beta sem assinatura
+- Dependências fixadas por versão e hash, incluindo FFmpeg, idiomas do Tesseract e modelo (X14)
 - Testes de GUI no CI (P13)
 - Modo "deixar o PC usável" (P11)
 - Ícone e instalador (Inno Setup)

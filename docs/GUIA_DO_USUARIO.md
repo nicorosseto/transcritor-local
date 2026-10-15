@@ -107,7 +107,7 @@ Qualquer IA entende o `.md`: ele é texto puro e traz, no topo, o cabeçalho **"
 | Situação | O que subir |
 |---|---|
 | **1 vídeo, numa conversa** | O `.md` de `transcricoes_md\`. É o arquivo principal |
-| **Quer que a IA veja os slides** | Clique em **Pacote para IA** (página Resultados) e anexe o `.md` da pasta gerada junto com as imagens de `imagens\`, ou o `.zip` quando a ferramenta aceitar. **Algumas IAs não abrem `.zip`** e, sem o conteúdo, podem inventar o resumo (aconteceu num teste): se a sua não abrir, anexe o `.md` e as imagens soltos |
+| **Quer que a IA veja os slides** | Clique em **Pacote para IA** (página Resultados) e anexe **a pasta inteira**: o `.md` junto com as imagens de `imagens\`, ou o `.zip` quando a ferramenta aceitar. No teste cego com três IAs, foram as imagens que mostraram diagramas que o OCR não leu por completo. **Algumas IAs não abrem `.zip`** e, sem o conteúdo, podem inventar o resumo (aconteceu num teste): se a sua não abrir, anexe o `.md` e as imagens soltos |
 | **Poucos vídeos** | Os `.md` individuais |
 | **Muitos vídeos, ferramenta que indexa fontes** (NotebookLM, Projetos do Claude, GPTs personalizados) | Os arquivos de `base_consolidada\` (já divididos por tamanho). No NotebookLM, os `.md` individuais deixam as respostas citarem o vídeo exato |
 

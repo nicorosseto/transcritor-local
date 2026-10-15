@@ -33,7 +33,9 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 **Máquina limpa (v0.1.12, Windows Sandbox):** primeiro uso do zero funcionou até a transcrição, mas achou N17 a N20; o N20 parava a rodada ([registro](testes/2026-10-14-sandbox-maquina-limpa.md)).
 
-**Próximo passo: repetir o teste em máquina limpa com a v0.1.13** (Sandbox novo, Rápido antes de baixar o modelo, origem e depois saída, 2 vídeos com OCR, "Ler pasta" de novo no fim). Passando, publicar: repositório público, Release pre-release com SHA-256 e aviso do SmartScreen. Para o histórico, a tabela abaixo é o roteiro da 5ª rodada:
+**Máquina limpa, repetição (v0.1.13):** ponta a ponta sem erro, com e sem OCR. **Teste cego com 3 IAs** (Haiku, Sonnet e Opus 5.5, sem contexto): nenhuma inventou conteúdo; o OCR perdeu o texto de um diagrama colorido (N21) ([registro](testes/2026-10-14-ia-cega.md)).
+
+**Próximo passo: auditoria do Codex sobre as mudanças de 14/10 ([pedido](auditorias/PEDIDO_2026-10-14.md)); sem achado que bloqueie, publicar** a v0.1.13 como beta: repositório público e Release marcado como pre-release, com o texto de [release/v0.1.13.md](release/v0.1.13.md). Para o histórico, a tabela abaixo é o roteiro da 5ª rodada:
 
 | O que | Esperado |
 |---|---|

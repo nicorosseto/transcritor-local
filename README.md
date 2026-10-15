@@ -14,7 +14,13 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 
 </details>
 
-> **Status:** v0.1 (beta). 87 testes automatizados passam em Windows e Linux (Python 3.11 e 3.13), o `.exe` é gerado e testado no GitHub Actions e o app passou por 5 rodadas de teste real num PC com Windows e por um teste em máquina limpa (Windows Sandbox) (vídeo de 36 min: fala a ~1,7x, texto de tela por OCR, cancelar e retomar). O `.exe` ainda **não é assinado**: o Chrome e o Windows SmartScreen podem avisar; confira o SHA-256 em `SHA256.txt`. Veja o [Roadmap](docs/ROADMAP.md) e os [registros dos testes](docs/testes/).
+> **Status: v0.1.13, beta.** Como foi testado:
+> - 87 testes automatizados a cada mudança, em Windows e Linux (Python 3.11 e 3.13); o `.exe` é gerado no GitHub Actions.
+> - 5 rodadas de uso real num PC com Windows, só CPU (vídeo de 36 min, fala a ~1,7x, texto de tela, cancelar e retomar).
+> - Primeiro uso numa [máquina limpa](docs/testes/2026-10-14-sandbox-maquina-limpa.md) (Windows Sandbox, sem nada instalado).
+> - [Teste cego com três IAs](docs/testes/2026-10-14-ia-cega.md) sem nenhum contexto: entenderam os arquivos e nenhuma inventou conteúdo.
+>
+> O `.exe` ainda **não é assinado**, então o Chrome e o Windows SmartScreen podem avisar. Veja as [limitações conhecidas](#limitações-conhecidas) e o [Roadmap](docs/ROADMAP.md).
 
 ---
 
@@ -67,11 +73,12 @@ Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/
 
 ### Opção A: executável para Windows (recomendado para usuários comuns)
 
-1. Baixe o `.zip` mais recente em **Releases** (versões estáveis) ou, para a versão de teste, em **Actions → Build Windows (.exe) → execução mais recente → Artifacts → TranscritorLocal-windows** (role até o fim da página)
-2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`). É um zip só; dentro há um único programa e o arquivo `COMO_ABRIR.txt`
-3. Abra `TranscritorLocal.exe`. Na primeira vez, a página **Preparação do PC** baixa o modelo de transcrição (~1,6 GB, uma única vez)
+1. Baixe o `.zip` da versão mais recente em **Releases**
+2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`). Dentro há um único programa, o `COMO_ABRIR.txt` e a pasta `licencas`
+3. Abra `TranscritorLocal.exe`. Na primeira vez, a página **Preparação do PC** confere o PC e baixa o modelo de transcrição uma única vez: ~0,5 GB na qualidade **Rápido**, ~1,6 GB na **Equilibrado** e na **Preciso**
+4. Para ler o texto da tela, instale o Tesseract pelo botão da mesma página
 
-Python e FFmpeg já vêm embutidos. Na primeira abertura, o Windows pode exibir *"O Windows protegeu o computador"*, porque o app ainda não tem assinatura digital: clique em **Mais informações → Executar assim mesmo**.
+Python e FFmpeg já vêm embutidos. Como o app ainda não tem assinatura digital, o Chrome pode chamar o arquivo de perigoso (em `chrome://downloads`, escolha **Manter**) e o Windows pode exibir *"O Windows protegeu o computador"* (clique em **Mais informações → Executar assim mesmo**). Para conferir o arquivo, compare `Get-FileHash .\TranscritorLocal.exe` com o SHA-256 publicado na página do Release.
 
 ### Opção B: pelo código-fonte (Python 3.10+)
 
@@ -109,20 +116,34 @@ Exemplo de trecho gerado (conteúdo fictício):
 > Total Vendas = SUM(Vendas[Valor])
 ```
 
+## Usando com uma IA
+
+| Situação | O que anexar |
+|---|---|
+| Quer que a IA entenda a fala | O `.md` do vídeo (pasta `transcricoes_md`) |
+| Quer que a IA veja também slides, diagramas e telas | A pasta do **Pacote para IA** inteira: o `.md` e a pasta `imagens`, ou o `.zip` se a ferramenta abrir `.zip` |
+| Muitos vídeos de um mesmo módulo | O arquivo da `base_consolidada` |
+
+Todo `.md` começa com um bloco "Como ler este arquivo", que explica a fala, o texto de tela e as capturas, e pede à IA que avise quando não conseguir ler algo em vez de inventar. No [teste cego](docs/testes/2026-10-14-ia-cega.md), três IAs sem contexto entenderam as aulas, abriram as imagens por conta própria e não inventaram nada.
+
 ## Desempenho de referência
 
-| PC | Qualidade | Velocidade medida |
-|---|---|---|
-| Xeon E5-2620 v3 (6C/12T, 2014), 16 GB, só CPU | Preciso (`large-v3-turbo`, beam 5) | **1,48x** (36:43 de vídeo em 24:49) |
+| PC | Qualidade | Vídeo | Velocidade medida |
+|---|---|---|---|
+| Xeon E5-2620 v3 (6C/12T, 2014), 16 GB, só CPU | Preciso (`large-v3-turbo`, beam 5) | 36:43 | **1,48x** (24:49) |
+| O mesmo PC | Equilibrado (`large-v3-turbo`, beam 1) | 36:43 | **~1,7x** na fala; o texto de tela soma ~0,6 s por troca de tela |
+| Windows Sandbox no mesmo PC, 4 GB de RAM | Rápido (`small`) | 2:48 | **4,3x** |
 
-"1,48x" = 1,48 minuto de vídeo transcrito por minuto real. Placas **NVIDIA** aceleram 5x ou mais; placas AMD/Intel não são usadas pelo motor atual (ver [ADR-001](docs/DECISOES.md)).
+"1,7x" = 1,7 minuto de vídeo transcrito por minuto real. Placas **NVIDIA** aceleram 5x ou mais; placas AMD/Intel não são usadas pelo motor atual (ver [ADR-001](docs/DECISOES.md)).
 
 ## Limitações conhecidas
 
-- Transcrição é **automática**: revise nomes próprios e termos técnicos
+- Transcrição é **automática**: revise nomes próprios e termos técnicos. A qualidade **Rápido** erra mais; use a **Equilibrado** sempre que o PC tiver memória
 - Não identifica **quem** fala (sem diarização)
-- O OCR lê **texto**, mas não entende **ações** ("clicou em tal botão") nem gráficos. A descrição por IA visual local está prevista para a [v0.2](docs/ROADMAP.md)
-- A lista completa, com status de cada item, está na [Auditoria](docs/AUDITORIA.md)
+- O OCR lê **texto**, mas não entende **ações** ("clicou em tal botão") nem gráficos. Texto sobre **fundo colorido** (caixas de diagrama) pode sair incompleto: por isso, anexe à IA o pacote com as imagens. A descrição por IA visual local está prevista para a [v0.2](docs/ROADMAP.md)
+- O Tesseract (texto da tela) é instalado à parte; embuti-lo no app está no roadmap
+- O `.exe` não tem assinatura digital e as dependências ainda não são fixadas por hash
+- A lista completa, com status de cada item, está na [Auditoria](docs/AUDITORIA.md) e no [status das auditorias](docs/auditorias/STATUS.md)
 
 ## Privacidade e direitos autorais
 
@@ -140,6 +161,7 @@ Exemplo de trecho gerado (conteúdo fictício):
 | [Auditoria](docs/AUDITORIA.md) | Lacunas encontradas, corrigidas e pendentes |
 | [Auditoria independente — Codex (08/10/2026)](docs/auditorias/2026-10-08/README.md) | Achados técnicos, evidências, revisão de interface e proposta de layout |
 | [Status das auditorias](docs/auditorias/STATUS.md) | O que foi corrigido, em qual teste, e o que falta |
+| [Registros dos testes](docs/testes/) | Rodadas reais no Windows, máquina limpa e teste cego com IAs |
 | [Retomada](docs/RETOMADA.md) | Onde o projeto parou e qual é o próximo passo |
 | [Roadmap](docs/ROADMAP.md) | Próximas versões |
 | [Licenças de terceiros](docs/LICENCAS_TERCEIROS.md) | FFmpeg, Whisper, Tesseract e bibliotecas |
