@@ -3,6 +3,10 @@
 **Para:** os mesmos auditores das rodadas de 14/10 ([Codex](2026-10-14/README.md) e [Claude](2026-10-14-claude/README.md)).
 **Objetivo:** confirmar se os bloqueios foram resolvidos na v0.1.14 e se a correção não abriu um problema novo. **Não** é uma auditoria completa de novo.
 
+**Escopo:** `git log --reverse 84c6ab1..HEAD` (tudo depois do commit auditado em 14/10). Inclui também a correção N22 (Tesseract instalado sem administrador, `transcritor/util.py` e `transcritor/ocr.py`) e o registro do teste do responsável numa máquina corporativa ([docs/testes/2026-10-15-maquina-corporativa.md](../testes/2026-10-15-maquina-corporativa.md)), que já conferiu no Windows real: FFmpeg baixado pelo app, transcrição sem o PyAV, OCR, K1, C1/K3 e N22.
+
+**Também, antes de o repositório ficar público:** confira se algum arquivo ou commit tem dado pessoal, nome de curso, nome real de vídeo de aula ou caminho da máquina do autor.
+
 ## O que conferir
 
 | Achado | Onde está a correção | Como conferir |
@@ -19,7 +23,7 @@ Os demais achados corrigidos e os que ficaram para a v0.2 estão em [STATUS.md](
 
 ```
 python -m pip install -r requirements.txt pytest pyflakes
-python -m pytest -q                       # 112 testes
+python -m pytest -q                       # 113 testes
 python -m pyflakes transcritor tests
 ```
 
