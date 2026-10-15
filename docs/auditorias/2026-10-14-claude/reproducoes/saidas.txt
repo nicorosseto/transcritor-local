@@ -1,0 +1,106 @@
+Saídas das reproduções, 15/10/2026, commit 84c6ab1 (main), Linux, Python 3.12.3, Tesseract 5.3.4, FFmpeg 6.1.1.
+Linhas de ruído do Tk ('invalid command name ... after script'), que aparecem ao destruir a janela, foram omitidas.
+Caminhos temporários e PIDs mudam a cada execução.
+
+$ xvfb-run ... python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k01_ler_pasta_e_transcrever.py 
+1a leitura: [('a.mp4', 'pendente'), ('b.mp4', 'pendente')]
+durante a leitura: _lendo = True | botão Transcrever: normal | Transcrever 2 ≈ menos de 1 min
+  diálogo: Confirmar rodada | leitura ainda rodando? False
+projeto trocado durante a confirmação: True
+status final: ✓  Pronto! 2 vídeos transcritos · 8 palavras
+.md gravados: ['a.md', 'b.md']
+registro.csv: [('a.mp4', 'pendente'), ('b.mp4', 'pendente'), ('c.mp4', 'pendente')]
+tabela: {'a.mp4': '○ Pendente', 'b.mp4': '○ Pendente', 'c.mp4': '○ Pendente'}
+base consolidada tem a fala? False
+
+$ xvfb-run ... python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k01_ler_pasta_e_transcrever.py --na-hora
+1a leitura: [('a.mp4', 'pendente'), ('b.mp4', 'pendente')]
+durante a leitura: _lendo = True | botão Transcrever: normal | Transcrever 2 ≈ menos de 1 min
+  diálogo: Confirmar rodada | leitura ainda rodando? True
+projeto trocado durante a confirmação: False
+  diálogo: Não foi possível começar -> Entendi
+status final: ✕  A rodada parou por um erro: Esta pasta de saída já está sendo usada (outra janela do Transcritor ou uma leitura/rodada em andamento). Aguarde terminar, feche a outra janela ou escolha outra pasta de saída..
+.md gravados: []
+registro.csv: [('a.mp4', 'pendente'), ('b.mp4', 'pendente'), ('c.mp4', 'pendente')]
+tabela: {'a.mp4': '○ Pendente', 'b.mp4': '○ Pendente', 'c.mp4': '○ Pendente'}
+base consolidada tem a fala? False
+
+$ xvfb-run ... python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k03_qualidade_durante_verificacao.py
+A: pedidos de verificação: ['equilibrado', 'rapido']
+A: situacao: None | lateral: 'Verificando o PC...'
+B: pedidos de verificação: ['equilibrado']
+B: situacao: None | lateral: 'Verificando o PC...'
+B: painel.preset = equilibrado | qualidade na tela = rapido
+B: depois de 'Verificar de novo': pedidos: ['equilibrado', 'equilibrado'] | situacao: None
+B: cartão do modelo no painel: ['Modelo de transcrição (Equilibrado: large-v3-turbo)', 'Modelo de transcrição (Equilibrado: large-v3-turbo)']
+
+$ xvfb-run ... python3.12 docs/auditorias/2026-10-14-claude/reproducoes/controle_saida_trocada_na_leitura.py
+logo após trocar: projeto = None | _lendo = True
+final: projeto.saida = saidaB | campo = saidaB | itens: 3
+saidaA criada e gravada mesmo assim: ['base_consolidada', 'projeto.json', 'registro.csv']
+
+$ xvfb-run ... python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k16_fechar_na_leitura.py
+lendo: True | trava no disco: True
+depois que o app saiu: trava = '16873 0eb7b31f81e24184af703648b5bf570a'
+trava com PID 17016 vivo (outro programa) -> PastaEmUso
+
+$ python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k04_ocr.py
+tesseract: tesseract 5.3.4
+verificar(): True True None por+eng
+[sistema | larga.jpg] TSV ok, 7 linhas brutas
+   bruto : ['ao Power Bl', '1.0 DAX?', '2. Medidas e colunas', 'SQL, APle ETL', 'R$ 1.500 por', 'Dia 3:0 que KIA', 'CALCULATE(SUM(Vendas[Valor]))']
+   limpo : []
+[sistema | estreita.jpg] TSV ok, 7 linhas brutas
+   bruto : ['IntrodukXo ao Power BI', '1.0 queR DAX?', '2. Medidas e colunas', 'SQL, APle ETL', 'R$ 1.500 por', 'Dia 3:0 queKIA', 'CALCULATE(SUM(Vendas[Valor]))']
+   limpo : ['IntrodukXo ao Power BI', '2. Medidas e colunas', 'Dia 3:0 queKIA', 'CALCULATE(SUM(Vendas[Valor]))']
+[pasta do app | larga.jpg] TSV ok, 7 linhas brutas
+   bruto : ['ao Power Bl', '1.0 DAX?', '2. Medidas e colunas', 'SQL, APle ETL', 'R$ 1.500 por', 'Dia 3:0 que KIA', 'CALCULATE(SUM(Vendas[Valor]))']
+   limpo : []
+[pasta do app | estreita.jpg] TSV ok, 7 linhas brutas
+   bruto : ['IntrodukXo ao Power BI', '1.0 queR DAX?', '2. Medidas e colunas', 'SQL, APle ETL', 'R$ 1.500 por', 'Dia 3:0 queKIA', 'CALCULATE(SUM(Vendas[Valor]))']
+   limpo : ['IntrodukXo ao Power BI', '2. Medidas e colunas', 'Dia 3:0 queKIA', 'CALCULATE(SUM(Vendas[Valor]))']
+config 'tsv' antiga na pasta do app -> começa com 'level'? False | stderr: read_params_file: Can't open tsv
+read_params_file: Can't open tsv
+Estimating res
+pasta do app sem eng: leu 7 linhas (sem erro)
+
+Filtro linha a linha (linha_legivel):
+   True   Introdução ao Power BI
+   False  1. O que é DAX?
+   True   2. Medidas e colunas
+   False  SQL, API e ETL
+   False  R$ 1.500 por mês
+   False  Dia 3: o que é IA
+   True   CALCULATE(SUM(Vendas[Valor]))
+   False  Es Ou ou mu ou
+   False  voe 8
+bloco inteiro do slide -> ['Introdução ao Power BI', '2. Medidas e colunas', 'CALCULATE(SUM(Vendas[Valor]))']
+bloco 'Agenda' -> 'Agenda\n3. Dúvidas' | e_util: False
+
+$ python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k05_k10_k17_pacote.py
+(a) ocr.limpar mantém a linha do slide? True | e_util: True
+(a1) zip: ['imagens/', 'aula.md', 'imagens/segredo.txt'] | conteúdo copiado: ['', 'CONFIDENCIAL']
+(a2) zip: ['imagens/', 'aula2.md', 'imagens/segredo.txt']
+(b) mesmo destino: True Mod 1 - aula | conteúdo final: OUTRO VÍDEO
+(c) 'Módulo 01/Aula (1) – introdução': link='../../capturas/Módulo%2001/Aula%20%281%29%20–%20introdução/cap_000010.jpg' -> caminho que um leitor de Markdown abre='../../capturas/Módulo%2001/Aula%20%281%29%20–%20introdução/cap_000010.jpg' fragmento='' | existe: True
+(c) 'Aula #3': link='../capturas/Aula%20#3/cap_000010.jpg' -> caminho que um leitor de Markdown abre='../capturas/Aula%20' fragmento='3/cap_000010.jpg' | existe: False
+
+$ python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k06_estimativa.py
+na mesma sessão : velocidade 1.111 | OCR s/h 720.0
+depois de reabrir: velocidade 1.0 | OCR s/h None | ordem: ['z0.mp4', 'z1.mp4', 'z2.mp4', 'z3.mp4', 'z4.mp4']
+20 vídeos de 2min50 já feitos a 1,7x -> estimativa usa 1.2 medida = False
+bordas: 6578 chamadas sem exceção
+
+$ python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k11_correcoes_ansi.py
+resumo: {'ok': 0, 'erro': 0, 'fatal': "UnicodeDecodeError: 'utf-8' codec can't decode byte 0xea in position 36: invalid continuation byte"}
+
+$ python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k13_k14_sobras.py
+(a) sobras após erro não-OSError: ['x.csv.e78525ff.tmp']
+(a') leitura falhou: UnicodeEncodeError | sobras: ['registro.csv.8ed0f775.tmp'] | trava: False
+(b) baixar_portugues falhou: rede caiu | sobras: ['por.traineddata.f868a22f.parcial']
+(c) capturas de 30 min de tela parada, sem cancelar: 1.4 s
+(c) cancelado aos 0,5 s; extrair_capturas só devolveu aos 0.6 s
+(c) sobras após cancelar no meio: 0 tmp_*.jpg
+
+$ python3.12 docs/auditorias/2026-10-14-claude/reproducoes/k15_morte_no_meio.py
+após matar o app: [('aula.mp3.8dd2ae9a.parcial.mp3', 2097152)]
