@@ -1,0 +1,69 @@
+{
+  "pacote_fora": {
+    "arquivos": [
+      "imagens/",
+      "aula.md",
+      "imagens/fora.txt",
+      "imagens/área com espaço.png"
+    ],
+    "conteudo_externo_incluido": true,
+    "link_interno_resolve": true
+  },
+  "pacote_symlink_fora": true,
+  "pacote_colisao_nomes": {
+    "mesma_pasta": true,
+    "primeiro_conteudo_preservado": false
+  },
+  "consolidacao_falha_publicacao": {
+    "base_anterior_existe": false,
+    "sobra_tmp": 1
+  },
+  "download_ocr_interrompido": {
+    "parciais_restantes": 1
+  },
+  "audio_falha_rename": {
+    "parciais_restantes": 1
+  },
+  "filtro_texto_tecnico": {
+    "entrada": "DAX\nSQL\nAPI\nCPU\nGPU\nETL\nGRAVAÇÃO",
+    "saida": "",
+    "rotulo_curto": "SQL API CPU GPU -> False"
+  },
+  "estimativas_limites": {
+    "vazio": 0.0,
+    "vel_zero": 35.0,
+    "ocr_zero": 5.0
+  },
+  "previsao_fala_mais_ocr": {
+    "video_duracao": 3600,
+    "fala_pos": 1800,
+    "velocidade": 1.0,
+    "ocr_total_esperado": 600,
+    "previsao_emitida": 2100.0,
+    "previsao_fala_restante_mais_ocr_inteiro": 2400
+  },
+  "interface_verificacao_atrasada": {
+    "qualidade_atual": "Preciso",
+    "modelo_na_situacao": "large-v3-turbo",
+    "cartoes_exibidos": [
+      "Modelo de transcrição (Preciso: small)",
+      "Modelo de transcrição (Preciso: small)",
+      "Baixar small (~0,5 GB)",
+      "Baixar small (~0,5 GB)"
+    ]
+  },
+  "referencia": {
+    "main": "84c6ab1db3f7f10fb8d007f01b949ff80a16df5c",
+    "versao": "0.1.13",
+    "pytest": {
+      "passed": 87,
+      "failed": 0,
+      "skipped": 0
+    },
+    "pyflakes_exit": 0,
+    "fumacas_exit_zero": 7,
+    "commits_main_com_email_pessoal": 0,
+    "commits_main_identidade_generica_claude": 11,
+    "commits_main_noreply_proprietario": 25
+  }
+}
