@@ -2,8 +2,15 @@ name: Build Windows (.exe)
 
 # Roda: manualmente (aba Actions → "Run workflow"), a cada push na main que mexa no app
 # (o .zip fica em Actions → execução → Artifacts) e ao criar uma tag v* (vira Release).
+# Release pelo site: "Run workflow" com a versão (ex.: v0.1.14) cria o rascunho de pre-release;
+# a tag nasce quando o rascunho é publicado.
 on:
   workflow_dispatch:
+    inputs:
+      versao:
+        description: "Para criar o rascunho do Release, a versão com v (ex.: v0.1.14). Vazio = só gerar o executável de teste."
+        required: false
+        default: ""
   push:
     branches: [main]
     paths:
@@ -15,6 +22,9 @@ on:
 
 permissions:
   contents: write   # necessário para anexar o .zip ao Release
+
+env:
+  VERSAO: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.versao }}
 
 jobs:
   build:
@@ -78,25 +88,35 @@ jobs:
           name: TranscritorLocal-windows
           path: dist/TranscritorLocal/
 
-      - name: Compactar para o Release (só em tags)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Conferir a versão do Release
+        if: env.VERSAO != ''
         shell: pwsh
         run: |
-          $zip = "TranscritorLocal-${{ github.ref_name }}-windows.zip"
+          $v = (python -c "import transcritor; print(transcritor.__version__)").Trim()
+          if ("v$v" -ne $env:VERSAO) { throw "A versão pedida ($env:VERSAO) não é a do código (v$v)." }
+
+      - name: Compactar para o Release
+        if: env.VERSAO != ''
+        shell: pwsh
+        run: |
+          $zip = "TranscritorLocal-$env:VERSAO-windows.zip"
           Compress-Archive dist/TranscritorLocal $zip
           $hexe = (Get-FileHash dist/TranscritorLocal/TranscritorLocal.exe -Algorithm SHA256).Hash.ToLower()
           $hzip = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          $notas = "docs/release/${{ github.ref_name }}.md"
-          $corpo = if (Test-Path $notas) { Get-Content $notas -Raw -Encoding utf8 } else { "# Transcritor Local ${{ github.ref_name }}`n" }
+          $notas = "docs/release/$env:VERSAO.md"
+          $corpo = if (Test-Path $notas) { Get-Content $notas -Raw -Encoding utf8 } else { "# Transcritor Local $env:VERSAO`n" }
           $corpo = $corpo.Replace("TranscritorLocal-windows.zip", $zip).Replace("<preenchido na publicação>", $hexe)
           $corpo += "`n`n## SHA-256`n`n| Arquivo | SHA-256 |`n|---|---|`n| ``$zip`` | ``$hzip`` |`n| ``TranscritorLocal.exe`` | ``$hexe`` |`n"
           Set-Content release_corpo.md $corpo -Encoding utf8
 
       # Rascunho de pre-release: o autor confere a página e publica à mão (achados B3/K7)
-      - name: Criar o Release (rascunho, pre-release; só em tags)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Criar o Release (rascunho, pre-release)
+        if: env.VERSAO != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.VERSAO }}
+          target_commitish: ${{ github.sha }}
+          name: Transcritor Local ${{ env.VERSAO }} (beta)
           draft: true
           prerelease: true
           body_path: release_corpo.md

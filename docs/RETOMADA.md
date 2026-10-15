@@ -6,7 +6,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 ## 1. Estado atual (15/10/2026)
 
-**Resumo:** a v0.1.14 tem todos os bloqueios das duas auditorias corrigidos e **passou no roteiro de testes do responsável** numa máquina corporativa sem administrador (15/10/2026, [registro](testes/2026-10-15-maquina-corporativa.md)), com o N22 corrigido no caminho. **Próximo passo: publicar** (repositório público + tag `v0.1.14`).
+**Resumo:** a v0.1.14 tem todos os bloqueios das duas auditorias corrigidos e **passou no roteiro de testes do responsável** numa máquina corporativa sem administrador (15/10/2026, [registro](testes/2026-10-15-maquina-corporativa.md)), com o N22 corrigido no caminho. **Próximo passo: publicar.** Repositório público desde 15/10/2026. Release: Actions → Build Windows (.exe) → **Run workflow** com `versao = v0.1.14` cria o rascunho de pre-release (a tag nasce ao publicar; o ambiente do Claude não consegue enviar tags).
 
 | Frente | Situação |
 |---|---|
