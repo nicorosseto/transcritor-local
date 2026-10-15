@@ -47,8 +47,9 @@ def autoteste() -> int:
         ff = preparacao.FFMPEG
         assert len(ff["sha256"]) == 64 and ff["versao"] in ff["url"], "versão fixa do FFmpeg incompleta"
         if getattr(sys, "frozen", False):
-            import av
-            assert getattr(av, "SUBSTITUTO_TRANSCRITOR", False), "o PyAV verdadeiro entrou no executável"
+            # confere os arquivos do pacote (o substituto em sys.modules não prova nada; rechecagem de 15/10)
+            pyav = [p.name for p in pasta_do_app().rglob("*") if p.is_dir() and p.name in ("av", "av.libs")]
+            assert not pyav, f"o PyAV verdadeiro entrou no executável: {pyav}"
             gpl = [p.name for p in pasta_do_app().rglob("*") if p.name.lower().startswith(("libx264", "libx265"))]
             assert not gpl, f"bibliotecas GPL no pacote: {gpl}"
             assert not (pasta_do_app() / "bin" / "ffmpeg.exe").exists(), "FFmpeg não deve vir no pacote"

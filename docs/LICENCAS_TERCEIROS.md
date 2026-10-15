@@ -1,6 +1,6 @@
 # Licenças de terceiros
 
-O Transcritor Local é MIT. Ele **usa** os componentes abaixo, cada um com a sua licença. Desde a v0.1.13, o `.zip` para Windows **não redistribui nenhum binário GPL** ([ADR-021](DECISOES.md)): o FFmpeg é baixado pelo próprio usuário, na primeira abertura, direto do distribuidor, e o PyAV fica fora do executável.
+O Transcritor Local é MIT. Ele **usa** os componentes abaixo, cada um com a sua licença. Desde a v0.1.14, o `.zip` para Windows **não redistribui nenhum binário GPL** ([ADR-021](DECISOES.md)): o FFmpeg é baixado pelo próprio usuário, na primeira abertura, direto do distribuidor, e o PyAV fica fora do executável.
 
 | Componente | Uso | Licença | Distribuído no .zip? |
 |---|---|---|---|

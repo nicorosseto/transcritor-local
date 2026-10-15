@@ -12,8 +12,8 @@ TRANSCRITOR LOCAL — COMO ABRIR
 
 3. Na primeira vez, o app abre a página "Preparação do PC". Nela, com um
    clique em cada botão, ele baixa uma única vez:
-   - o FFmpeg, programa que abre os vídeos (~115 MB, versão oficial,
-     conferida antes de usar);
+   - o FFmpeg, programa que abre os vídeos (~115 MB, direto do distribuidor
+     gyan.dev, conferido antes de usar);
    - o modelo de transcrição (~0,5 GB no modo Rápido, ~1,6 GB no
      Equilibrado e no Preciso).
    Depois disso, tudo funciona sem internet.

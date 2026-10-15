@@ -112,15 +112,16 @@ class PainelVerificacao(ctk.CTkFrame):
                      "Já vem dentro do app. Você NÃO precisa instalar Python.", VERDE)
         ff = preparacao.FFMPEG
         if s.ffmpeg_ok:
-            origem = ("Baixado pelo app (versão oficial " + ff["versao"] + ")." if s.ffmpeg_baixado
+            origem = ("Baixado pelo app (versão " + ff["versao"] + " do gyan.dev)." if s.ffmpeg_baixado
                       else "Já vem dentro do app." if s.ffmpeg_embutido else "Encontrado no seu PC.")
             self._cartao("✅", "FFmpeg (lê os vídeos)", origem, VERDE)
         elif preparacao.ffmpeg_baixavel():
             mb = round(ff["tamanho"] / 1e6)
             c = self._cartao("⬇️", "FFmpeg (lê os vídeos)",
                              f"Obrigatório. É o programa que abre os vídeos e tira o áudio e as capturas. O app "
-                             f"baixa a versão oficial {ff['versao']} uma única vez (~{mb} MB), direto do "
-                             "distribuidor, e confere o arquivo antes de usar. Licença GPL, à parte do app.",
+                             f"baixa a versão {ff['versao']} uma única vez (~{mb} MB), direto do "
+                             "distribuidor gyan.dev (indicado pelo site do FFmpeg), e confere o arquivo antes de usar. Licença GPL, "
+                             "à parte do app.",
                              LARANJA)
             self._acao_baixar(c, f"Baixar FFmpeg (~{mb} MB)",
                               lambda progresso, fim: self.app.baixar_ffmpeg(progresso, fim))

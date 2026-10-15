@@ -10,6 +10,7 @@ Este é o **único arquivo que muda** depois de cada rodada. As pastas datadas s
 | [2026-10-11 · fase 2](2026-10-11-fase2/) | Claude | Idem, depois da fase 2 |
 | [2026-10-14](2026-10-14/README.md) | Codex (independente) | Pré-publicação da v0.1.13: B1 a B3 (bloqueios), C1 a C6 |
 | [2026-10-14 · Claude](2026-10-14-claude/README.md) | Claude (sessão nova, independente) | Pré-publicação da v0.1.13: K1 a K20 |
+| [2026-10-15 · rechecagem Claude](2026-10-15-rechecagem-claude/README.md) | Claude (sessão nova) | Os 5 bloqueios resolvidos (B2 e B3 com ressalvas de texto, ajustadas); R1: apagar os artefatos antigos do Actions antes de abrir o repositório |
 
 Status: ✅ corrigido · ⏳ pendente · 🔎 em medição. Severidade da contra-auditoria.
 
@@ -117,6 +118,8 @@ As duas foram feitas em paralelo, sem uma ver a outra, sobre o commit `84c6ab1`.
 | K13, K14, C4 (parte) | 🟡/🟠 | ✅ v0.1.14 | Temporários limpos em qualquer erro, no download do português e na troca final do áudio |
 | K17 = C6 | 🟡/🟠 | ✅ v0.1.14 | Pacotes com o mesmo nome ganham sufixo em vez de um apagar o outro |
 | K18 | 🟡 | ✅ v0.1.14 | Cópia `registro_PENDENTE` aberta no Excel não vira falso "registro não salvo"; e esse aviso aparece em qualquer desfecho |
+| R1 (rechecagem) | 🔴 para abrir o repositório | ⏳ responsável | Artefatos do Actions dos builds 1 a 20 ainda trazem FFmpeg e PyAV GPL; apagar pelo site antes de tornar o repositório público |
+| Ressalvas da rechecagem | 🟡 | ✅ | Autoteste confere os arquivos do pacote (não o substituto em memória); "v0.1.14" e "113 testes" nos textos; "versão do gyan.dev" no lugar de "versão oficial"; o pedido de abrir a Preparação não se perde quando a verificação é refeita |
 | K20 | 🟡 | ✅ | Auditorias trazidas para a `main`; branches antigas a apagar pelo site antes de abrir o repositório |
 | C2 | 🟠 | ⏳ v0.2 | Previsão subestima o OCR do vídeo atual durante a fala |
 | C3 = K4 | 🟠 | ⏳ v0.2 | O filtro do N9 descarta siglas e linhas curtas ("SQL", "DAX"). Junto com o N21: no diagrama do teste cego, captura em cinza e ampliada 2x leu as 7 caixas (hoje lê 1), com OCR ~1,8x mais lento. Calibrar com vídeos reais |

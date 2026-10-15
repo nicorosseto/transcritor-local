@@ -610,12 +610,14 @@ class App(ctk.CTk):
         Cada pedido ganha um número; só o resultado do último pedido vale (achados N18, C1 e K3)."""
         preset, saida = self._preset(), self._pasta(self.ent_saida)
         self._verif_gen = getattr(self, "_verif_gen", 0) + 1
+        # o pedido de abrir a Preparação passa para o pedido seguinte (observação da rechecagem de 15/10)
+        self._abrir_pendente = getattr(self, "_abrir_pendente", False) or abrir_se_obrigatorio
         self._verif_modelo = PRESETS[preset]["modelo"]
         gen = self._verif_gen
 
         def tarefa():
             s = verificar(preset, saida)
-            self.fila.put(Evento("verificacao", {"situacao": s, "abrir": abrir_se_obrigatorio, "gen": gen}))
+            self.fila.put(Evento("verificacao", {"situacao": s, "abrir": False, "gen": gen}))
         threading.Thread(target=tarefa, daemon=True).start()
 
     def _aplicar_situacao(self, s: Situacao, abrir: bool, gen: int | None = None):
@@ -624,6 +626,8 @@ class App(ctk.CTk):
         if s.modelo != PRESETS[self._preset()]["modelo"]:
             self._rodar_verificacao()  # a qualidade mudou sem novo pedido: pede agora, nunca fica preso
             return
+        abrir = abrir or getattr(self, "_abrir_pendente", False)
+        self._abrir_pendente = False
         self.situacao = s
         n = s.total_pendencias
         if s.obrigatorios:

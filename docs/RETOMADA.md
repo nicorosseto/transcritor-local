@@ -10,7 +10,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 | Frente | Situação |
 |---|---|
-| Motor (transcrição, OCR, registro, base consolidada) | Estável. 112 testes automáticos (Linux e Windows, Python 3.11 e 3.13; no Windows, 4 de OCR pulados) e 13 fumaças de interface |
+| Motor (transcrição, OCR, registro, base consolidada) | Estável. 113 testes automáticos (Linux e Windows, Python 3.11 e 3.13; no Windows, 4 de OCR pulados) e 13 fumaças de interface |
 | Auditorias de 08/10 (X1 a X16) | 15 de 16 corrigidas; X14 parcial (FFmpeg fixado por hash; dependências Python na v0.2) |
 | Auditorias de pré-publicação de 14/10 (Codex B1-B3/C1-C6, Claude K1-K20) | **Bloqueios corrigidos na v0.1.14** (K1, B1/K5, B2/K2, B3/K7) e mais 9 correções menores. O resto está na lista da v0.2. Tabela em [auditorias/STATUS.md](auditorias/STATUS.md) |
 | Licenças | O `.zip` não leva binário GPL: FFmpeg baixado na primeira abertura com SHA-256 fixo; PyAV fora do executável ([ADR-021](DECISOES.md)) |
@@ -26,7 +26,7 @@ Estes testes são do responsável (combinado em 15/10/2026). O que mudou desde o
 |---|---|---|---|
 | 1 | GitHub | Apagar as 4 branches antigas (aba **Branches**) | Só `main` |
 | 2 | Windows Sandbox novo | Baixar o artefato `TranscritorLocal-windows` do build mais recente da v0.1.14, abrir o `.exe` | Título "Transcritor Local 0.1.14"; pasta sem `bin/`; `licencas/` com `BIBLIOTECAS.txt` |
-| 3 | Preparação do PC | Clicar em **Baixar FFmpeg** | Barra de progresso até ~115 MB, depois "Baixado pelo app (versão oficial 9.0.2)" |
+| 3 | Preparação do PC | Clicar em **Baixar FFmpeg** | Barra de progresso até ~115 MB, depois "Baixado pelo app (versão 9.0.2 do gyan.dev)" |
 | 4 | Preparação do PC | Rápido, baixar o modelo small; instalar o Tesseract | Como na v0.1.13 |
 | 5 | Vídeos | Origem, depois saída; 2 vídeos curtos, com "Ler texto da tela" | Os dois concluídos; `.md` com fala e texto de tela. **Esta é a prova de que o app funciona sem o PyAV** |
 | 6 | Vídeos | Clicar em **Ler pasta** e, logo em seguida, tentar clicar em **Transcrever** | Botão travado enquanto lê (K1) |
@@ -103,7 +103,7 @@ Roteiro original do teste (1ª rodada):
 ## 5. Comandos úteis (ambiente de desenvolvimento)
 
 ```
-python3 -m pytest -q                                  # 112 testes do motor
+python3 -m pytest -q                                  # 113 testes do motor
 python3 -m pyflakes transcritor tests ferramentas     # lint
 xvfb-run -a python3.12 ferramentas/fumaca/rodada_completa.py      # janela de verdade, modelo simulado
 xvfb-run -a -s "-screen 0 1366x768x24" python3.12 ferramentas/capturar_telas.py /tmp/telas

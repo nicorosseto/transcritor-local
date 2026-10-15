@@ -15,7 +15,7 @@ Transforma uma pasta de vídeos (aulas, palestras, reuniões gravadas) em **arqu
 </details>
 
 > **Status: v0.1.14, beta.** Como foi testado:
-> - 112 testes automatizados a cada mudança, no Linux e no Windows (Python 3.11 e 3.13); no Windows, os 4 testes de OCR são pulados porque o CI não tem o Tesseract. O `.exe` é gerado e conferido no GitHub Actions.
+> - 113 testes automatizados a cada mudança, no Linux e no Windows (Python 3.11 e 3.13); no Windows, os 4 testes de OCR são pulados porque o CI não tem o Tesseract. O `.exe` é gerado e conferido no GitHub Actions.
 > - Duas auditorias independentes antes da publicação (Codex e uma sessão nova do Claude), com os bloqueios corrigidos ([status](docs/auditorias/STATUS.md)).
 > - 5 rodadas de uso real num PC com Windows, só CPU (vídeo de 36 min, fala a ~1,7x, texto de tela, cancelar e retomar).
 > - Primeiro uso numa [máquina limpa](docs/testes/2026-10-14-sandbox-maquina-limpa.md) (Windows Sandbox, sem nada instalado) e numa [máquina corporativa sem administrador](docs/testes/2026-10-15-maquina-corporativa.md) (fala a 4,6x a 6,4x num i7 de 13ª geração).
@@ -77,7 +77,7 @@ Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/
 1. Baixe o `.zip` da versão mais recente em **Releases**
 2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`). Dentro há um único programa, o `COMO_ABRIR.txt` e a pasta `licencas`
 3. Abra `TranscritorLocal.exe`. Na primeira vez, a página **Preparação do PC** confere o PC e, com um clique em cada botão, baixa uma única vez:
-   - o **FFmpeg**, programa que abre os vídeos (~115 MB). É a versão oficial fixa, baixada direto do distribuidor e conferida por SHA-256 antes de usar ([por que não vem no zip](docs/DECISOES.md#adr-021-o-zip-não-redistribui-binário-gpl-o-ffmpeg-é-baixado-na-primeira-abertura));
+   - o **FFmpeg**, programa que abre os vídeos (~115 MB). É uma versão fixa, baixada direto do distribuidor gyan.dev (indicado pelo site do FFmpeg) e conferida por SHA-256 antes de usar ([por que não vem no zip](docs/DECISOES.md#adr-021-o-zip-não-redistribui-binário-gpl-o-ffmpeg-é-baixado-na-primeira-abertura));
    - o **modelo de transcrição**: ~0,5 GB na qualidade **Rápido**, ~1,6 GB na **Equilibrado** e na **Preciso**
 4. Para ler o texto da tela, instale o Tesseract pelo botão da mesma página
 
