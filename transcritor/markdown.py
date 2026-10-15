@@ -39,8 +39,10 @@ def palavras_da_tela(telas: "list[Tela]") -> int:
 
 
 def link_seguro(caminho: str) -> str:
-    """Espaços e parênteses quebram links Markdown (achado N7): vão codificados."""
-    return caminho.replace("%", "%25").replace(" ", "%20").replace("(", "%28").replace(")", "%29")
+    """Espaços e parênteses quebram links Markdown (achado N7); "#" e "?" viram âncora e consulta
+    (achado K10, ex.: pasta "Curso C#"). Todos vão codificados."""
+    return (caminho.replace("%", "%25").replace(" ", "%20").replace("(", "%28").replace(")", "%29")
+            .replace("#", "%23").replace("?", "%3F"))
 
 
 @dataclass

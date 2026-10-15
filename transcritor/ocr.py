@@ -67,9 +67,12 @@ def baixar_portugues() -> Path:
             continue
         tmp = nome_temporario(arq, ".parcial")
         url = URL_PORTUGUES.replace("por.", f"{idioma}.")
-        with urllib.request.urlopen(url, timeout=120) as resp, open(tmp, "wb") as f:
-            f.write(resp.read())
-        tmp.replace(arq)
+        try:
+            with urllib.request.urlopen(url, timeout=120) as resp, open(tmp, "wb") as f:
+                f.write(resp.read())
+            tmp.replace(arq)
+        finally:
+            tmp.unlink(missing_ok=True)  # download interrompido não deixa .parcial (achado K14)
     return destino
 
 

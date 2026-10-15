@@ -144,7 +144,11 @@ class Registro:
                           f"Os dados foram salvos em {self.pendente.name}; feche o arquivo e rode de novo.")
             return
         self.aviso = ""
-        self.pendente.unlink(missing_ok=True)  # já incorporada
+        try:
+            self.pendente.unlink(missing_ok=True)  # já incorporada
+        except OSError:  # a cópia aberta no Excel não impede o registro de ter sido salvo (achado K18)
+            self.aviso = (f"O registro.csv foi salvo, mas a cópia {self.pendente.name} está aberta em outro "
+                          "programa. Feche e apague essa cópia.")
 
     # ---------------------------------------------------------------- sincronização
     def _chave_livre(self, rel: str) -> str:

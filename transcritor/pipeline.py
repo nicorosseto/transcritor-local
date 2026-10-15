@@ -462,5 +462,13 @@ class Projeto:
     def gerar_pacotes(self) -> list[Path]:
         """Uma pasta (e um .zip) por vídeo concluído, prontos para anexar numa conversa com IA."""
         feitos = [l for l in self.registro.ativos() if l.status == OK and self.caminho_md(l.caminho).is_file()]
-        return [pacote.montar(self.caminho_md(l.caminho), self.cfg.pasta_pacote, l.saida or chave_padrao(l.caminho))
-                for l in feitos]
+        gerados, usados = [], set()
+        for l in feitos:
+            nome = base = pacote.nome_seguro(l.saida or chave_padrao(l.caminho))
+            n = 2
+            while nome.lower() in usados:  # "Mod 1/aula" e "Mod 1 - aula" não se sobrescrevem (achado K17/C6)
+                nome, n = f"{base} ({n})", n + 1
+            usados.add(nome.lower())
+            gerados.append(pacote.montar(self.caminho_md(l.caminho), self.cfg.pasta_pacote, nome,
+                                         self.cfg.pasta_capturas))
+        return gerados

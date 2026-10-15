@@ -51,11 +51,15 @@ def carregar(pasta_saida: Path) -> tuple[dict[str, str], str]:
     if not arq.is_file():
         return {}, ""
     try:
-        dados = json.loads(arq.read_text(encoding="utf-8-sig"))
+        try:
+            texto = arq.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError:  # salvo em ANSI por um editor antigo (achado K11)
+            texto = arq.read_text(encoding="cp1252")
+        dados = json.loads(texto)
         regras = dados.get("trocar", {}) if isinstance(dados, dict) else {}
         regras = {str(k).strip(): str(v) for k, v in regras.items() if str(k).strip()}
         return regras, ""
-    except (json.JSONDecodeError, OSError, AttributeError) as e:
+    except (ValueError, OSError, AttributeError) as e:  # ValueError inclui JSON e codificação inválidos
         return {}, f"O arquivo {NOME_ARQUIVO} tem um erro de formato e foi ignorado ({e})."
 
 

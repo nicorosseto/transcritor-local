@@ -100,6 +100,13 @@ def nome_temporario(destino: Path, sufixo: str = ".tmp") -> Path:
     return destino.with_name(f"{destino.name}.{uuid.uuid4().hex[:8]}{sufixo}")
 
 
+def _apagar(caminho: Path) -> None:
+    try:
+        caminho.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
 def gravar_atomico(destino: Path, escrever, tentativas: int = 5, espera: float = 1.0) -> None:
     """Grava via arquivo temporário único e troca de uma vez (um corte no meio não deixa o arquivo
     pela metade). escrever(caminho) grava o conteúdo nesse caminho.
@@ -116,12 +123,12 @@ def gravar_atomico(destino: Path, escrever, tentativas: int = 5, espera: float =
             return
         except OSError as e:
             ultimo = e
-            try:
-                tmp.unlink(missing_ok=True)
-            except OSError:
-                pass
+            _apagar(tmp)
             if n < tentativas - 1:
                 time.sleep(espera)
+        except BaseException:  # outro erro (codificação, Ctrl+C): não deixa o temporário para trás (K13)
+            _apagar(tmp)
+            raise
     assert ultimo is not None
     raise ultimo
 

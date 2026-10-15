@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -62,9 +61,9 @@ def verificar(preset: str, pasta_saida: Path | None) -> Situacao:
 class PainelVerificacao(ctk.CTkFrame):
     """Página da janela principal (antes era uma janela por cima; layout aprovado em 11/10/2026)."""
 
-    def __init__(self, pai, app, ao_mudar=None):
+    def __init__(self, pai, app):
         super().__init__(pai, fg_color="transparent")
-        self.app, self.ao_mudar = app, ao_mudar
+        self.app = app
         self.preset, self.pasta_saida = "equilibrado", None
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
@@ -85,6 +84,7 @@ class PainelVerificacao(ctk.CTkFrame):
 
     def mostrar(self, situacao: Situacao, preset: str, pasta_saida: Path | None) -> None:
         self.preset, self.pasta_saida = preset, pasta_saida
+        self.btn_reverificar.configure(state="normal", text="Verificar de novo")
         self._desenhar(situacao)
 
     # ------------------------------------------------------------------ desenho
@@ -203,17 +203,8 @@ class PainelVerificacao(ctk.CTkFrame):
                      text_color=LARANJA).pack(fill="x", pady=(8, 0))
 
     def _reverificar(self):
+        """Pede a verificação ao app, que é o único que decide qual resultado vale (achado C1).
+        Antes o painel verificava por conta própria e desenhava um resultado que podia estar velho."""
         self.btn_reverificar.configure(state="disabled", text="Verificando...")
-
-        def tarefa():
-            s = verificar(self.preset, self.pasta_saida)
-            self.app.na_interface(lambda: self._depois(s))
-        threading.Thread(target=tarefa, daemon=True).start()
-
-    def _depois(self, s):
-        if not self.winfo_exists():
-            return
-        self.btn_reverificar.configure(state="normal", text="Verificar de novo")
-        self._desenhar(s)
-        if self.ao_mudar:
-            self.ao_mudar(s)
+        self.verificando()
+        self.app._rodar_verificacao()

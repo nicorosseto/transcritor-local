@@ -110,7 +110,7 @@ class App(ctk.CTk):
             "videos": self._montar_pagina_videos(self.miolo),
             "resultados": self._montar_pagina_resultados(self.miolo),
         }
-        self.painel_verif = PainelVerificacao(self.miolo, self, ao_mudar=lambda s: self._aplicar_situacao(s, False))
+        self.painel_verif = PainelVerificacao(self.miolo, self)
         self.paginas["preparacao"] = self.painel_verif
         for pg in self.paginas.values():
             pg.grid(row=0, column=0, sticky="nsew")
@@ -606,16 +606,24 @@ class App(ctk.CTk):
         self._rodar_verificacao(abrir_se_obrigatorio=True)
 
     def _rodar_verificacao(self, abrir_se_obrigatorio=False):
+        """Único caminho de verificação (início, troca de qualidade, "Verificar de novo", fim de download).
+        Cada pedido ganha um número; só o resultado do último pedido vale (achados N18, C1 e K3)."""
         preset, saida = self._preset(), self._pasta(self.ent_saida)
+        self._verif_gen = getattr(self, "_verif_gen", 0) + 1
+        self._verif_modelo = PRESETS[preset]["modelo"]
+        gen = self._verif_gen
 
         def tarefa():
             s = verificar(preset, saida)
-            self.fila.put(Evento("verificacao", {"situacao": s, "abrir": abrir_se_obrigatorio}))
+            self.fila.put(Evento("verificacao", {"situacao": s, "abrir": abrir_se_obrigatorio, "gen": gen}))
         threading.Thread(target=tarefa, daemon=True).start()
 
-    def _aplicar_situacao(self, s: Situacao, abrir: bool):
+    def _aplicar_situacao(self, s: Situacao, abrir: bool, gen: int | None = None):
+        if gen is not None and gen != getattr(self, "_verif_gen", gen):
+            return  # resultado de um pedido antigo; o do pedido mais novo ainda vem (achados C1 e K3)
         if s.modelo != PRESETS[self._preset()]["modelo"]:
-            return  # verificação de uma qualidade que já foi trocada; a nova está a caminho (N18)
+            self._rodar_verificacao()  # a qualidade mudou sem novo pedido: pede agora, nunca fica preso
+            return
         self.situacao = s
         n = s.total_pendencias
         if s.obrigatorios:
@@ -737,6 +745,8 @@ class App(ctk.CTk):
     def _escanear(self, cfg: Config, aceitar_nova_origem: bool = False):
         self._lendo = True
         self.btn_ler.configure(state="disabled")
+        if hasattr(self, "btn_iniciar"):
+            self._estado_principal(False)
         self.lbl_resumo.configure(text="Lendo a pasta e medindo as durações...")
 
         def tarefa():
@@ -754,6 +764,7 @@ class App(ctk.CTk):
         """Saída de outro curso: não mistura sem o usuário confirmar (achado X7)."""
         self._lendo = False
         self.btn_ler.configure(state="normal")
+        self._atualizar_estimativa()
         self.lbl_resumo.configure(text="Escolha outra pasta de saída ou confirme que a pasta de vídeos foi movida.")
         r = Dialogo(self, "Pasta de saída de outro projeto",
                     f"{erro}\n\nSe forem vídeos diferentes, use outra pasta de saída para não misturar "
@@ -878,8 +889,7 @@ class App(ctk.CTk):
     # ================================================================== estimativa
     def _opcoes_mudaram(self):
         self.lbl_preset.configure(text=PRESETS[self._preset()]["descricao"])
-        s = self.situacao
-        if s is not None and s.modelo != PRESETS[self._preset()]["modelo"]:
+        if getattr(self, "_verif_modelo", None) not in (None, PRESETS[self._preset()]["modelo"]):
             # outra qualidade usa outro modelo: confere de novo o que falta baixar (achado N18)
             self.situacao = None
             self._selo("preparacao", 0)
@@ -914,7 +924,8 @@ class App(ctk.CTk):
             self.lbl_sel_det.configure(text="Marque os vídeos na lista." if not sel
                                        else "")
             self.btn_iniciar.configure(text="Transcrever")
-        self._estado_principal(bool(rodada) and not self.rodando)
+        # durante uma leitura o botão fica travado: a leitura troca o projeto por baixo (achado K1)
+        self._estado_principal(bool(rodada) and not self.rodando and not getattr(self, "_lendo", False))
 
     # ================================================================== execução
     def _verificar_antes_de_iniciar(self, cfg: Config) -> bool:
@@ -949,8 +960,9 @@ class App(ctk.CTk):
     def _iniciar(self):
         rodada = self._rodada()
         cfg = self._cfg()
-        if not rodada or cfg is None or self.projeto is None:
+        if not rodada or cfg is None or self.projeto is None or getattr(self, "_lendo", False):
             return
+        projeto = self.projeto
         if not self._verificar_antes_de_iniciar(cfg):
             return
         e = self.projeto.estimar(rodada, cfg.ocr)
@@ -962,6 +974,13 @@ class App(ctk.CTk):
                     "Pode deixar rodando sozinho.",
                     [("Começar", "ok", True), ("Cancelar", None, False)], icone="▶️", som=False).perguntar()
         if r != "ok":
+            return
+        if getattr(self, "_lendo", False) or self.projeto is not projeto:
+            # a lista foi relida enquanto o diálogo estava aberto: os itens desta rodada são de uma
+            # leitura que já não vale e o registro seria salvo sem eles (achado K1)
+            Dialogo(self, "A lista mudou", "A pasta foi lida de novo enquanto você confirmava. Confira a lista "
+                    "e clique em Transcrever outra vez.", [("Entendi", None, True)], icone="ℹ️").perguntar()
+            self._atualizar_estimativa()
             return
         try:
             cfg = self.projeto.preparar_rodada(cfg)  # mesmas pastas da leitura (achado X3)
@@ -994,8 +1013,6 @@ class App(ctk.CTk):
         self._lateral_rodada(0.0, f"0 de {len(rodada)} · 0%")
         self._log(f"Rodada iniciada: {len(rodada)} vídeo(s), qualidade {PRESETS[cfg.preset]['rotulo']}"
                   f"{', com leitura de tela' if cfg.ocr else ''}.")
-
-        projeto = self.projeto
 
         def tarefa():
             try:
@@ -1101,12 +1118,13 @@ class App(ctk.CTk):
         elif t == "outra_origem":
             self._outra_origem(d["erro"], d["cfg"])
         elif t == "verificacao":
-            self._aplicar_situacao(d["situacao"], d["abrir"])
+            self._aplicar_situacao(d["situacao"], d["abrir"], d.get("gen"))
         elif t == "medindo":
             self.lbl_resumo.configure(text=f"Medindo durações... {d['n']} de {d['t']}")
         elif t == "falha_leitura":
             self._lendo = False
             self.btn_ler.configure(state="normal")
+            self._atualizar_estimativa()
             Dialogo(self, "Erro ao ler a pasta", d["erro"], [("Entendi", None, True)], icone="❌").perguntar()
         elif t == "escaneado":
             self._lendo = False

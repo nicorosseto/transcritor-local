@@ -15,16 +15,44 @@ from urllib.parse import unquote
 
 from .markdown import link_seguro
 
-_CAPTURA = re.compile(r"(\[captura\]\()([^)\n]+)(\))")
+# Só a linha de cabeçalho que o app escreve ("> 🖼️ **Na tela [hh:mm:ss]** · [captura](...)"): um link
+# parecido dentro do texto lido da tela não é seguido (achado B1/K5)
+_CAPTURA = re.compile(r"^(> 🖼️ \*\*Na tela \[[0-9:]+\]\*\* · \[captura\]\()([^)\n]+)(\))", re.M)
+EXTENSOES_IMAGEM = {".jpg", ".jpeg", ".png", ".webp"}
 
 
-def _nome_seguro(texto: str) -> str:
+def nome_seguro(texto: str) -> str:
     return re.sub(r'[<>:"/\\|?*]+', " - ", texto).strip(" .-") or "video"
 
 
-def montar(md: Path, destino_raiz: Path, nome: str) -> Path:
-    """Cria destino_raiz/<nome>/ (md + imagens/) e destino_raiz/<nome>.zip. Refaz do zero se já existe."""
-    nome = _nome_seguro(nome)
+def _captura_permitida(alvo: str, md: Path, raiz_capturas: Path) -> Path | None:
+    """Caminho real da captura, ou None se ela não puder entrar no pacote (achado B1/K5).
+
+    Entra só uma imagem que, com links simbólicos e "..", fique de fato dentro da pasta de capturas
+    do projeto. Caminho absoluto, endereço (http:, file:) ou qualquer coisa fora dela fica de fora."""
+    alvo = unquote(alvo)
+    if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", alvo) or alvo.startswith(("/", "\\")) or os.path.isabs(alvo):
+        return None
+    try:
+        origem = (md.parent / alvo).resolve(strict=True)
+        raiz = raiz_capturas.resolve(strict=True)
+    except (OSError, RuntimeError):
+        return None
+    if origem.suffix.lower() not in EXTENSOES_IMAGEM or not origem.is_file():
+        return None
+    try:
+        origem.relative_to(raiz)
+    except ValueError:
+        return None
+    return origem
+
+
+def montar(md: Path, destino_raiz: Path, nome: str, raiz_capturas: Path) -> Path:
+    """Cria destino_raiz/<nome>/ (md + imagens/) e destino_raiz/<nome>.zip. Refaz do zero se já existe.
+
+    Só copia imagens de dentro de raiz_capturas; um link para qualquer outro lugar fica como está no
+    texto, sem levar o arquivo."""
+    nome = nome_seguro(nome)
     pasta = destino_raiz / nome
     shutil.rmtree(pasta, ignore_errors=True)
     imagens = pasta / "imagens"
@@ -32,9 +60,9 @@ def montar(md: Path, destino_raiz: Path, nome: str) -> Path:
     usados: set[str] = set()
 
     def trocar(m: re.Match) -> str:
-        origem = Path(os.path.normpath(os.path.join(md.parent, unquote(m.group(2)))))
-        if not origem.is_file():
-            return m.group(0)  # captura que não existe mais: mantém o link como está
+        origem = _captura_permitida(m.group(2), md, raiz_capturas)
+        if origem is None:
+            return m.group(0)  # captura que não existe mais ou fora da pasta de capturas: não entra
         arquivo = origem.name
         n = 1
         while arquivo in usados:  # nomes iguais em vídeos diferentes não acontecem aqui, mas não custa

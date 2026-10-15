@@ -74,7 +74,10 @@ def extrair_audio(video: Path, destino: Path, cancelar=None) -> None:
         msg = "".join(erros).strip().splitlines()
         raise RuntimeError("Falha ao extrair o áudio" + (f": {msg[-1]}" if msg else
                            " (o vídeo pode não ter trilha de áudio)."))
-    tmp.replace(destino)  # só "vale" quando terminou: um corte no meio não deixa MP3 quebrado
+    try:
+        tmp.replace(destino)  # só "vale" quando terminou: um corte no meio não deixa MP3 quebrado
+    finally:
+        tmp.unlink(missing_ok=True)  # se a troca falhar, o .parcial não fica para trás (achado C4)
 
 
 def carregar_audio(audio: Path):
