@@ -1,0 +1,82 @@
+# Saídas de 15/10/2026 (commit 8ada040, Linux, Python 3.12.3)
+
+$ python3.12 docs/auditorias/2026-10-15-rechecagem-claude/reproducoes/b1_k5_pacote.py
+legitima                           entrou no zip: ['imagens/área com espaço.jpg'] [b'\xff\xd8LEGITIMA']
+dotdot_txt (Codex)                 entrou no zip: [] []
+dotdot_jpg                         entrou no zip: [] []
+dotdot_por_dentro                  entrou no zip: [] []
+absoluto                           entrou no zip: [] []
+file_uri                           entrou no zip: [] []
+pct2e                              entrou no zip: [] []
+barra_invertida                    entrou no zip: [] []
+drive_windows                      entrou no zip: [] []
+unc                                entrou no zip: [] []
+symlink_para_fora                  entrou no zip: [] []
+hardlink_para_fora                 entrou no zip: ['imagens/hardlink.jpg'] [b'\xff\xd8FORA']
+imagem_na_saida_fora_de_capturas   entrou no zip: [] []
+nao_imagem_em_capturas             entrou no zip: [] []
+K5 a1 (link no texto de tela) zip: ['imagens/', 'ocr.md', 'imagens/área com espaço.jpg']
+   .md do pacote: ['> 🖼️ **Na tela [00:00:10]** · [captura](imagens/área%20com%20espaço.jpg)', '> Exemplo de link: [captura](<tmp>/fora.jpg) clique para abrir a imagem']
+
+$ xvfb-run ... reproducoes/c1_abrir_preparacao.py
+trocou a qualidade no meio=False: página='preparacao' | selo obrigatório=1
+trocou a qualidade no meio=True: página='videos' | selo obrigatório=1
+
+# Outras execuções desta rechecagem (saídas copiadas do terminal, só as linhas de resultado)
+
+$ python -m pytest -q
+113 passed in 33.19s
+$ python -m pyflakes transcritor tests
+(sem saída, código 0)
+$ python -m pytest tests/test_auditoria_2026_10_14.py -k b1 -v
+8 passed, 18 deselected
+
+$ xvfb-run -a -s "-screen 0 1366x768x24" python ferramentas/fumaca/auditoria_k1.py
+K1.1 OK: Transcrever travado durante a leitura
+K1.2 OK: releitura durante a confirmação cancela a rodada com aviso
+K1.3 OK: registro.csv {'a.mp4': 'ok', 'b.mp4': 'ok', 'c.mp4': 'ok'}
+AUDITORIA K1 GUI OK
+
+$ xvfb-run ... docs/auditorias/2026-10-14-claude/reproducoes/k01_ler_pasta_e_transcrever.py      (igual com --na-hora)
+durante a leitura: _lendo = True | botão Transcrever: disabled | Transcrever 2 ≈ menos de 1 min
+projeto trocado durante a confirmação: False
+status final:
+.md gravados: []
+registro.csv: [('a.mp4', 'pendente'), ('b.mp4', 'pendente'), ('c.mp4', 'pendente')]
+tabela: {'a.mp4': '○ Pendente', 'b.mp4': '○ Pendente', 'c.mp4': '○ Pendente'}
+
+$ xvfb-run ... ferramentas/fumaca/auditoria_c1.py
+C1 OK: ['Modelo de transcrição (Preciso: large-v3-turbo)', ..., 'Baixar large-v3-turbo (~1,6 GB)', ...]
+AUDITORIA C1 GUI OK
+
+$ xvfb-run ... docs/auditorias/2026-10-14-claude/reproducoes/k03_qualidade_durante_verificacao.py
+A: pedidos de verificação: ['equilibrado', 'rapido', 'equilibrado']
+A: situacao: Situacao(... modelo='large-v3-turbo' ...) | lateral: '✓ PC pronto · CPU'
+B: pedidos de verificação: ['equilibrado', 'rapido']
+B: situacao: Situacao(... modelo='small' ...) | lateral: '✓ PC pronto · CPU'
+B: painel.preset = rapido | qualidade na tela = rapido
+B: cartão do modelo no painel: ['Modelo de transcrição (Rápido: small)', ...]
+
+$ xvfb-run ... docs/auditorias/2026-10-14/gui_verificacao_atrasada.py
+AssertionError em "assert iniciou.wait(2)": o painel não verifica mais por conta própria (caminho removido)
+
+$ curl -L -o ffmpeg.zip https://github.com/GyanD/codexffmpeg/releases/download/9.0.2/ffmpeg-9.0.2-essentials_build.zip && sha256sum ffmpeg.zip
+http=200 bytes=114768076
+60f467265b1e312373dbcd92200c2618a74850f98d3d078e94296bb3fa2047ba  ffmpeg.zip      (= preparacao.FFMPEG)
+$ preparacao.baixar_ffmpeg(origem={... "url": "file://.../ffmpeg.zip"}) numa pasta de usuário temporária
+LICENSE.txt 35147 | ORIGEM.txt 531 | bin/ffprobe.exe 105221120 | bin/ffmpeg.exe 105423872   (ffplay.exe não é extraído)
+
+$ pip download --platform win_amd64 --python-version 3.12 av==19.0.1   (nomes das DLLs da roda Windows)
+av.libs/libx264-165-0f71f37cf3f3ee0e2ecac2b06829e9ff.dll
+av.libs/libx265-ee9d492f3fb55d0a3b564bb1bf4f6822.dll   (+ 21 outras: avcodec, avformat, ...)
+
+$ pyinstaller packaging/transcritor.spec (Linux, PyInstaller 6.22.3, dist fora do repositório)
+nenhum av/, av.libs/, libx264* ou libx265* no pacote
+$ TranscritorLocal --autoteste
+autoteste ok: Transcritor Local 0.1.14
+$ mesmo .spec, numa cópia fora do repositório, sem "av" em excludes; TranscritorLocal --autoteste
+AssertionError: bibliotecas GPL no pacote: ['libx265-eebb7db1.so.217', 'libx264-d6533a8d.so.165', ...]   (código 1)
+(a asserção anterior, SUBSTITUTO_TRANSCRITOR, passou com o PyAV verdadeiro dentro: só a busca por nome barrou)
+
+Fumaças sob Xvfb 1366x768, todas código 0: ffmpeg_primeiro_uso, janela_basica, rodada_completa, rodada_tela_falha,
+pacote_para_ia, cancelar_rodada, acao_e_confirmacao, previsao_no_ocr, maquina_limpa, escala_do_windows 1.25 e 1.5.
