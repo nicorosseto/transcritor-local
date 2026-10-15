@@ -10,7 +10,7 @@ Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize
 
 | Frente | Situação |
 |---|---|
-| Motor (transcrição, OCR, registro, base consolidada) | Estável. 113 testes automáticos (Linux e Windows, Python 3.11 e 3.13; no Windows, 4 de OCR pulados) e 13 fumaças de interface |
+| Motor (transcrição, OCR, registro, base consolidada) | Estável. 113 testes automáticos (Linux e Windows, Python 3.11 e 3.13; no Windows, 4 de OCR pulados) e 12 fumaças de interface |
 | Auditorias de 08/10 (X1 a X16) | 15 de 16 corrigidas; X14 parcial (FFmpeg fixado por hash; dependências Python na v0.2) |
 | Auditorias de pré-publicação de 14/10 (Codex B1-B3/C1-C6, Claude K1-K20) | **Bloqueios corrigidos na v0.1.14** (K1, B1/K5, B2/K2, B3/K7) e mais 9 correções menores. O resto está na lista da v0.2. Tabela em [auditorias/STATUS.md](auditorias/STATUS.md) |
 | Licenças | O `.zip` não leva binário GPL: FFmpeg baixado na primeira abertura com SHA-256 fixo; PyAV fora do executável ([ADR-021](DECISOES.md)) |
