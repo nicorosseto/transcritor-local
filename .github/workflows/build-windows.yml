@@ -1,7 +1,9 @@
 name: Build Windows (.exe)
 
-# Roda: manualmente (aba Actions → "Run workflow"), a cada push na main que mexa no app
+# Roda: manualmente (aba Actions → "Run workflow"), a cada push na main ou na dev que mexa no app
 # (o .zip fica em Actions → execução → Artifacts) e ao criar uma tag v* (vira Release).
+# Fluxo: o trabalho novo vai para a dev; o executável de teste sai daqui; depois do teste no
+# Windows, a dev entra na main.
 # Release pelo site: "Run workflow" com a versão (ex.: v0.1.14) cria o rascunho de pre-release;
 # a tag nasce quando o rascunho é publicado.
 on:
@@ -12,7 +14,7 @@ on:
         required: false
         default: ""
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - "transcritor/**"
       - "packaging/**"

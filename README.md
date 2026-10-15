@@ -79,7 +79,7 @@ Detalhes em [Arquitetura](docs/ARQUITETURA.md) e nas [Decisões técnicas](docs/
 
 ### Opção A: executável para Windows (recomendado para usuários comuns)
 
-1. Baixe o `.zip` da versão mais recente em **Releases**
+1. Baixe o `.zip` da versão mais recente em [**Releases**](https://github.com/nicorosseto/transcritor-local/releases)
 2. Descompacte em uma pasta **fora do OneDrive** (ex.: `C:\TranscritorLocal`). Dentro há um único programa, o `COMO_ABRIR.txt` e a pasta `licencas`
 3. Abra `TranscritorLocal.exe`. Na primeira vez, a página **Preparação do PC** confere o PC e, com um clique em cada botão, baixa uma única vez:
    - o **FFmpeg**, programa que abre os vídeos (~115 MB). É uma versão fixa, baixada direto do distribuidor gyan.dev (indicado pelo site do FFmpeg) e conferida por SHA-256 antes de usar ([por que não vem no zip](docs/DECISOES.md#adr-021-o-zip-não-redistribui-binário-gpl-o-ffmpeg-é-baixado-na-primeira-abertura));

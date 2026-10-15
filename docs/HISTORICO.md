@@ -207,3 +207,9 @@ Duas auditorias independentes, feitas em paralelo sem uma ver a outra: Codex (9 
 | C1/K3, K9 a K18 | Verificação do PC por um único caminho; licenças das bibliotecas no zip; links com `#`; `correcoes.json` em ANSI; temporários; colisão de pacotes |
 
 O resto dos achados está na lista da v0.2 do [roadmap](ROADMAP.md).
+
+## Publicação (15/10/2026)
+
+Repositório público e [Release v0.1.14](https://github.com/nicorosseto/transcritor-local/releases/tag/v0.1.14) publicado como **pre-release**. O rascunho foi criado pelo workflow (Run workflow com `versao = v0.1.14`) e conferido antes do clique em Publicar: hash do zip igual ao calculado pelo GitHub, zip baixado e aberto (sem `bin/`, com `licencas/BIBLIOTECAS.txt`), app na 0.1.14. A conferência achou os links de "Detalhes" das notas relativos, que davam 404 na página do Release; foram trocados por links absolutos. A tag `v0.1.14` aponta para o commit que gerou o zip (`4b9d26a`).
+
+Daqui em diante, o trabalho novo vai para a branch `dev` (que também gera o executável de teste) e entra na `main` depois do teste no Windows.

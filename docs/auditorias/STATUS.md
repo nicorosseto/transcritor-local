@@ -120,6 +120,7 @@ As duas foram feitas em paralelo, sem uma ver a outra, sobre o commit `84c6ab1`.
 | K17 = C6 | 🟡/🟠 | ✅ v0.1.14 | Pacotes com o mesmo nome ganham sufixo em vez de um apagar o outro |
 | K18 | 🟡 | ✅ v0.1.14 | Cópia `registro_PENDENTE` aberta no Excel não vira falso "registro não salvo"; e esse aviso aparece em qualquer desfecho |
 | R1 (rechecagem) | 🔴 para abrir o repositório | ⏳ responsável | Artefatos do Actions dos builds 1 a 20 ainda trazem FFmpeg e PyAV GPL; apagar pelo site antes de tornar o repositório público |
+| Ressalva do Codex: inspecionar o ZIP do Release | 🟡 | ✅ 15/10 | O responsável baixou o zip do rascunho (82.482.316 bytes), conferiu que não há `bin/`, que `licencas/BIBLIOTECAS.txt` existe (203 KB) e que o app abre na 0.1.14. Só então publicou |
 | Ressalvas da rechecagem | 🟡 | ✅ | Autoteste confere os arquivos do pacote (não o substituto em memória); "v0.1.14" e "113 testes" nos textos; "versão do gyan.dev" no lugar de "versão oficial"; o pedido de abrir a Preparação não se perde quando a verificação é refeita |
 | K20 | 🟡 | ✅ | Auditorias trazidas para a `main`; branches antigas a apagar pelo site antes de abrir o repositório |
 | C2 | 🟠 | ⏳ v0.2 | Previsão subestima o OCR do vídeo atual durante a fala |

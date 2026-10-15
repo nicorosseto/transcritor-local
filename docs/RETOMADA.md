@@ -2,39 +2,31 @@
 
 Arquivo para continuar o trabalho numa próxima sessão (pessoa ou IA). Atualize ao fim de cada sessão.
 
-**Última atualização:** 15/10/2026 · **Versão:** 0.1.14 · **Branch:** `main`
+**Última atualização:** 15/10/2026 · **Versão:** 0.1.14 (publicada) · **Branches:** `main` (estável) e `dev` (trabalho novo)
 
 ## 1. Estado atual (15/10/2026)
 
-**Resumo:** a v0.1.14 tem todos os bloqueios das duas auditorias corrigidos e **passou no roteiro de testes do responsável** numa máquina corporativa sem administrador (15/10/2026, [registro](testes/2026-10-15-maquina-corporativa.md)), com o N22 corrigido no caminho. **Próximo passo: publicar.** Repositório público desde 15/10/2026. Release: Actions → Build Windows (.exe) → **Run workflow** com `versao = v0.1.14` cria o rascunho de pre-release (a tag nasce ao publicar; o ambiente do Claude não consegue enviar tags).
+**Resumo:** a **v0.1.14 está publicada** como pre-release ([Release](https://github.com/nicorosseto/transcritor-local/releases/tag/v0.1.14)), com o repositório público desde 15/10/2026. Todos os bloqueios das duas auditorias foram corrigidos e rechecados, e o roteiro de testes do responsável passou numa máquina corporativa sem administrador ([registro](testes/2026-10-15-maquina-corporativa.md)). **Próximo passo:** post do LinkedIn; depois, v0.1.15 (N23) na branch `dev`.
 
 | Frente | Situação |
 |---|---|
 | Motor (transcrição, OCR, registro, base consolidada) | Estável. 113 testes automáticos (Linux e Windows, Python 3.11 e 3.13; no Windows, 4 de OCR pulados) e 12 fumaças de interface |
 | Auditorias de 08/10 (X1 a X16) | 15 de 16 corrigidas; X14 parcial (FFmpeg fixado por hash; dependências Python na v0.2) |
-| Auditorias de pré-publicação de 14/10 (Codex B1-B3/C1-C6, Claude K1-K20) | **Bloqueios corrigidos na v0.1.14** (K1, B1/K5, B2/K2, B3/K7) e mais 9 correções menores. O resto está na lista da v0.2. Tabela em [auditorias/STATUS.md](auditorias/STATUS.md) |
+| Auditorias de pré-publicação de 14/10 e rechecagens de 15/10 | Bloqueios corrigidos na v0.1.14 (K1, B1/K5, B2/K2, B3/K7) e mais 9 correções menores; ressalva do Codex (inspecionar o zip do Release) cumprida. O resto está na lista da v0.2. Tabela em [auditorias/STATUS.md](auditorias/STATUS.md) |
 | Licenças | O `.zip` não leva binário GPL: FFmpeg baixado na primeira abertura com SHA-256 fixo; PyAV fora do executável ([ADR-021](DECISOES.md)) |
-| Testes reais | 5 rodadas no PC do responsável, máquina limpa (Windows Sandbox) com a v0.1.13 e teste cego com 3 IAs ([testes/](testes/)) |
-| Release | Workflow cria **rascunho** de **pre-release** ao subir uma tag `v*`, com as notas de `docs/release/<tag>.md` e os SHA-256 preenchidos. Notas da próxima: [release/v0.1.14.md](release/v0.1.14.md) |
-| Repositório | Privado. Antes de abrir: apagar pelo site as branches `claude/funny-volta-uacma0`, `docs/auditoria-beta-v0.1.13`, `docs/auditoria-codex-2026-10-08` e `fix/auditoria-fase1` (o conteúdo das auditorias já está na `main`; o proxy desta sessão não deixou apagar) |
+| Testes reais | 5 rodadas no PC do responsável, máquina limpa (Windows Sandbox), teste cego com 3 IAs e máquina corporativa sem administrador ([testes/](testes/)) |
+| Repositório | **Público.** Release v0.1.14 publicado como pre-release; tag `v0.1.14` no commit `4b9d26a` |
 
-### 1.1 Próxima sessão: roteiro de testes do responsável
+### 1.1 Como lançar a próxima versão
 
-Estes testes são do responsável (combinado em 15/10/2026). O que mudou desde o último teste no Sandbox: o FFmpeg não vem mais no zip, o PyAV saiu do executável, e a interface ganhou as correções K1, C1/K3, B1.
-
-| # | Onde | O que fazer | Esperado |
-|---|---|---|---|
-| 1 | GitHub | Apagar as 4 branches antigas (aba **Branches**) | Só `main` |
-| 2 | Windows Sandbox novo | Baixar o artefato `TranscritorLocal-windows` do build mais recente da v0.1.14, abrir o `.exe` | Título "Transcritor Local 0.1.14"; pasta sem `bin/`; `licencas/` com `BIBLIOTECAS.txt` |
-| 3 | Preparação do PC | Clicar em **Baixar FFmpeg** | Barra de progresso até ~115 MB, depois "Baixado pelo app (versão 9.0.2 do gyan.dev)" |
-| 4 | Preparação do PC | Rápido, baixar o modelo small; instalar o Tesseract | Como na v0.1.13 |
-| 5 | Vídeos | Origem, depois saída; 2 vídeos curtos, com "Ler texto da tela" | Os dois concluídos; `.md` com fala e texto de tela. **Esta é a prova de que o app funciona sem o PyAV** |
-| 6 | Vídeos | Clicar em **Ler pasta** e, logo em seguida, tentar clicar em **Transcrever** | Botão travado enquanto lê (K1) |
-| 7 | Preparação do PC | Clicar em **Verificar de novo** e trocar a qualidade logo depois | O cartão do modelo acompanha a qualidade da tela (C1/K3) |
-| 8 | Resultados | **Pacote para IA** | Pasta e `.zip` com o `.md` e as imagens |
-| 9 | (opcional) Codex e Claude | Rechecagem só dos bloqueios: [pedido](auditorias/PEDIDO_RECHECAGEM_2026-10-15.md) | Sem bloqueio novo |
-
-Passando, publicar: tornar o repositório público, criar a tag `v0.1.14` (o workflow cria o rascunho do Release), conferir a página e clicar em **Publicar**. Depois, o post do LinkedIn.
+| Passo | Quem | O quê |
+|---|---|---|
+| 1 | Claude | Trabalho novo na branch `dev`, com a versão subida em `pyproject.toml` e `transcritor/__init__.py` e as notas em `docs/release/vX.Y.Z.md` (links **absolutos**: links relativos dão 404 na página do Release) |
+| 2 | Workflow | Cada push na `dev` que mexa no app gera o executável de teste (Actions → Build Windows → Artifacts) |
+| 3 | Responsável | Testa no Windows |
+| 4 | Responsável | Passou: Pull request `dev` → `main` e merge pelo site |
+| 5 | Responsável | Actions → Build Windows (.exe) → **Run workflow** na `main` com `versao = vX.Y.Z`: cria o rascunho de pre-release (o ambiente do Claude não consegue enviar tags) |
+| 6 | Responsável | Baixar o zip do rascunho, conferir (sem `bin/`, `licencas/BIBLIOTECAS.txt`, versão no título) e clicar em **Publish release** |
 
 ## 2. Teste do responsável no Windows (P1)
 
@@ -80,11 +72,12 @@ Roteiro original do teste (1ª rodada):
 
 **Se o Chrome bloquear o download ("arquivo perigoso"):** o `.exe` não tem assinatura digital (P7), e o PyInstaller costuma cair em falso positivo. Opções, nesta ordem: (1) `chrome://downloads` → **Manter arquivo perigoso**; (2) baixar com o Edge.. O build imprime o SHA-256 do `.exe` no resumo da execução e grava `SHA256.txt` na pasta, para conferir com `Get-FileHash`.
 
-## 3. Depois da publicação
+## 3. Próximos passos
 
 | Ordem | Item | Referência |
 |---|---|---|
-| 1 | Post no LinkedIn (rascunho na conversa de 14/10; atualizar com as auditorias e o teste cego) | — |
+| 1 | Post no LinkedIn (rascunho na conversa de 14/10; atualizar com as auditorias, o teste cego e a máquina corporativa) | — |
+| 1b | v0.1.15: N23 (avisar que falta o Tesseract ao marcar "Ler texto da tela") | ROADMAP.md |
 | 2 | v0.2, OCR: filtro que não descarte siglas (C3/K4) e captura em cinza ampliada 2x para diagramas coloridos (N21) | ROADMAP.md |
 | 3 | v0.2, robustez: previsão durante a fala (C2), base consolidada atômica (C5), estimativa (K6), sobras e trava (K15, K16), pacote fora da thread da interface (K19) | auditorias/STATUS.md |
 | 4 | v0.2, build: dependências Python com hash e autoteste que abre a janela (K8, X14); Tesseract no CI do Windows (K12) | auditorias/STATUS.md |
