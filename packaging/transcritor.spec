@@ -22,7 +22,9 @@ a = Analysis(
     binaries=binaries,
     datas=datas,
     hiddenimports=["transcritor.gui.app", "transcritor.cli", "psutil"],
-    excludes=["torch", "tensorflow", "matplotlib"],  # PyAV fica: o faster-whisper o importa ao carregar (ADR-003)
+    # PyAV fora: embute libx264/libx265 (GPL). O faster-whisper só o importa; entrada_janela.py põe um
+    # módulo vazio no lugar, e o áudio é lido pelo FFmpeg (ADR-003, ADR-021, achado K2 de 14/10/2026)
+    excludes=["torch", "tensorflow", "matplotlib", "av"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

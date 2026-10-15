@@ -40,35 +40,20 @@ jobs:
       - name: Gerar executável
         run: pyinstaller packaging/transcritor.spec --noconfirm --distpath dist --workpath build
 
-      - name: Embutir FFmpeg (build "essentials" de gyan.dev, GPL)
+      # Sem FFmpeg dentro do pacote: o app baixa a versão fixa na primeira abertura (ADR-021).
+      - name: Licenças e instruções
         shell: pwsh
         run: |
-          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-          Invoke-WebRequest $url -OutFile ffmpeg.zip
-          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg_tmp
-          $pasta = Get-ChildItem ffmpeg_tmp -Directory | Select-Object -First 1
-          New-Item -ItemType Directory -Force dist/TranscritorLocal/bin | Out-Null
-          Copy-Item "$($pasta.FullName)/bin/ffmpeg.exe","$($pasta.FullName)/bin/ffprobe.exe" dist/TranscritorLocal/bin/
           New-Item -ItemType Directory -Force dist/TranscritorLocal/licencas | Out-Null
-          Copy-Item "$($pasta.FullName)/LICENSE" dist/TranscritorLocal/licencas/FFmpeg-LICENSE.txt
           Copy-Item LICENSE dist/TranscritorLocal/licencas/TranscritorLocal-LICENSE.txt
           Copy-Item docs/LICENCAS_TERCEIROS.md dist/TranscritorLocal/licencas/
           Copy-Item packaging/COMO_ABRIR.txt dist/TranscritorLocal/
-          $v = (& "$($pasta.FullName)/bin/ffmpeg.exe" -version | Select-Object -First 1)
-          $num = if ($v -match 'ffmpeg version (\d+(\.\d+)+)') { $Matches[1] } else { "" }
-          $fonte = if ($num) { "https://ffmpeg.org/releases/ffmpeg-$num.tar.xz" } else { "https://ffmpeg.org/download.html#releases" }
-          $linhas = @(
-            "Codigo-fonte do FFmpeg distribuido nesta pasta (bin/ffmpeg.exe e bin/ffprobe.exe)",
-            "Versao: $v",
-            "Build: https://www.gyan.dev/ffmpeg/builds/ (release essentials, licenca GPL v3)",
-            "Codigo-fonte desta versao: $fonte",
-            "Licenca: licencas/FFmpeg-LICENSE.txt",
-            "",
-            "O Transcritor Local (MIT) chama esses programas como processos separados.",
-            "Quem recebeu esta pasta pode obter o codigo-fonte correspondente no endereco acima;",
-            "se ele sair do ar, peca uma copia abrindo uma issue no repositorio do projeto."
-          )
-          $linhas | Set-Content dist/TranscritorLocal/licencas/FFmpeg-CODIGO-FONTE.txt -Encoding utf8
+          # textos de licença e avisos (NOTICE) de todas as bibliotecas Python do ambiente (achado K9)
+          pip install pip-licenses
+          pip-licenses --from=mixed --with-license-file --with-notice-file --no-license-path --format=plain-vertical `
+            --ignore-packages pip-licenses prettytable wcwidth pytest pluggy iniconfig pyinstaller pyinstaller-hooks-contrib altgraph pefile pywin32-ctypes `
+            --output-file dist/TranscritorLocal/licencas/BIBLIOTECAS.txt
+          if ((Get-Item dist/TranscritorLocal/licencas/BIBLIOTECAS.txt).Length -lt 10000) { throw "BIBLIOTECAS.txt veio vazio" }
 
       - name: Teste de fumaça do executável
         shell: pwsh
@@ -96,10 +81,23 @@ jobs:
       - name: Compactar para o Release (só em tags)
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
-        run: Compress-Archive dist/TranscritorLocal "TranscritorLocal-${{ github.ref_name }}-windows.zip"
+        run: |
+          $zip = "TranscritorLocal-${{ github.ref_name }}-windows.zip"
+          Compress-Archive dist/TranscritorLocal $zip
+          $hexe = (Get-FileHash dist/TranscritorLocal/TranscritorLocal.exe -Algorithm SHA256).Hash.ToLower()
+          $hzip = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          $notas = "docs/release/${{ github.ref_name }}.md"
+          $corpo = if (Test-Path $notas) { Get-Content $notas -Raw -Encoding utf8 } else { "# Transcritor Local ${{ github.ref_name }}`n" }
+          $corpo = $corpo.Replace("TranscritorLocal-windows.zip", $zip).Replace("<preenchido na publicação>", $hexe)
+          $corpo += "`n`n## SHA-256`n`n| Arquivo | SHA-256 |`n|---|---|`n| ``$zip`` | ``$hzip`` |`n| ``TranscritorLocal.exe`` | ``$hexe`` |`n"
+          Set-Content release_corpo.md $corpo -Encoding utf8
 
-      - name: Publicar no Release (só em tags)
+      # Rascunho de pre-release: o autor confere a página e publica à mão (achados B3/K7)
+      - name: Criar o Release (rascunho, pre-release; só em tags)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          draft: true
+          prerelease: true
+          body_path: release_corpo.md
           files: TranscritorLocal-*-windows.zip

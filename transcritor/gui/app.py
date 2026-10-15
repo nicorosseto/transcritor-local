@@ -28,7 +28,7 @@ from ..pipeline import Evento, Item, PastasMudaram, Projeto, ProjetoDeOutraOrige
 from ..registro import ERRO as ST_ERRO
 from ..registro import OK as ST_OK
 from ..registro import SUBSTITUIDO
-from ..util import hhmmss
+from ..util import hhmmss, localizar_binario
 from ..resultado import resumo_final
 from . import marca, tema, textos
 from .componentes import Dialogo, Dica, piscar_barra_de_tarefas, som_aviso, som_sucesso
@@ -659,6 +659,26 @@ class App(ctk.CTk):
             self._log("Verificando o PC...")
         self._mostrar_pagina("preparacao")
 
+    def baixar_ffmpeg(self, ao_progredir, ao_terminar):
+        """Usado pela Preparação do PC (ADR-021). ao_terminar(erro_ou_None) roda na thread da interface."""
+        if getattr(self, "_baixando_ffmpeg", False):
+            return
+        self._baixando_ffmpeg = True
+
+        def tarefa():
+            erro = None
+            try:
+                preparacao.baixar_ffmpeg(ao_progredir)
+            except Exception as e:
+                erro = str(e) or type(e).__name__
+            self._baixando_ffmpeg = False
+            def fim():
+                if not erro:
+                    self._log(f"FFmpeg {preparacao.FFMPEG['versao']} baixado e conferido (SHA-256).")
+                ao_terminar(erro)
+            self.na_interface(fim)
+        threading.Thread(target=tarefa, daemon=True).start()
+
     def baixar_modelo(self, modelo, ao_progredir, ao_terminar):
         """Usado pela janela de verificação. ao_terminar(erro_ou_None) roda na thread da interface."""
         if self._baixando:
@@ -930,6 +950,15 @@ class App(ctk.CTk):
     # ================================================================== execução
     def _verificar_antes_de_iniciar(self, cfg: Config) -> bool:
         """Bloqueios com explicação e saída clara (corrige o OCR que 'sumia' sem aviso)."""
+        if not localizar_binario("ffmpeg") or not localizar_binario("ffprobe"):
+            r = Dialogo(self, "Falta o FFmpeg",
+                        "O app precisa do FFmpeg para abrir os vídeos. Na página Preparação do PC, ele é "
+                        "baixado uma única vez, com um clique.",
+                        [("Abrir a Preparação do PC", "abrir", True), ("Cancelar", None, False)],
+                        icone="⬇️", som=False).perguntar()
+            if r == "abrir":
+                self._abrir_verificacao()
+            return False
         if cfg.ocr and not ocr.verificar().disponivel:
             r = Dialogo(self, "Tesseract não instalado",
                         "Você marcou \"Ler texto da tela\", mas o Tesseract (o leitor de texto) não está "

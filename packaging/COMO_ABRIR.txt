@@ -10,15 +10,20 @@ TRANSCRITOR LOCAL — COMO ABRIR
    clique em "Mais informações" e depois em "Executar assim mesmo".
    (O aviso aparece porque o app ainda não tem assinatura digital paga.)
 
-3. Na primeira vez, o app mostra a tela "Verificar PC e preparar":
-   ele baixa o modelo de transcrição (~1,6 GB, uma única vez).
+3. Na primeira vez, o app abre a página "Preparação do PC". Nela, com um
+   clique em cada botão, ele baixa uma única vez:
+   - o FFmpeg, programa que abre os vídeos (~115 MB, versão oficial,
+     conferida antes de usar);
+   - o modelo de transcrição (~0,5 GB no modo Rápido, ~1,6 GB no
+     Equilibrado e no Preciso).
    Depois disso, tudo funciona sem internet.
 
 IMPORTANTE
-- NÃO mova o TranscritorLocal.exe para fora desta pasta: ele precisa das
-  pastas "_internal" e "bin" ao lado dele.
+- NÃO mova o TranscritorLocal.exe para fora desta pasta: ele precisa da
+  pasta "_internal" ao lado dele.
 - Para criar um atalho na Área de Trabalho: clique com o botão direito no
   TranscritorLocal.exe > Mostrar mais opções > Enviar para > Área de trabalho.
-- Você NÃO precisa instalar Python nem FFmpeg: já vêm dentro desta pasta.
+- Você NÃO precisa instalar Python: já vem dentro desta pasta.
+- Licenças: pasta "licencas".
 
 Ajuda e código-fonte: https://github.com/nicorosseto/transcritor-local

@@ -22,6 +22,7 @@ class Situacao:
     """Resultado consolidado da verificação, usado também pelo selo do botão."""
     ffmpeg_ok: bool = True
     ffmpeg_embutido: bool = False
+    ffmpeg_baixado: bool = False
     modelo_baixado: bool = True
     modelo: str = ""
     tesseract_ok: bool = True
@@ -41,6 +42,7 @@ def verificar(preset: str, pasta_saida: Path | None) -> Situacao:
     ff = localizar_binario("ffmpeg")
     s.ffmpeg_ok = ff is not None
     s.ffmpeg_embutido = bool(ff and Path(ff).parent == pasta_do_app() / "bin")
+    s.ffmpeg_baixado = bool(ff and Path(ff).parent == preparacao.pasta_ffmpeg() / "bin")
     try:
         s.modelo_baixado = preparacao.estado_modelo(s.modelo).baixado
     except Exception:
@@ -108,13 +110,24 @@ class PainelVerificacao(ctk.CTkFrame):
         self._secao("O que o app precisa")
         self._cartao("✅", "Motor do app (Python e bibliotecas)",
                      "Já vem dentro do app. Você NÃO precisa instalar Python.", VERDE)
+        ff = preparacao.FFMPEG
         if s.ffmpeg_ok:
-            self._cartao("✅", "FFmpeg (lê os vídeos)",
-                         "Já vem dentro do app." if s.ffmpeg_embutido else "Encontrado no seu PC.", VERDE)
+            origem = ("Baixado pelo app (versão oficial " + ff["versao"] + ")." if s.ffmpeg_baixado
+                      else "Já vem dentro do app." if s.ffmpeg_embutido else "Encontrado no seu PC.")
+            self._cartao("✅", "FFmpeg (lê os vídeos)", origem, VERDE)
+        elif preparacao.ffmpeg_baixavel():
+            mb = round(ff["tamanho"] / 1e6)
+            c = self._cartao("⬇️", "FFmpeg (lê os vídeos)",
+                             f"Obrigatório. É o programa que abre os vídeos e tira o áudio e as capturas. O app "
+                             f"baixa a versão oficial {ff['versao']} uma única vez (~{mb} MB), direto do "
+                             "distribuidor, e confere o arquivo antes de usar. Licença GPL, à parte do app.",
+                             LARANJA)
+            self._acao_baixar(c, f"Baixar FFmpeg (~{mb} MB)",
+                              lambda progresso, fim: self.app.baixar_ffmpeg(progresso, fim))
         else:
             self._cartao("❌", "FFmpeg (lê os vídeos)",
-                         "Obrigatório e não encontrado. Reinstale o app (o FFmpeg vem na pasta \"bin\") ou "
-                         "instale com: winget install --id Gyan.FFmpeg -e", VERMELHO)
+                         "Obrigatório e não encontrado. Instale pelo gerenciador de pacotes do sistema "
+                         "(ex.: sudo apt install ffmpeg) e clique em \"Verificar de novo\".", VERMELHO)
         rot = PRESETS[self.preset]["rotulo"]
         tam = preparacao.TAMANHO_APROX.get(s.modelo, 1.6e9) / 1e9
         if s.modelo_baixado:
@@ -125,7 +138,9 @@ class PainelVerificacao(ctk.CTkFrame):
                              f"Obrigatório. É o \"cérebro\" que transforma fala em texto. Precisa ser baixado "
                              f"uma vez (~{str(round(tam, 1)).replace('.', ',')} GB); depois funciona sem "
                              f"internet. Leva de 5 a 30 min, conforme a sua conexão.", LARANJA)
-            self._acao_baixar(c, s.modelo, tam)
+            tam_txt = str(round(tam, 1)).replace(".", ",")
+            self._acao_baixar(c, f"Baixar {s.modelo} (~{tam_txt} GB)",
+                              lambda progresso, fim, m=s.modelo: self.app.baixar_modelo(m, progresso, fim))
         if s.tesseract_ok:
             self._cartao("✅", "Tesseract (lê texto que aparece na tela)", "Instalado.", VERDE)
         else:
@@ -165,12 +180,11 @@ class PainelVerificacao(ctk.CTkFrame):
         return c
 
     # ------------------------------------------------------------------ ações
-    def _acao_baixar(self, cartao, modelo, tamanho_gb: float):
+    def _acao_baixar(self, cartao, texto_botao: str, disparar):
+        """Botão de download com barra. disparar(ao_progredir, ao_terminar) começa o download no app."""
         linha = ctk.CTkFrame(cartao, fg_color="transparent")
         linha.pack(fill="x", padx=(46, 10), pady=(0, 10))
-        tam = str(round(tamanho_gb, 1)).replace(".", ",")
-        btn = ctk.CTkButton(linha, text=f"Baixar {modelo} (~{tam} GB)", width=200,
-                            font=ctk.CTkFont(weight="bold"))
+        btn = ctk.CTkButton(linha, text=texto_botao, width=200, font=ctk.CTkFont(weight="bold"))
         btn.pack(side="left")
         barra = ctk.CTkProgressBar(linha, width=300)
         rotulo = ctk.CTkLabel(linha, text="")
@@ -180,7 +194,7 @@ class PainelVerificacao(ctk.CTkFrame):
             barra.set(0)
             barra.pack(side="left", padx=10)
             rotulo.pack(side="left")
-            self.app.baixar_modelo(modelo, lambda f, t: self.app.na_interface(lambda: atualizar(f, t)), concluido)
+            disparar(lambda f, t: self.app.na_interface(lambda: atualizar(f, t)), concluido)
 
         def atualizar(f, t):
             if barra.winfo_exists():

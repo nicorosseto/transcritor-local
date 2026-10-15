@@ -263,3 +263,19 @@ Formato curto: contexto → decisão → consequências. Datas em DD/MM/AAAA.
 **Decisão.** O build grava `SHA256.txt` ao lado do `.exe` e mostra o hash no resumo da execução, para conferir a integridade com `Get-FileHash`. Foi testado e removido um segundo artefato com zip protegido por senha: o responsável baixou o normal sem ele, e um `.exe` em zip com senha é justamente o padrão de distribuição de malware, o que prejudicaria a credibilidade de um repositório público.
 
 **Consequências.** (+) Quem baixar consegue conferir o arquivo. (−) O aviso do Chrome/SmartScreen continua até a assinatura de código (P7); o README explica como abrir.
+
+**Atualização (15/10/2026):** o `SHA256.txt` vem no mesmo zip e por isso só confere a cópia. O hash que vale é o da página do Release, que o build preenche sozinho com o do `.exe` e o do `.zip` (achados B3/K7).
+
+## ADR-021: O `.zip` não redistribui binário GPL; o FFmpeg é baixado na primeira abertura
+
+**Data:** 15/10/2026 · **Status:** aceita · **Origem:** auditorias de 14/10/2026 (B2 do Codex, K2 do Claude)
+
+**Contexto.** O `.zip` levava o `ffmpeg.exe` da build "essentials" de gyan.dev (GPL v3, com bibliotecas externas) e, sem ninguém notar, o PyAV, cujas rodas para Windows embutem FFmpeg com libx264 e libx265 (GPL). A oferta de código-fonte apontava só para o FFmpeg "puro", o que não cobre o código-fonte correspondente dessas builds. As duas auditorias trataram isso como bloqueio do Release.
+
+**Decisão.**
+1. **PyAV fora do executável.** O faster-whisper só o importa para `decode_audio()`, que o app nunca chama: o áudio é lido pelo FFmpeg e entregue como array ([ADR-003](#adr-003)). No `.exe`, `packaging/entrada_janela.py` registra um módulo `av` vazio antes de tudo; qualquer uso dele falha com uma mensagem clara. O autoteste do build confere que o PyAV verdadeiro e as DLLs libx264/libx265 não entraram.
+2. **FFmpeg baixado pelo usuário.** A Preparação do PC baixa, com um clique, a versão fixa (9.0.2) do GitHub do próprio distribuidor, confere o SHA-256 gravado em `preparacao.FFMPEG` e extrai só `ffmpeg.exe`, `ffprobe.exe` e a licença para a pasta do usuário, com um `ORIGEM.txt`. Quem distribui o FFmpeg continua sendo o distribuidor.
+
+**Alternativas.** (a) Anexar ao Release o código-fonte completo das duas builds: trabalhoso (dezenas de bibliotecas, configuração da build) e fácil de errar. (b) Mandar instalar pelo `winget`: o Windows Sandbox e parte dos PCs não têm `winget`. (c) Build própria de FFmpeg LGPL: fora do alcance de um beta.
+
+**Consequências.** (+) O `.zip` fica só com código MIT/BSD/Apache e similares; versão do FFmpeg fixada por hash (resolve a parte do X14 que fala do FFmpeg). (−) Primeiro uso baixa ~115 MB a mais; precisa de internet na primeira vez, como o modelo. (−) Trocar a versão do FFmpeg exige atualizar URL, tamanho e hash juntos.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import sys
 import threading
 from collections import deque
 from pathlib import Path
@@ -15,17 +16,22 @@ class FFmpegAusente(RuntimeError):
     pass
 
 
+MENSAGEM_SEM_FFMPEG = ("FFmpeg não encontrado. Baixe na página Preparação do PC (botão \"Baixar FFmpeg\")."
+                       if sys.platform == "win32" else
+                       "FFmpeg não encontrado. Instale pelo gerenciador de pacotes (ex.: sudo apt install ffmpeg).")
+
+
 def ffmpeg() -> str:
     exe = localizar_binario("ffmpeg")
     if not exe:
-        raise FFmpegAusente("FFmpeg não encontrado. Instale com: winget install --id Gyan.FFmpeg -e")
+        raise FFmpegAusente(MENSAGEM_SEM_FFMPEG)
     return exe
 
 
 def ffprobe() -> str:
     exe = localizar_binario("ffprobe")
     if not exe:
-        raise FFmpegAusente("ffprobe não encontrado (vem junto com o FFmpeg).")
+        raise FFmpegAusente(MENSAGEM_SEM_FFMPEG)
     return exe
 
 

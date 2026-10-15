@@ -39,9 +39,10 @@ def pasta_dados_usuario() -> Path:
 
 
 def localizar_binario(nome: str, extras: list[Path] | None = None) -> str | None:
-    """Procura um executável: primeiro ao lado do app (versão empacotada), depois no PATH."""
+    """Procura um executável: ao lado do app, na pasta que o app baixou (FFmpeg, ADR-021) e no PATH."""
     exe = f"{nome}.exe" if sys.platform == "win32" else nome
-    candidatos = [pasta_do_app() / "bin" / exe, pasta_do_app() / exe]
+    candidatos = [pasta_do_app() / "bin" / exe, pasta_do_app() / exe,
+                  pasta_dados_usuario() / "ffmpeg" / "bin" / exe]
     candidatos += [Path(p) / exe for p in (extras or [])]
     for c in candidatos:
         if c.is_file():

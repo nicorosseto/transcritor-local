@@ -22,3 +22,10 @@ mkdir -p /tmp/telas && xvfb-run -a -s "-screen 0 1366x768x24" python3.12 ferrame
 `maquina_limpa.py`: N17 a N19 do teste no Windows Sandbox (troca de qualidade reverifica o modelo, escolher a saída relê a pasta, lista legível em 1024x768). Rode com `-screen 0 1024x768x24`.
 
 `escala_do_windows.py`: simula escala 1.0/1.25/1.5 e confere que a janela e o botão Transcrever cabem na tela (N16). Passe a escala como argumento e o tamanho da tela no `xvfb-run -s`.
+
+`auditoria_k1.py`: K1 (auditoria de 14/10). Transcrever fica travado durante a leitura; releitura com a confirmação aberta cancela a rodada com aviso; rodada normal registra tudo no `registro.csv`.
+
+`auditoria_c1.py`: C1 e K3. "Verificar de novo" lenta com troca de qualidade no meio nunca mostra o modelo de outra qualidade.
+
+`ffmpeg_primeiro_uso.py`: ADR-021. Sem FFmpeg, a Preparação mostra "Baixar FFmpeg", baixa (pacote falso por `file://`), confere o SHA-256 e reconhece o FFmpeg baixado.
+

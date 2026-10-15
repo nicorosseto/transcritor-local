@@ -174,3 +174,86 @@ def test_k18_copia_pendente_presa_nao_vira_falso_registro_nao_salvo(tmp_path, mo
                                     {"ok": 1, "cancelado": True, "registro_nao_salvo": "x"}])
 def test_k18_registro_nao_salvo_aparece_em_qualquer_desfecho(resumo):
     assert "registro.csv" in resumo_final(resumo)[1]
+
+
+# --------------------------------------------------------------------------- B2 / K2: FFmpeg baixado (ADR-021)
+def _zip_ffmpeg(destino: Path, faltar: str | None = None) -> dict:
+    import hashlib
+    with zipfile.ZipFile(destino, "w") as z:
+        for nome in ("bin/ffmpeg.exe", "bin/ffprobe.exe", "bin/ffplay.exe", "LICENSE", "doc/ffmpeg.html"):
+            if nome != faltar:
+                z.writestr(f"ffmpeg-9.9-essentials_build/{nome}", f"conteudo de {nome}")
+    dados = destino.read_bytes()
+    return {"versao": "9.9", "url": destino.as_uri(), "sha256": hashlib.sha256(dados).hexdigest(),
+            "tamanho": len(dados), "pagina": "https://exemplo", "fonte": "https://exemplo/fonte.tar.xz"}
+
+
+def test_b2_ffmpeg_baixado_confere_hash_e_extrai_so_o_necessario(tmp_path, monkeypatch):
+    from transcritor import preparacao
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "dados"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "dados"))
+    info = _zip_ffmpeg(tmp_path / "ff.zip")
+    progresso = []
+    pasta_bin = preparacao.baixar_ffmpeg(lambda f, t: progresso.append((f, t)), origem=info)
+    assert sorted(p.name for p in pasta_bin.iterdir()) == ["ffmpeg.exe", "ffprobe.exe"]
+    raiz = pasta_bin.parent
+    assert (raiz / "LICENSE.txt").is_file() and "GPL" in (raiz / "ORIGEM.txt").read_text(encoding="utf-8")
+    assert progresso and progresso[-1][0] == info["tamanho"]
+    assert not list(raiz.glob("*.parcial"))
+
+
+def test_b2_ffmpeg_com_hash_diferente_e_recusado(tmp_path, monkeypatch):
+    from transcritor import preparacao
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "dados"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "dados"))
+    info = dict(_zip_ffmpeg(tmp_path / "ff.zip"), sha256="0" * 64)
+    with pytest.raises(RuntimeError, match="SHA-256"):
+        preparacao.baixar_ffmpeg(origem=info)
+    raiz = preparacao.pasta_ffmpeg()
+    assert not (raiz / "bin").exists() and not list(raiz.glob("*.parcial"))
+
+
+def test_b2_ffmpeg_sem_ffprobe_no_pacote_e_recusado(tmp_path, monkeypatch):
+    from transcritor import preparacao
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "dados"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "dados"))
+    info = _zip_ffmpeg(tmp_path / "ff.zip", faltar="bin/ffprobe.exe")
+    with pytest.raises(RuntimeError, match="ffprobe"):
+        preparacao.baixar_ffmpeg(origem=info)
+
+
+def test_b2_ffmpeg_cancelado_nao_deixa_parcial(tmp_path, monkeypatch):
+    import threading
+    from transcritor import preparacao
+    from transcritor.util import Cancelado
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "dados"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "dados"))
+    info = _zip_ffmpeg(tmp_path / "ff.zip")
+    cancelar = threading.Event(); cancelar.set()
+    with pytest.raises(Cancelado):
+        preparacao.baixar_ffmpeg(origem=info, cancelar=cancelar)
+    assert not list(preparacao.pasta_ffmpeg().glob("*.parcial"))
+
+
+def test_b2_versao_fixa_tem_hash_e_url_versionada():
+    from transcritor import preparacao
+    ff = preparacao.FFMPEG
+    assert len(ff["sha256"]) == 64 and ff["versao"] in ff["url"] and ff["url"].startswith("https://")
+
+
+def test_k2_app_funciona_com_o_substituto_do_pyav():
+    """O executável não leva o PyAV; com o substituto, o faster-whisper e o app carregam."""
+    import subprocess
+    import sys
+    raiz = Path(__file__).resolve().parent.parent
+    codigo = (
+        "import sys, runpy; sys.frozen = True\n"
+        f"sys.path.insert(0, {str(raiz)!r}); sys.path.insert(0, {str(raiz / 'packaging')!r})\n"
+        "import entrada_janela\n"
+        "import av; assert av.SUBSTITUTO_TRANSCRITOR\n"
+        "import faster_whisper, transcritor.transcricao, transcritor.pipeline\n"
+        "print(repr(av)); assert not hasattr(av, '__path__')\n"
+        "try:\n    av.open\nexcept AttributeError as e:\n    assert 'FFmpeg' in str(e)\nelse:\n    raise SystemExit(1)\n"
+        "print('ok')\n")
+    r = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0 and "ok" in r.stdout, r.stderr[-2000:]
