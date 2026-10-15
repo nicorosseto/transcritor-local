@@ -257,3 +257,11 @@ def test_k2_app_funciona_com_o_substituto_do_pyav():
         "print('ok')\n")
     r = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True, timeout=120)
     assert r.returncode == 0 and "ok" in r.stdout, r.stderr[-2000:]
+
+
+# --------------------------------------------------------------------------- N22 (teste na máquina corporativa, 15/10)
+def test_n22_tesseract_instalado_so_para_o_usuario_e_encontrado(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    caminhos = ocr._caminhos_windows()
+    assert tmp_path / "Programs" / "Tesseract-OCR" in caminhos
+    assert tmp_path / "Tesseract-OCR" in caminhos

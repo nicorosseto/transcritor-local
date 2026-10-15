@@ -14,6 +14,19 @@ URL_PORTUGUES = "https://github.com/tesseract-ocr/tessdata_fast/raw/main/por.tra
 _CAMINHOS_WINDOWS = [Path(r"C:\Program Files\Tesseract-OCR"), Path(r"C:\Program Files (x86)\Tesseract-OCR")]
 
 
+def _caminhos_windows() -> list[Path]:
+    """Pastas comuns do Tesseract, inclusive a instalação só para o usuário (sem administrador), que o
+    winget faz em PCs corporativos (achado N22, 15/10/2026)."""
+    import os
+    extras = []
+    for var, sub in (("LOCALAPPDATA", "Programs/Tesseract-OCR"), ("LOCALAPPDATA", "Tesseract-OCR"),
+                     ("ProgramFiles", "Tesseract-OCR"), ("ProgramFiles(x86)", "Tesseract-OCR")):
+        base = os.environ.get(var)
+        if base:
+            extras.append(Path(base) / sub)
+    return _CAMINHOS_WINDOWS + extras
+
+
 @dataclass
 class EstadoOCR:
     disponivel: bool
@@ -41,7 +54,7 @@ def _idiomas(exe: str, tessdata: Path | None) -> set[str]:
 
 
 def verificar() -> EstadoOCR:
-    exe = localizar_binario("tesseract", _CAMINHOS_WINDOWS if sys.platform == "win32" else None)
+    exe = localizar_binario("tesseract", _caminhos_windows() if sys.platform == "win32" else None)
     if not exe:
         return EstadoOCR(False, None, False, None,
                          "Tesseract não instalado. Instale com: winget install --id UB-Mannheim.TesseractOCR -e")

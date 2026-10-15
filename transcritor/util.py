@@ -47,7 +47,30 @@ def localizar_binario(nome: str, extras: list[Path] | None = None) -> str | None
     for c in candidatos:
         if c.is_file():
             return str(c)
-    return shutil.which(nome)
+    achado = shutil.which(nome)
+    if achado or sys.platform != "win32":
+        return achado
+    # Um instalador (ex.: winget) pode ter mudado o PATH depois que o app abriu: o processo continua com o
+    # PATH antigo. Relê o PATH atual do usuário e do sistema no registro (achado N22, 15/10/2026).
+    caminho = os.pathsep.join(_path_do_registro())
+    return shutil.which(nome, path=caminho) if caminho else None
+
+
+def _path_do_registro() -> list[str]:
+    try:
+        import winreg
+    except ImportError:
+        return []
+    pastas = []
+    for raiz, chave in ((winreg.HKEY_CURRENT_USER, r"Environment"),
+                        (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment")):
+        try:
+            with winreg.OpenKey(raiz, chave) as k:
+                valor, _ = winreg.QueryValueEx(k, "Path")
+        except OSError:
+            continue
+        pastas += [os.path.expandvars(p) for p in str(valor).split(";") if p.strip()]
+    return pastas
 
 
 def rodar(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
